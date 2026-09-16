@@ -1,42 +1,119 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import type { View } from '../App'
+import { useResumeStore } from '@/stores/resumeStore'
+import { useAnalysisStore } from '@/stores/analysisStore'
 
 interface Props {
   onNav: (v: View) => void
 }
 
-const steps = [
-  { label: 'Reading resume', duration: 600 },
-  { label: 'Extracting sections', duration: 800 },
-  { label: 'Identifying skills', duration: 700 },
-  { label: 'Analyzing experience', duration: 900 },
-  { label: 'Checking ATS compatibility', duration: 1000 },
-  { label: 'Preparing recommendations', duration: 800 },
+const STEPS = [
+  { label: 'Reading resume', minDuration: 500 },
+  { label: 'Extracting sections', minDuration: 500 },
+  { label: 'Identifying skills', minDuration: 500 },
+  { label: 'Analyzing experience', minDuration: 500 },
+  { label: 'Checking ATS compatibility', minDuration: 600 },
+  { label: 'Preparing recommendations', minDuration: 400 },
 ]
+
+function wait(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
 
 export default function ProcessingScreen({ onNav }: Props) {
   const [completed, setCompleted] = useState(0)
-  const [active, setActive] = useState(0)
+  const [failure, setFailure] = useState<string | null>(null)
+
+  const { file, parse } = useResumeStore()
+  const { analyze } = useAnalysisStore()
 
   useEffect(() => {
-    let idx = 0
-    const advance = () => {
-      if (idx >= steps.length) {
-        setTimeout(() => onNav('dashboard'), 600)
+    if (!file) {
+      onNav('upload')
+      return
+    }
+
+    // Resets so a re-run (including React StrictMode's dev-only double-invoke
+    // of this effect, which cancels the first run almost immediately) starts
+    // clean rather than resuming mid-animation.
+    setCompleted(0)
+    setFailure(null)
+    let cancelled = false
+
+    const run = async () => {
+      // Steps 1-2 correspond to parsing the file into structured Resume JSON.
+      await wait(STEPS[0].minDuration)
+      if (cancelled) return
+      setCompleted(1)
+
+      await parse()
+      if (cancelled) return
+
+      const parsedResume = useResumeStore.getState().resume
+      if (useResumeStore.getState().status === 'error' || !parsedResume) {
+        setFailure(useResumeStore.getState().error ?? 'This resume could not be parsed.')
         return
       }
-      setActive(idx)
-      setTimeout(() => {
-        setCompleted(idx + 1)
-        idx++
-        advance()
-      }, steps[idx].duration)
-    }
-    const t = setTimeout(advance, 400)
-    return () => clearTimeout(t)
-  }, [onNav])
+      setCompleted(2)
 
-  const progress = Math.round((completed / steps.length) * 100)
+      // Steps 3-5 correspond to the deterministic ATS analysis.
+      await wait(STEPS[2].minDuration)
+      if (cancelled) return
+      setCompleted(3)
+
+      await wait(STEPS[3].minDuration)
+      if (cancelled) return
+      setCompleted(4)
+
+      await analyze(parsedResume, useResumeStore.getState().warnings)
+      if (cancelled) return
+
+      if (useAnalysisStore.getState().status === 'error') {
+        setFailure(useAnalysisStore.getState().error ?? 'Analysis failed unexpectedly.')
+        return
+      }
+      setCompleted(5)
+
+      await wait(STEPS[5].minDuration)
+      if (cancelled) return
+      setCompleted(6)
+
+      await wait(400)
+      if (cancelled) return
+      onNav('dashboard')
+    }
+
+    run()
+
+    return () => {
+      cancelled = true
+    }
+  }, [file, onNav, parse, analyze])
+
+  if (failure) {
+    return (
+      <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-4 py-16">
+        <div className="w-full max-w-md text-center">
+          <div className="w-16 h-16 rounded-2xl bg-critical-bg mx-auto mb-6 flex items-center justify-center">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path d="M12 8v5M12 16h.01" stroke="#DC2626" strokeWidth="2" strokeLinecap="round" />
+              <circle cx="12" cy="12" r="9" stroke="#DC2626" strokeWidth="2" />
+            </svg>
+          </div>
+          <h1 className="font-serif text-2xl text-foreground mb-2">We couldn't process that resume</h1>
+          <p className="text-muted-foreground text-sm mb-8">{failure}</p>
+          <button
+            onClick={() => onNav('upload')}
+            className="px-6 py-3 bg-primary text-primary-foreground text-sm font-medium rounded-xl hover:bg-primary/90 transition-colors"
+          >
+            Try a different file
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  const progress = Math.round((completed / STEPS.length) * 100)
 
   return (
     <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-4 py-16">
@@ -70,14 +147,14 @@ export default function ProcessingScreen({ onNav }: Props) {
 
         {/* Steps */}
         <div className="bg-card border border-border rounded-2xl p-6 space-y-3">
-          {steps.map((step, i) => {
+          {STEPS.map((step, i) => {
             const done = i < completed
-            const current = i === active && !done
+            const current = i === completed
             return (
               <div
                 key={step.label}
                 className={`flex items-center gap-3 py-1.5 transition-all duration-300 ${
-                  done ? 'opacity-100' : current ? 'opacity-100' : 'opacity-35'
+                  done || current ? 'opacity-100' : 'opacity-35'
                 }`}
               >
                 <div className="w-5 h-5 flex-shrink-0">

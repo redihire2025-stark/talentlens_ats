@@ -109,6 +109,39 @@ describe('parseResumeText', () => {
   })
 })
 
+describe('parseResumeText with DOCX-shaped input', () => {
+  // mammoth's extractRawText inserts a blank line after every paragraph
+  // (bullets included), unlike the mostly-clean line breaks pdf.js
+  // produces. This regression-tests the fix in dateBoundaryBlocks.ts.
+  const MAMMOTH_STYLE_RESUME = [
+    'Jordan Rivera',
+    '',
+    'jordan.rivera@example.com',
+    '',
+    'Work Experience',
+    '',
+    'Frontend Engineer, Acme Corp | Mar 2021 - Present',
+    '',
+    '- Built reusable React components used across 4 production applications.',
+    '',
+    '- Led migration from JavaScript to TypeScript across the frontend codebase.',
+    '',
+    'Software Engineer, Beta Inc | Jun 2018 - Feb 2021',
+    '',
+    '- Implemented REST API integrations for the customer dashboard.',
+    '',
+  ].join('\n')
+
+  it('still groups bullets under the correct entry despite a blank line after every paragraph', () => {
+    const { resume } = parseResumeText(MAMMOTH_STYLE_RESUME)
+    expect(resume.experience).toHaveLength(2)
+    expect(resume.experience[0]!.company).toBe('Acme Corp')
+    expect(resume.experience[0]!.bullets).toHaveLength(2)
+    expect(resume.experience[1]!.company).toBe('Beta Inc')
+    expect(resume.experience[1]!.bullets).toHaveLength(1)
+  })
+})
+
 describe('parseResumeText edge cases', () => {
   it('returns an empty resume with a warning when no text was extracted', () => {
     const { resume, warnings } = parseResumeText('   ')

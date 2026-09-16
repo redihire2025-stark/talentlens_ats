@@ -37,15 +37,41 @@ wouldn't catch.
      "Label:" (e.g. "Languages:") gives a default `SkillCategory`. Full
      canonicalization (`React.js` → `react`) is the normalization engine's
      job (TASK-007), not this parser's.
-   - `buildExperience.ts` / `buildEducation.ts` / `buildProjects.ts` —
-     split their section into blank-line-separated blocks (one per entry)
-     and pull dates, location, and a title/company (or institution/degree)
-     split out of the remaining text.
+   - `buildExperience.ts` / `buildEducation.ts` split their section into
+     entries using `dateBoundaryBlocks.ts` (a new entry starts at each line
+     containing a recognizable date range), not blank lines — see "Why
+     date boundaries, not blank lines" below. `buildProjects.ts` still
+     splits on blank lines (`blocks.ts`'s `splitIntoBlocks`), since
+     projects don't reliably have dates.
    - `buildCertifications.ts` — one certification per non-blank line.
 3. `dateUtils.ts` finds date-like tokens (month-year, numeric, year-only,
    or "present") independently and pairs the first two found on a line,
    rather than matching one large "start - end" regex — resume date
    formats vary too much for a single reliable pattern.
+
+## Why date boundaries, not blank lines
+
+An earlier version split experience/education entries on blank lines, the
+same way `buildProjects.ts` still does. That works for pdf.js output,
+where a blank line between entries usually survives extraction via the
+`hasEOL` heuristic — but it silently broke on real DOCX files: mammoth's
+`extractRawText` inserts a blank line *after every paragraph*, bullets
+included, and drops genuinely empty paragraphs entirely. The result was
+every single bullet point being treated as its own broken "experience
+entry." This was caught by testing an actual `.docx` file through the
+real upload flow, not by the unit tests, which had (incorrectly) assumed
+hand-typed-style single-newline-separated bullets.
+
+`dateBoundaryBlocks.ts`'s `splitByDateBoundary` fixes this by starting a
+new entry at each line containing a recognizable date range instead —
+robust across both extraction formats, as long as each entry's meta line
+states its dates (which experience and education entries conventionally
+do). The trade-off: a bullet that happens to mention a bare year (e.g.
+"migrated a system built in 2015") would incorrectly start a new entry.
+This is judged rarer and less damaging than the failure mode it replaces.
+Projects don't reliably have dates, so `buildProjects.ts` keeps blank-line
+splitting and inherits the same DOCX limitation — a documented gap, not
+an oversight.
 
 ## Known limitations
 

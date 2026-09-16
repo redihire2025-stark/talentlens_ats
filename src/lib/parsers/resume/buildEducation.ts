@@ -1,5 +1,5 @@
 import type { EducationEntry } from '@/types/resume'
-import { splitIntoBlocks } from './blocks'
+import { splitByDateBoundary } from './dateBoundaryBlocks'
 import { extractDateRange } from './dateUtils'
 import { extractLocation } from './fieldExtractors'
 
@@ -54,5 +54,5 @@ function parseEducationBlock(block: string[]): EducationEntry {
 }
 
 export function buildEducation(educationLines: string[]): EducationEntry[] {
-  return splitIntoBlocks(educationLines).map(parseEducationBlock)
+  return splitByDateBoundary(educationLines).map(parseEducationBlock)
 }

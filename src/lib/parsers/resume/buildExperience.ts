@@ -1,5 +1,6 @@
 import type { ExperienceEntry } from '@/types/resume'
-import { isBulletLine, splitIntoBlocks, stripBulletMarker } from './blocks'
+import { isBulletLine, stripBulletMarker } from './blocks'
+import { splitByDateBoundary } from './dateBoundaryBlocks'
 import { extractDateRange } from './dateUtils'
 import { extractLocation } from './fieldExtractors'
 
@@ -88,5 +89,5 @@ function parseExperienceBlock(block: string[], warnings: string[], entryIndex: n
 }
 
 export function buildExperience(experienceLines: string[], warnings: string[]): ExperienceEntry[] {
-  return splitIntoBlocks(experienceLines).map((block, index) => parseExperienceBlock(block, warnings, index))
+  return splitByDateBoundary(experienceLines).map((block, index) => parseExperienceBlock(block, warnings, index))
 }
