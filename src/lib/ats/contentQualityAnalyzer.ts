@@ -1,16 +1,5 @@
 import type { AnalyzerResult, AtsAnalysisInput } from './types'
-
-const ACTION_VERBS = [
-  'built', 'led', 'developed', 'designed', 'implemented', 'launched', 'improved', 'increased', 'reduced',
-  'managed', 'created', 'optimized', 'architected', 'delivered', 'drove', 'established', 'automated',
-  'streamlined', 'mentored', 'coordinated', 'analyzed', 'migrated', 'scaled', 'shipped',
-]
-const QUANTIFICATION_RE = /\d/
-
-function startsWithActionVerb(bullet: string): boolean {
-  const firstWord = bullet.trim().split(/\s+/)[0]?.toLowerCase().replace(/[^a-z]/g, '')
-  return Boolean(firstWord && ACTION_VERBS.includes(firstWord))
-}
+import { isQuantified, startsWithActionVerb } from './bulletQuality'
 
 /**
  * A proxy for how compelling the resume's content is, independent of any
@@ -34,7 +23,7 @@ export function analyzeContentQuality({ resume }: AtsAnalysisInput): AnalyzerRes
   }
 
   const actionVerbCount = bullets.filter(startsWithActionVerb).length
-  const quantifiedCount = bullets.filter((bullet) => QUANTIFICATION_RE.test(bullet)).length
+  const quantifiedCount = bullets.filter(isQuantified).length
 
   const actionVerbRatio = actionVerbCount / bullets.length
   const quantifiedRatio = quantifiedCount / bullets.length

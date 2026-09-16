@@ -17,24 +17,20 @@ const SECTION_CHECKS: SectionCheck[] = [
 
 const TOTAL_WEIGHT = SECTION_CHECKS.reduce((sum, check) => sum + check.weight, 0)
 
+/** The raw list of missing section/field labels — shared with the recommendation engine (TASK-011) so both agree on exactly what's missing. */
+export function getMissingSections(input: AtsAnalysisInput): string[] {
+  return SECTION_CHECKS.filter((check) => !check.present(input)).map((check) => check.label)
+}
+
 /**
  * Checks for the presence of the sections and contact fields a resume
  * needs to be screened at all. Weighted rather than a flat count —
  * missing "Experience" is a much bigger problem than missing "Summary".
  */
 export function analyzeSections(input: AtsAnalysisInput): AnalyzerResult {
-  const present: string[] = []
-  const missing: string[] = []
-  let earnedWeight = 0
-
-  for (const check of SECTION_CHECKS) {
-    if (check.present(input)) {
-      earnedWeight += check.weight
-      present.push(check.label)
-    } else {
-      missing.push(check.label)
-    }
-  }
+  const missing = getMissingSections(input)
+  const present = SECTION_CHECKS.map((check) => check.label).filter((label) => !missing.includes(label))
+  const earnedWeight = SECTION_CHECKS.filter((check) => present.includes(check.label)).reduce((sum, check) => sum + check.weight, 0)
 
   const score = Math.round((earnedWeight / TOTAL_WEIGHT) * 100)
 
