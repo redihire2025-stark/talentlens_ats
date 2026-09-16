@@ -26,11 +26,14 @@ export default function Header({ view, onNav }: Props) {
             onClick={() => onNav('landing')}
             className="flex items-center gap-2.5 group flex-shrink-0"
           >
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center shadow-sm" style={{ background: 'linear-gradient(135deg, #7C3AED, #A855F7)' }}>
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                <circle cx="8" cy="8" r="6" stroke="white" strokeWidth="1.5" fill="none" />
-                <circle cx="8" cy="8" r="2.5" fill="white" />
-                <line x1="12.2" y1="12.2" x2="14.5" y2="14.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center shadow-lg flex-shrink-0" style={{ background: 'linear-gradient(135deg, #7C3AED 0%, #A855F7 100%)' }}>
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                {/* T — horizontal bar + vertical stem */}
+                <line x1="3" y1="5" x2="11" y2="5" stroke="white" strokeWidth="2" strokeLinecap="round" />
+                <line x1="7" y1="5" x2="7" y2="15" stroke="white" strokeWidth="2" strokeLinecap="round" />
+                {/* L — vertical + horizontal foot, offset right */}
+                <line x1="11.5" y1="7" x2="11.5" y2="15" stroke="white" strokeWidth="2" strokeLinecap="round" />
+                <line x1="11.5" y1="15" x2="17" y2="15" stroke="white" strokeWidth="2" strokeLinecap="round" />
               </svg>
             </div>
             <span className="font-semibold text-foreground tracking-tight text-[15px]">TalentLens</span>
