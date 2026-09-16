@@ -90,6 +90,7 @@ export default function ResumeUpload({ onNav }: Props) {
             accept=".pdf,.docx"
             className="hidden"
             onChange={onInputChange}
+            data-testid="resume-file-input"
           />
 
           {!file ? (

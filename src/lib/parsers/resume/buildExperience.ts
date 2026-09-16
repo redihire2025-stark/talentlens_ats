@@ -37,6 +37,12 @@ function parseMetaLines(metaLines: string[], warnings: string[], entryIndex: num
     text = text.replace(location, ' ')
   }
 
+  // A date range (or location) is often wrapped in parentheses in the
+  // source line — e.g. "Backend Engineer, Acme Corp (2020 - Present)" —
+  // and only the date/location text itself is removed above, leaving an
+  // empty "()" behind that would otherwise get glued onto the next part.
+  text = text.replace(/\(\s*\)/g, ' ')
+
   const parts = text
     .split(META_SEPARATOR_RE)
     .map((part) => part.trim())

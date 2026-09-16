@@ -142,6 +142,23 @@ describe('parseResumeText with DOCX-shaped input', () => {
   })
 })
 
+describe('parseResumeText with a parenthesized date range', () => {
+  it('does not leave a stray "()" glued onto the company name', () => {
+    const text = [
+      'Priya Nair',
+      'priya.nair@example.com',
+      '',
+      'Work Experience',
+      'Backend Engineer, Nimbus Systems  (2020-01 – Present)',
+      '- Designed microservices.',
+    ].join('\n')
+
+    const { resume } = parseResumeText(text)
+    expect(resume.experience[0]!.company).toBe('Nimbus Systems')
+    expect(resume.experience[0]!.title).toBe('Backend Engineer')
+  })
+})
+
 describe('parseResumeText edge cases', () => {
   it('returns an empty resume with a warning when no text was extracted', () => {
     const { resume, warnings } = parseResumeText('   ')

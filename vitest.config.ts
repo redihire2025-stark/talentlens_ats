@@ -11,6 +11,14 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
+      // Vitest runs tests in a real Node.js process (jsdom only polyfills
+      // window/document into it), so Vite resolves packages by their Node
+      // build, not their "browser" package.json field the way a real
+      // browser build does. mammoth's Node build (lib/unzip.js) only
+      // understands { path | buffer | file }, not the { arrayBuffer }
+      // shape our browser-only code passes — so under test, force
+      // resolution to the same browser bundle real usage gets.
+      mammoth: path.resolve(__dirname, 'node_modules/mammoth/mammoth.browser.js'),
     },
   },
   test: {
