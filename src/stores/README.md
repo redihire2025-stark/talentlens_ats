@@ -5,7 +5,8 @@ never a single monolithic store:
 
 - `resumeStore` — the uploaded file and its parsed `Resume` (TASK-013)
 - `analysisStore` — the ATS Compatibility Score (TASK-013)
-- `jobDescription` — parsed JD JSON, input state (TASK-015)
+- `jobDescriptionStore` — the JD text/file and its parsed `JobDescription` (TASK-015)
+- `matchStore` — the resume/JD `MatchAnalysis` and JD Match Score (TASK-015)
 - `editor` — recommendation accept/reject/edit state, draft edits (TASK-016)
 - `versions` — resume version history (original, v1, v2, tailored) (TASK-017)
 

@@ -1,52 +1,78 @@
-import { useState } from 'react'
 import type { View } from '../App'
 import { ScoreRing, ProgressBar } from './shared'
+import { useResumeStore } from '@/stores/resumeStore'
+import { useAnalysisStore } from '@/stores/analysisStore'
+import { useJobDescriptionStore } from '@/stores/jobDescriptionStore'
+import { useMatchStore } from '@/stores/matchStore'
+import { JD_MATCH_CATEGORY_LABELS, JD_MATCH_SCORE_CATEGORIES } from '@/features/job-description/jdMatchDisplay'
 
 interface Props {
   onNav: (v: View) => void
 }
 
-const matchBreakdown = [
-  { label: 'Required Skills', value: 92 },
-  { label: 'Preferred Skills', value: 71 },
-  { label: 'Experience', value: 96 },
-  { label: 'Responsibilities', value: 83 },
-  { label: 'Job Title', value: 90 },
-  { label: 'Education', value: 100 },
-]
-
-const matchedSkills = ['React', 'TypeScript', 'JavaScript', 'REST APIs', 'AWS']
-const missingSkills = ['Next.js', 'Docker']
-const partialSkills = ['GraphQL', 'CI/CD']
-
-const sampleJD = `Senior Frontend Engineer
+const SAMPLE_JD = `Senior Frontend Engineer
 
 We're looking for a Senior Frontend Engineer to join our product team.
 
-Requirements:
-- 5+ years of frontend experience
-- Expert-level React and TypeScript
-- Experience with REST APIs and GraphQL
-- AWS cloud infrastructure knowledge
-- CI/CD pipeline experience
-- Next.js and Docker familiarity
+Requirements
+5+ years of frontend experience
+Required Skills: React, TypeScript, REST API, AWS, CI/CD
 
-Nice to have:
-- Open source contributions
-- Experience with design systems`
+Preferred Qualifications
+Preferred Skills: GraphQL, Next.js, Docker
+
+Responsibilities
+Build and maintain customer-facing web applications.
+Collaborate with design and product on new features.
+
+Education
+Bachelor's degree in Computer Science or equivalent experience`
 
 export default function JDMatch({ onNav }: Props) {
-  const [jdText, setJdText] = useState('')
-  const [analyzed, setAnalyzed] = useState(false)
-  const [loading, setLoading] = useState(false)
+  const { resume } = useResumeStore()
+  const { atsResult } = useAnalysisStore()
+  const { text, setText, parseText, parseFile, jobDescription, status: jdStatus, error: jdError } = useJobDescriptionStore()
+  const { analysis, result, status: matchStatus, error: matchError, match } = useMatchStore()
 
-  const handleAnalyze = () => {
-    if (!jdText.trim()) return
-    setLoading(true)
-    setTimeout(() => { setLoading(false); setAnalyzed(true) }, 1800)
+  const loading = jdStatus === 'parsing' || matchStatus === 'matching'
+  const analyzed = matchStatus === 'ready' && result !== null
+
+  if (!resume || !atsResult) {
+    return (
+      <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-4 py-16">
+        <div className="w-full max-w-md text-center">
+          <h1 className="font-serif text-2xl text-foreground mb-2">Analyze your resume first</h1>
+          <p className="text-muted-foreground text-sm mb-8">
+            Upload and analyze a resume before matching it against a job description.
+          </p>
+          <button
+            onClick={() => onNav('upload')}
+            className="px-6 py-3 bg-primary text-primary-foreground text-sm font-medium rounded-xl hover:bg-primary/90 transition-colors"
+          >
+            Upload a resume
+          </button>
+        </div>
+      </div>
+    )
   }
 
-  const loadSample = () => setJdText(sampleJD)
+  const handleAnalyze = async () => {
+    if (!text.trim()) return
+    await parseText()
+    const parsedJd = useJobDescriptionStore.getState().jobDescription
+    if (useJobDescriptionStore.getState().status === 'error' || !parsedJd) return
+    await match(resume, parsedJd, atsResult.score)
+  }
+
+  const handleFileUpload = async (file: File) => {
+    await parseFile(file)
+    const parsedJd = useJobDescriptionStore.getState().jobDescription
+    if (useJobDescriptionStore.getState().status === 'error' || !parsedJd) return
+    await match(resume, parsedJd, atsResult.score)
+  }
+
+  const loadSample = () => setText(SAMPLE_JD)
+  const error = jdError ?? matchError
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
@@ -65,17 +91,19 @@ export default function JDMatch({ onNav }: Props) {
             </div>
 
             <textarea
-              value={jdText}
-              onChange={(e) => setJdText(e.target.value)}
+              value={text}
+              onChange={(e) => setText(e.target.value)}
               placeholder={"Paste the job description here..."}
               rows={14}
               className="w-full bg-muted/50 border border-border rounded-xl px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none leading-relaxed"
             />
 
+            {error && <p className="mt-3 text-xs text-critical font-medium">{error}</p>}
+
             <div className="flex items-center gap-3 mt-4">
               <button
                 onClick={handleAnalyze}
-                disabled={!jdText.trim() || loading}
+                disabled={!text.trim() || loading}
                 className="flex-1 py-2.5 bg-primary text-primary-foreground text-sm font-medium rounded-xl hover:bg-primary/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 {loading ? 'Analyzing...' : 'Analyze Match'}
@@ -86,7 +114,15 @@ export default function JDMatch({ onNav }: Props) {
                   <path d="M2 11h10" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
                 </svg>
                 Upload JD
-                <input type="file" accept=".pdf,.docx,.txt" className="hidden" />
+                <input
+                  type="file"
+                  accept=".pdf,.docx"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0]
+                    if (file) handleFileUpload(file)
+                  }}
+                />
               </label>
             </div>
           </div>
@@ -117,16 +153,20 @@ export default function JDMatch({ onNav }: Props) {
           </div>
         )}
 
-        {analyzed && (
+        {analyzed && result && (
           <div className="space-y-5">
             {/* Match score */}
             <div className="bg-card border border-border rounded-2xl p-6 flex items-center gap-6">
-              <ScoreRing score={84} size={100} strokeWidth={8} />
+              <ScoreRing score={result.score} size={100} strokeWidth={8} />
               <div>
                 <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">JD Match Score</div>
-                <div className="font-semibold text-foreground mb-1">Senior Frontend Engineer</div>
+                <div className="font-semibold text-foreground mb-1">{jobDescription?.title ?? 'This role'}</div>
                 <p className="text-xs text-muted-foreground leading-relaxed max-w-xs">
-                  Strong alignment on experience and required skills. A few preferred skills are not evidenced in your resume.
+                  {result.score >= 85
+                    ? 'Strong alignment across skills, experience, and requirements.'
+                    : result.score >= 60
+                    ? 'Reasonable alignment, with some skills or requirements not evidenced in your resume.'
+                    : 'Limited alignment — several required skills or requirements are not evidenced in your resume.'}
                 </p>
               </div>
             </div>
@@ -135,13 +175,13 @@ export default function JDMatch({ onNav }: Props) {
             <div className="bg-card border border-border rounded-2xl p-6">
               <h3 className="font-semibold text-foreground mb-4">Match Breakdown</h3>
               <div className="space-y-3.5">
-                {matchBreakdown.map((item) => (
-                  <div key={item.label}>
+                {JD_MATCH_SCORE_CATEGORIES.map((category) => (
+                  <div key={category}>
                     <div className="flex justify-between mb-1.5">
-                      <span className="text-sm text-foreground">{item.label}</span>
-                      <span className="font-mono text-sm font-semibold text-foreground">{item.value}%</span>
+                      <span className="text-sm text-foreground">{JD_MATCH_CATEGORY_LABELS[category]}</span>
+                      <span className="font-mono text-sm font-semibold text-foreground">{result.breakdown[category]}%</span>
                     </div>
-                    <ProgressBar value={item.value} />
+                    <ProgressBar value={result.breakdown[category]} />
                   </div>
                 ))}
               </div>
@@ -151,7 +191,7 @@ export default function JDMatch({ onNav }: Props) {
       </div>
 
       {/* Skill matching */}
-      {analyzed && (
+      {analyzed && result && analysis && (
         <div className="mt-8 bg-card border border-border rounded-2xl p-6">
           <div className="flex items-start justify-between mb-5">
             <div>
@@ -175,7 +215,8 @@ export default function JDMatch({ onNav }: Props) {
                 <span className="text-xs font-semibold text-foreground uppercase tracking-wider">Matched</span>
               </div>
               <div className="space-y-2">
-                {matchedSkills.map((s) => (
+                {result.matched.length === 0 && <p className="text-xs text-muted-foreground">None yet.</p>}
+                {result.matched.map((s) => (
                   <div key={s} className="flex items-center gap-2 px-3 py-2 bg-success-bg rounded-lg">
                     <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                       <path d="M2 6l3 3 5-5" stroke="#10B981" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -192,7 +233,8 @@ export default function JDMatch({ onNav }: Props) {
                 <span className="text-xs font-semibold text-foreground uppercase tracking-wider">Not evidenced</span>
               </div>
               <div className="space-y-2">
-                {missingSkills.map((s) => (
+                {result.missing.length === 0 && <p className="text-xs text-muted-foreground">None.</p>}
+                {result.missing.map((s) => (
                   <div key={s} className="flex items-center gap-2 px-3 py-2 bg-critical-bg rounded-lg">
                     <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                       <path d="M2 2l8 8M10 2L2 10" stroke="#DC2626" strokeWidth="1.5" strokeLinecap="round" />
@@ -209,7 +251,8 @@ export default function JDMatch({ onNav }: Props) {
                 <span className="text-xs font-semibold text-foreground uppercase tracking-wider">Partial evidence</span>
               </div>
               <div className="space-y-2">
-                {partialSkills.map((s) => (
+                {result.partial.length === 0 && <p className="text-xs text-muted-foreground">None.</p>}
+                {result.partial.map((s) => (
                   <div key={s} className="flex items-center gap-2 px-3 py-2 bg-warning-bg rounded-lg">
                     <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                       <path d="M6 2v5M6 9v.5" stroke="#D97706" strokeWidth="1.5" strokeLinecap="round" />
