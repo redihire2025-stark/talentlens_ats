@@ -7,6 +7,8 @@ shape used across features is defined here and imported, not redeclared.
 - `score.ts` — `MatchStatus` and `ScoreResult<TBreakdown>`, the shared
   response envelope for both the ATS Compatibility Score and the JD Match
   Score (see `docs/scoring/scoring-methodology.md`)
+- `resume.ts` — the `Resume` domain schema (see
+  `docs/architecture/resume-schema.md`)
 
-The `Resume` and `JobDescription` domain schemas and API request/response
-contracts are added in TASK-003, TASK-005, and TASK-012 respectively.
+The `JobDescription` domain schema and API request/response contracts are
+added in TASK-005 and TASK-012 respectively.
