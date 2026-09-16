@@ -16,7 +16,7 @@ interface Props {
 }
 
 export default function ATSDashboard({ onNav, onExport }: Props) {
-  const { file } = useResumeStore()
+  const { file, warnings } = useResumeStore()
   const { atsResult } = useAnalysisStore()
 
   if (!atsResult) {
@@ -62,6 +62,18 @@ export default function ATSDashboard({ onNav, onExport }: Props) {
         <span>·</span>
         <span className="text-foreground font-medium">ATS Analysis</span>
       </div>
+
+      {/* Parsing warnings — e.g. "very short document", "no skills section detected" */}
+      {warnings.length > 0 && (
+        <div className="mb-8 p-4 bg-warning-bg border border-warning/20 rounded-xl">
+          <p className="text-xs font-semibold text-warning mb-1.5">Heads up while reading your resume</p>
+          <ul className="space-y-1">
+            {warnings.map((warning) => (
+              <li key={warning} className="text-xs text-warning">{warning}</li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {/* Top actions */}
       <div className="flex flex-wrap items-center justify-between gap-4 mb-8">

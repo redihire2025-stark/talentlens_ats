@@ -4,9 +4,10 @@
 
 TalentLens is a resume intelligence and job-matching platform. Upload a
 resume, get a deterministic ATS Compatibility Score with a full breakdown,
-optionally match it against a job description, and turn evidence-based
-recommendations into a new, exportable resume version — all without
-creating an account.
+optionally match it against a job description, accept or edit evidence-based
+recommendations with your score recalculating live, keep a full version
+history, and export a real PDF or DOCX — all without creating an account.
+V1's full pipeline (TASK-001 through TASK-020) is implemented end to end.
 
 V1 targets job seekers. Recruiter functionality is architecturally possible
 later but not built in V1. See `docs/product/v1-scope.md` for the full
@@ -53,6 +54,15 @@ React 19, TypeScript, Vite, Tailwind CSS v4, Zustand, Vitest + React
 Testing Library. No backend service, database, or authentication in V1 —
 see `docs/architecture/overview.md` for why and how that boundary is kept
 swappable for later.
+
+## Hardening
+
+A top-level error boundary (`src/components/ErrorBoundary.tsx`) catches
+unexpected render errors so a bug never leaves the user on a blank white
+screen. Parser warnings (a very short document, no skills section found,
+etc.) surface directly on the ATS dashboard rather than being silently
+discarded. No resume/JD content is ever logged, stored in browser storage,
+or rendered via `dangerouslySetInnerHTML`.
 
 ## Privacy
 
