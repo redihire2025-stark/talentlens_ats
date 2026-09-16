@@ -10,7 +10,6 @@ import Recommendations from './components/Recommendations'
 import ResumeEditor from './components/ResumeEditor'
 import BeforeAfter from './components/BeforeAfter'
 import ExportModal from './components/ExportModal'
-import RecruiterPreview from './components/RecruiterPreview'
 
 export type View =
   | 'landing'
@@ -22,7 +21,6 @@ export type View =
   | 'recommendations'
   | 'editor'
   | 'before-after'
-  | 'recruiter'
 
 export default function App() {
   const [view, setView] = useState<View>('landing')
@@ -50,7 +48,6 @@ export default function App() {
           <ResumeEditor onNav={nav} onExport={() => setShowExport(true)} />
         )}
         {view === 'before-after' && <BeforeAfter onNav={nav} />}
-        {view === 'recruiter' && <RecruiterPreview onNav={nav} />}
       </main>
       {showExport && <ExportModal onClose={() => setShowExport(false)} onNav={nav} />}
     </div>

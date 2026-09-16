@@ -285,50 +285,6 @@ export default function LandingPage({ onNav }: Props) {
         </div>
       </section>
 
-      {/* User type selection teaser */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-28">
-        <div className="text-center mb-12">
-          <h2 className="font-serif text-4xl text-foreground mb-4">What are you here to do?</h2>
-          <p className="text-muted-foreground">Choose your path to get started.</p>
-        </div>
-
-        <div className="grid sm:grid-cols-2 gap-6 max-w-2xl mx-auto">
-          <div className="bg-card border-2 border-primary/20 rounded-2xl p-8 hover:border-primary/50 transition-colors group cursor-pointer" onClick={() => onNav('upload')}>
-            <div className="w-12 h-12 rounded-xl bg-secondary flex items-center justify-center mb-5">
-              <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
-                <path d="M4 19V7l8-5 8 5v12" stroke="#3730A3" strokeWidth="1.5" strokeLinejoin="round" />
-                <rect x="8" y="12" width="6" height="7" rx="1" stroke="#3730A3" strokeWidth="1.5" />
-              </svg>
-            </div>
-            <h3 className="font-semibold text-lg text-foreground mb-2">Job Seeker</h3>
-            <p className="text-sm text-muted-foreground leading-relaxed mb-5">
-              Check, improve, and tailor your resume for the roles you want.
-            </p>
-            <span className="inline-flex items-center gap-1.5 text-sm font-medium text-primary group-hover:gap-2.5 transition-all">
-              Improve My Resume
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                <path d="M2 7h10M8 4l3 3-3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </span>
-          </div>
-
-          <div className="bg-card border border-border rounded-2xl p-8 opacity-70 cursor-default">
-            <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center mb-5">
-              <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
-                <circle cx="11" cy="8" r="4" stroke="#6B7080" strokeWidth="1.5" />
-                <path d="M3 19c0-4 3.6-7 8-7s8 3 8 7" stroke="#6B7080" strokeWidth="1.5" strokeLinecap="round" />
-              </svg>
-            </div>
-            <h3 className="font-semibold text-lg text-foreground mb-2">Recruiter</h3>
-            <p className="text-sm text-muted-foreground leading-relaxed mb-5">
-              Analyze jobs and evaluate candidate alignment with role requirements.
-            </p>
-            <div className="flex items-center gap-2">
-              <span className="px-2.5 py-1 bg-muted text-muted-foreground text-xs rounded-full font-medium">Coming Soon</span>
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* Final CTA */}
       <section className="border-t border-border">

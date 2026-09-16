@@ -38,8 +38,7 @@ export default function Header({ view, onNav }: Props) {
                 { label: 'Resume Checker', view: 'upload' as View },
                 { label: 'Resume Matcher', view: 'jd-match' as View },
                 { label: 'Resume Optimizer', view: 'editor' as View },
-                { label: 'For Recruiters', view: 'recruiter' as View },
-              ].map((item) => (
+                ].map((item) => (
                 <button
                   key={item.label}
                   onClick={() => onNav(item.view)}
@@ -101,7 +100,6 @@ export default function Header({ view, onNav }: Props) {
               { label: 'Resume Checker', view: 'upload' as View },
               { label: 'Resume Matcher', view: 'jd-match' as View },
               { label: 'Resume Optimizer', view: 'editor' as View },
-              { label: 'For Recruiters', view: 'recruiter' as View },
             ].map((item) => (
               <button
                 key={item.label}
