@@ -1,51 +1,64 @@
-import { useState, useEffect } from 'react'
 import type { View } from '../App'
 import { ScoreRing, ProgressBar, StatusBadge } from './shared'
+import { useResumeStore } from '@/stores/resumeStore'
+import { useAnalysisStore } from '@/stores/analysisStore'
+import { ATS_SCORE_CATEGORIES } from '@/lib/ats/types'
+import {
+  ATS_CATEGORY_LABELS,
+  ATS_HEALTH_CARD_LABELS,
+  explanationForCategory,
+  scoreToHealthStatus,
+} from '@/features/ats-analysis/atsCategoryDisplay'
 
 interface Props {
   onNav: (v: View) => void
   onExport: () => void
 }
 
-const breakdown = [
-  { label: 'Parsing', value: 96, desc: 'Resume structure was parsed cleanly.' },
-  { label: 'Sections', value: 100, desc: 'All standard sections are present.' },
-  { label: 'Keywords', value: 82, desc: 'Key industry terms are present but sparse in some areas.' },
-  { label: 'Experience', value: 91, desc: 'Work history is well-documented with clear dates and roles.' },
-  { label: 'Skills Evidence', value: 85, desc: 'Skills are listed and partially evidenced in experience.' },
-  { label: 'Formatting', value: 94, desc: 'Clean, machine-readable formatting throughout.' },
-  { label: 'Content Quality', value: 81, desc: 'Bullet points could be stronger with more measurable outcomes.' },
-]
-
-type HealthStatus = 'strong' | 'good' | 'needs-improvement'
-
-const healthCards: Array<{
-  title: string
-  status: HealthStatus
-  score: number
-  detail: string
-}> = [
-  { title: 'Structure', status: 'strong', score: 96, detail: 'Logical section order, clear headings, clean visual hierarchy.' },
-  { title: 'Skills', status: 'good', score: 85, detail: 'Core skills are listed. Consider adding context and evidence for key skills.' },
-  { title: 'Experience', status: 'strong', score: 91, detail: 'Strong chronological history with clear company names, titles, and dates.' },
-  { title: 'Keywords', status: 'needs-improvement', score: 82, detail: 'Some role-relevant terms are missing or underrepresented.' },
-  { title: 'Formatting', status: 'strong', score: 94, detail: 'ATS-safe font and layout. No tables or columns that could cause parsing issues.' },
-  { title: 'Content Impact', status: 'needs-improvement', score: 78, detail: 'Several bullet points describe tasks rather than impact. Quantify outcomes where possible.' },
-]
-
 export default function ATSDashboard({ onNav, onExport }: Props) {
-  const [animated, setAnimated] = useState(false)
+  const { file } = useResumeStore()
+  const { atsResult } = useAnalysisStore()
 
-  useEffect(() => {
-    const t = setTimeout(() => setAnimated(true), 100)
-    return () => clearTimeout(t)
-  }, [])
+  if (!atsResult) {
+    return (
+      <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-4 py-16">
+        <div className="w-full max-w-md text-center">
+          <h1 className="font-serif text-2xl text-foreground mb-2">No analysis yet</h1>
+          <p className="text-muted-foreground text-sm mb-8">Upload a resume to see your ATS Compatibility Score.</p>
+          <button
+            onClick={() => onNav('upload')}
+            className="px-6 py-3 bg-primary text-primary-foreground text-sm font-medium rounded-xl hover:bg-primary/90 transition-colors"
+          >
+            Upload a resume
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  const breakdown = ATS_SCORE_CATEGORIES.map((category) => ({
+    category,
+    label: ATS_CATEGORY_LABELS[category],
+    value: atsResult.breakdown[category],
+    desc: explanationForCategory(atsResult.explanations, category),
+  }))
+
+  const healthCards = ATS_SCORE_CATEGORIES.map((category) => {
+    const score = atsResult.breakdown[category]
+    return {
+      category,
+      title: ATS_HEALTH_CARD_LABELS[category],
+      status: scoreToHealthStatus(score),
+      score,
+      detail: explanationForCategory(atsResult.explanations, category),
+    }
+  })
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 text-xs text-muted-foreground mb-8">
-        <span>resume_v2.pdf</span>
+        <span>{file?.name ?? 'your resume'}</span>
         <span>·</span>
         <span className="text-foreground font-medium">ATS Analysis</span>
       </div>
@@ -54,7 +67,7 @@ export default function ATSDashboard({ onNav, onExport }: Props) {
       <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
         <div>
           <h1 className="font-serif text-3xl text-foreground">ATS Score Dashboard</h1>
-          <p className="text-muted-foreground text-sm mt-1">resume_v2.pdf — analyzed just now</p>
+          <p className="text-muted-foreground text-sm mt-1">{file?.name ?? 'your resume'} — analyzed just now</p>
         </div>
         <div className="flex gap-2">
           <button
@@ -77,9 +90,13 @@ export default function ATSDashboard({ onNav, onExport }: Props) {
         {/* Score card */}
         <div className="bg-card border border-border rounded-2xl p-8 flex flex-col items-center text-center">
           <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-5">ATS Compatibility</div>
-          <ScoreRing score={animated ? 87 : 0} size={140} strokeWidth={10} />
+          <ScoreRing score={atsResult.score} size={140} strokeWidth={10} />
           <p className="text-sm text-muted-foreground leading-relaxed mt-5 max-w-[220px]">
-            Your resume is highly compatible with common ATS-style parsing and screening requirements.
+            {atsResult.score >= 85
+              ? 'Your resume is highly compatible with common ATS-style parsing and screening requirements.'
+              : atsResult.score >= 70
+              ? 'Your resume is reasonably compatible, with a few areas that could be strengthened.'
+              : 'Your resume has several gaps that could affect ATS-style parsing and screening.'}
           </p>
           <button
             onClick={() => onNav('recommendations')}
@@ -94,7 +111,7 @@ export default function ATSDashboard({ onNav, onExport }: Props) {
           <h2 className="font-semibold text-foreground mb-5">Score Breakdown</h2>
           <div className="space-y-4">
             {breakdown.map((item) => (
-              <div key={item.label}>
+              <div key={item.category}>
                 <div className="flex items-center justify-between mb-1.5">
                   <span className="text-sm text-foreground font-medium">{item.label}</span>
                   <div className="flex items-center gap-3">
@@ -102,7 +119,7 @@ export default function ATSDashboard({ onNav, onExport }: Props) {
                     <span className="font-mono text-sm font-semibold text-foreground w-10 text-right">{item.value}%</span>
                   </div>
                 </div>
-                <ProgressBar value={animated ? item.value : 0} />
+                <ProgressBar value={item.value} />
               </div>
             ))}
           </div>
@@ -123,7 +140,7 @@ export default function ATSDashboard({ onNav, onExport }: Props) {
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {healthCards.map((card) => (
-            <div key={card.title} className="bg-card border border-border rounded-xl p-5 hover:shadow-md transition-shadow">
+            <div key={card.category} className="bg-card border border-border rounded-xl p-5 hover:shadow-md transition-shadow">
               <div className="flex items-start justify-between mb-3">
                 <h3 className="font-semibold text-foreground">{card.title}</h3>
                 <StatusBadge status={card.status} />
