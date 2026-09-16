@@ -1,8 +1,7 @@
 # Matching Rules
 
-> Status: skeleton written in TASK-001 (project setup). Filled in with real
-> module behavior as `src/lib/normalization` and `src/lib/matching` are
-> implemented in TASK-007 and TASK-009.
+> This reflects the real implementation: `src/lib/normalization` (TASK-007)
+> and `src/lib/matching` (TASK-009).
 
 ## Matching layers
 
@@ -58,3 +57,34 @@ matter how related they seem.
   recommendation engine's job, and only ever by rephrasing/highlighting
   what the candidate already stated (see product principles in
   `docs/product/v1-scope.md`).
+
+## Implementation notes
+
+- **Skills** (`skillMatcher.ts`) collapse layers 2-3 above into one step:
+  the normalization dictionary (TASK-007) *is* a synonym table, so
+  "React"/"React.js"/"ReactJS" normalizing to the same canonical form
+  covers both "normalized" and "synonym" matching at once. The fuzzy layer
+  only compares against the resume's own skill list (never arbitrary
+  bullet text) to avoid false positives; a precise (non-fuzzy) substring
+  check against bullets is what makes "REST API development" satisfy a JD
+  asking for "RESTful API" — both normalize to the same "rest api" phrase,
+  and the bullet contains that phrase verbatim.
+- **Titles** (`titleMatcher.ts`) compare only the core title
+  (seniority-stripped) for matched/missing; a seniority difference is
+  reported in the explanation rather than failing the match outright.
+- **Experience** (`experienceMatcher.ts`) computes years as a calendar
+  span (earliest start to latest end/present) rather than summing each
+  entry's duration, so overlapping or concurrent roles aren't double
+  counted.
+- **Responsibilities** (`responsibilityMatcher.ts`) use fuzzy token
+  overlap as the *primary* layer, not a last resort — responsibilities are
+  full sentences, not canonicalizable terms the way skills are.
+- **Education** (`educationMatcher.ts`) treats a JD requirement that
+  explicitly says "or equivalent experience" as partially satisfied by
+  relevant work experience alone, rather than an automatic miss for a
+  candidate without a degree.
+- **Semantic matching** (`semanticMatcher.ts`) exists only as the
+  `SemanticMatcher` interface plus a `NoopSemanticMatcher` default — per
+  the "AI ABSTRACTION" architecture principle, it's not called by
+  `matchResume` in V1. A real implementation could be added later without
+  changing any of the deterministic matchers above.
