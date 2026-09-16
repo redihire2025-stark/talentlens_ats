@@ -12,12 +12,12 @@ export function ScoreRing({ score, size = 120, strokeWidth = 9, showLabel = true
   const cx = size / 2
   const cy = size / 2
 
-  const color = score >= 85 ? '#16A34A' : score >= 70 ? '#D97706' : '#DC2626'
+  const color = score >= 85 ? '#059669' : score >= 70 ? '#D97706' : '#DC2626'
 
   return (
     <div className="relative inline-flex items-center justify-center">
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ transform: 'rotate(-90deg)' }}>
-        <circle cx={cx} cy={cy} r={r} fill="none" stroke="#E3E5EF" strokeWidth={strokeWidth} />
+        <circle cx={cx} cy={cy} r={r} fill="none" stroke="#E6E3DD" strokeWidth={strokeWidth} />
         <circle
           cx={cx} cy={cy} r={r}
           fill="none"
@@ -33,7 +33,7 @@ export function ScoreRing({ score, size = 120, strokeWidth = 9, showLabel = true
         <div className="absolute inset-0 flex flex-col items-center justify-center">
           <span
             className="font-mono font-bold leading-none"
-            style={{ fontSize: size * 0.22, color: '#0E0F1A' }}
+            style={{ fontSize: size * 0.22, color: '#1C1917' }}
           >
             {score}
           </span>
@@ -51,7 +51,7 @@ interface ProgressBarProps {
 }
 
 export function ProgressBar({ value, color, height = 6 }: ProgressBarProps) {
-  const bg = color ?? (value >= 85 ? '#16A34A' : value >= 70 ? '#D97706' : '#DC2626')
+  const bg = color ?? (value >= 85 ? '#059669' : value >= 70 ? '#D97706' : '#DC2626')
   return (
     <div
       className="w-full rounded-full bg-muted overflow-hidden"
@@ -90,5 +90,5 @@ export function StatusBadge({ status, label }: BadgeProps) {
 }
 
 export function ScoreColor(score: number) {
-  return score >= 85 ? '#16A34A' : score >= 70 ? '#D97706' : '#DC2626'
+  return score >= 85 ? '#059669' : score >= 70 ? '#D97706' : '#DC2626'
 }

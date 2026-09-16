@@ -59,14 +59,14 @@ const features = [
     description:
       'Understand how your resume performs against common ATS parsing requirements with a transparent, section-by-section breakdown.',
     detail: '7 scoring dimensions',
-    color: '#3730A3',
+    color: '#0F766E',
   },
   {
     title: 'Job Description Matching',
     description:
       'Paste or upload a job description and see exactly how your skills, experience, and keywords align with what the role requires.',
     detail: '6 match dimensions',
-    color: '#6366F1',
+    color: '#14B8A6',
   },
   {
     title: 'Actionable Recommendations',
@@ -152,7 +152,7 @@ function DashboardMockup() {
       <div className="absolute -bottom-3 -right-3 bg-card border border-border rounded-xl shadow-lg px-3 py-2 flex items-center gap-2">
         <div className="w-7 h-7 rounded-full bg-success-bg flex items-center justify-center">
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-            <path d="M2 6l3 3 5-5" stroke="#16A34A" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M2 6l3 3 5-5" stroke="#059669" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </div>
         <div>

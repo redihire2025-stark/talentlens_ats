@@ -178,7 +178,7 @@ export default function JDMatch({ onNav }: Props) {
                 {matchedSkills.map((s) => (
                   <div key={s} className="flex items-center gap-2 px-3 py-2 bg-success-bg rounded-lg">
                     <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                      <path d="M2 6l3 3 5-5" stroke="#16A34A" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                      <path d="M2 6l3 3 5-5" stroke="#059669" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                     <span className="text-sm text-foreground font-medium">{s}</span>
                   </div>
