@@ -1,8 +1,8 @@
 # API Spec
 
-> Status: skeleton written in TASK-001 (project setup). Endpoints are
-> implemented incrementally alongside the engine they front, starting
-> TASK-004; the API layer itself is wired up in TASK-012.
+> `src/api/` (TASK-012) implements every endpoint below except
+> `resume/optimize` and `resume/export`, which are added in TASK-016 and
+> TASK-018 once their underlying engines exist.
 
 ## How these endpoints are implemented in V1
 
@@ -14,22 +14,29 @@ switching to a real network call later doesn't change any caller.
 
 ## Endpoints
 
-| Method & path | Request | Response | Backed by |
-| --- | --- | --- | --- |
-| `POST /api/resume/parse` | resume file | `Resume` JSON | `src/lib/parsers` |
-| `POST /api/resume/analyze` | `Resume` JSON | ATS Compatibility Score + breakdown | `src/lib/ats` |
-| `POST /api/jd/parse` | JD text | `JobDescription` JSON | `src/lib/parsers` |
-| `POST /api/match` | `Resume` + `JobDescription` | JD Match Score, matched/missing/partial skills | `src/lib/matching` |
-| `POST /api/recommendations` | `Resume` + analysis results | Recommendation list | `src/lib/recommendations` |
-| `POST /api/resume/optimize` | `Resume` + accepted recommendations | Updated `Resume` JSON + new `ResumeVersion` | `src/lib/resume-generation` |
-| `POST /api/resume/export` | `Resume` version + format (`pdf`\|`docx`) | Exported file | `src/lib/resume-generation` |
-| `GET /api/health` | — | `{ status: "ok" }` | — |
+| Method & path | `src/api` function | Request | Response | Backed by |
+| --- | --- | --- | --- | --- |
+| `POST /api/resume/parse` | `parseResume` | resume file | `{ resume, warnings }` | `src/lib/parsers/resume` |
+| `POST /api/resume/analyze` | `analyzeResume` | `{ resume, parserWarnings? }` | `{ result: ScoreResult<AtsScoreBreakdown> }` | `src/lib/ats` |
+| `POST /api/jd/parse` | `parseJobDescriptionFromText` / `parseJobDescriptionFromFile` | JD text, or a file | `{ jobDescription, warnings }` | `src/lib/parsers/jd` |
+| `POST /api/match` | `matchResumeToJob` | `{ resume, jobDescription, atsScore }` | `{ analysis, result: ScoreResult<JdMatchScoreBreakdown> }` | `src/lib/matching` |
+| `POST /api/recommendations` | `getRecommendations` | `{ resume, parserWarnings?, matchAnalysis? }` | `{ recommendations }` | `src/lib/recommendations` |
+| `POST /api/resume/optimize` | _(TASK-016)_ | `Resume` + accepted recommendations | Updated `Resume` JSON + new `ResumeVersion` | `src/lib/resume-generation` |
+| `POST /api/resume/export` | _(TASK-018)_ | `Resume` version + format (`pdf`\|`docx`) | Exported file | `src/lib/resume-generation` |
+| `GET /api/health` | `getHealth` | — | `{ status: "ok" }` | — |
+
+`atsScore` is passed into `/api/match` rather than recomputed there,
+because the ATS Compatibility Score never depends on the JD — the caller
+computes it once via `/api/resume/analyze` and reuses it.
 
 ## Conventions
 
-- Every request/response body is a named type in `src/types`, never `any`.
-- Validation errors return a structured error with a human-readable
-  message — never a raw stack trace or generic 500 with no context.
+- Every request/response body is a named type in `src/api/types.ts` or
+  `src/types`, never `any`.
+- Every function returns `Promise<ApiResult<T>>` —
+  `{ ok: true, data }` or `{ ok: false, error: { code, message } }` — so
+  validation failures are handled the same way a real HTTP error response
+  would be, without throwing for expected failures.
 - No endpoint logs resume or JD content (see privacy notes in
   `docs/product/v1-scope.md`).
 - No endpoint requires authentication in V1.
