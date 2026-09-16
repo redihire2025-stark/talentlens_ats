@@ -1,9 +1,12 @@
 # types
 
-Shared TypeScript types for the whole app: the `Resume` and `JobDescription`
-domain schemas, scoring/match result shapes, and API request/response
-contracts. No `any`-based structures — every shape used across features is
-defined here and imported, not redeclared.
+Shared TypeScript types for the whole app. No `any`-based structures — every
+shape used across features is defined here and imported, not redeclared.
 
-Populated in TASK-002 (shared types) / TASK-003 (resume schema) / TASK-005
-(JD schema).
+- `common.ts` — cross-cutting primitives (`Id`, `ISODateString`, `Nullable<T>`)
+- `score.ts` — `MatchStatus` and `ScoreResult<TBreakdown>`, the shared
+  response envelope for both the ATS Compatibility Score and the JD Match
+  Score (see `docs/scoring/scoring-methodology.md`)
+
+The `Resume` and `JobDescription` domain schemas and API request/response
+contracts are added in TASK-003, TASK-005, and TASK-012 respectively.
