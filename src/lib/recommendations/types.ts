@@ -16,6 +16,13 @@ export interface RecommendationImpact {
   delta: number
 }
 
+/** Precisely where in the Resume a recommendation's `currentText` lives, so the editor (TASK-016) can apply a user-edited replacement without guessing. Only bullet-impact recommendations have one. */
+export interface RecommendationLocation {
+  section: 'experience'
+  entryIndex: number
+  bulletIndex: number
+}
+
 /**
  * A single, evidence-based suggestion. `currentText`, when present, is a
  * verbatim quote from the resume — never altered. `guidance` explains what
@@ -31,6 +38,7 @@ export interface Recommendation {
   currentText: string | null
   guidance: string
   impact: RecommendationImpact
+  location?: RecommendationLocation
 }
 
 export interface GenerateRecommendationsInput {

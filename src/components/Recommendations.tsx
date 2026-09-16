@@ -1,77 +1,78 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { View } from '../App'
+import { useResumeStore } from '@/stores/resumeStore'
+import { useAnalysisStore } from '@/stores/analysisStore'
+import { useMatchStore } from '@/stores/matchStore'
+import { useEditorStore } from '@/stores/editorStore'
+import { getRecommendations } from '@/api/recommendations'
 
 interface Props {
   onNav: (v: View) => void
 }
 
-type RecStatus = 'pending' | 'accepted' | 'rejected' | 'editing'
-
-interface Rec {
-  id: number
-  category: string
-  section: string
-  current: string
-  suggested: string
-  impact: string
-  impactValue: string
-  status: RecStatus
-  editValue?: string
-}
-
-const initialRecs: Rec[] = [
-  {
-    id: 1,
-    category: 'Content Impact',
-    section: 'Experience',
-    current: 'Built React applications.',
-    suggested: 'Built reusable React components used across multiple production applications, reducing development time by 30%.',
-    impact: 'ATS relevance',
-    impactValue: '+4',
-    status: 'pending',
-  },
-  {
-    id: 2,
-    category: 'Keywords',
-    section: 'Summary',
-    current: 'Experienced software engineer with frontend focus.',
-    suggested: 'Senior Frontend Engineer with 6 years of experience building scalable React and TypeScript applications in production environments.',
-    impact: 'Keyword coverage',
-    impactValue: '+6',
-    status: 'pending',
-  },
-  {
-    id: 3,
-    category: 'Content Impact',
-    section: 'Experience',
-    current: 'Worked with the team to improve performance.',
-    suggested: 'Collaborated with cross-functional teams to optimize application performance, reducing load time by 45% across core user flows.',
-    impact: 'Content quality',
-    impactValue: '+3',
-    status: 'pending',
-  },
-  {
-    id: 4,
-    category: 'Skills Evidence',
-    section: 'Experience',
-    current: 'Used AWS for cloud deployments.',
-    suggested: 'Deployed and maintained cloud infrastructure on AWS (EC2, S3, CloudFront), supporting 500K+ monthly active users.',
-    impact: 'Skills evidence',
-    impactValue: '+5',
-    status: 'pending',
-  },
-]
-
 export default function Recommendations({ onNav }: Props) {
-  const [recs, setRecs] = useState<Rec[]>(initialRecs)
+  const { resume, warnings } = useResumeStore()
+  const { analysis: matchAnalysis } = useMatchStore()
+  const { recommendations, statuses, editedTexts, load, setEditedText, acceptRecommendation, rejectRecommendation, resetRecommendation } =
+    useEditorStore()
   const [filter, setFilter] = useState<'all' | 'pending' | 'accepted' | 'rejected'>('all')
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
 
-  const update = (id: number, patch: Partial<Rec>) =>
-    setRecs((prev) => prev.map((r) => (r.id === id ? { ...r, ...patch } : r)))
+  useEffect(() => {
+    if (!resume || recommendations.length > 0) return
+    setLoading(true)
+    getRecommendations({ resume, parserWarnings: warnings, matchAnalysis: matchAnalysis ?? undefined }).then((result) => {
+      setLoading(false)
+      if (result.ok) load(resume, result.data.recommendations)
+    })
+  }, [resume, warnings, matchAnalysis, recommendations.length, load])
 
-  const filtered = recs.filter((r) => filter === 'all' || r.status === filter)
-  const accepted = recs.filter((r) => r.status === 'accepted').length
-  const pending = recs.filter((r) => r.status === 'pending').length
+  if (!resume) {
+    return (
+      <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-4 py-16">
+        <div className="w-full max-w-md text-center">
+          <h1 className="font-serif text-2xl text-foreground mb-2">No resume to review yet</h1>
+          <p className="text-muted-foreground text-sm mb-8">Upload and analyze a resume to see recommendations.</p>
+          <button
+            onClick={() => onNav('upload')}
+            className="px-6 py-3 bg-primary text-primary-foreground text-sm font-medium rounded-xl hover:bg-primary/90 transition-colors"
+          >
+            Upload a resume
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  if (loading || recommendations.length === 0) {
+    return (
+      <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-4 py-16">
+        <div className="text-center">
+          {loading ? (
+            <>
+              <div className="w-12 h-12 rounded-full border-4 border-secondary border-t-accent animate-spin mx-auto mb-4" />
+              <p className="text-sm text-muted-foreground">Generating recommendations...</p>
+            </>
+          ) : (
+            <>
+              <h1 className="font-serif text-2xl text-foreground mb-2">Nothing to flag</h1>
+              <p className="text-muted-foreground text-sm">This resume looks solid — no recommendations right now.</p>
+            </>
+          )}
+        </div>
+      </div>
+    )
+  }
+
+  const filtered = recommendations.filter((r) => filter === 'all' || statuses[r.id] === filter)
+  const accepted = recommendations.filter((r) => statuses[r.id] === 'accepted').length
+  const pending = recommendations.filter((r) => statuses[r.id] === 'pending').length
+
+  const handleAccept = (id: string) => {
+    acceptRecommendation(id)
+    setEditingId(null)
+  }
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
@@ -98,7 +99,7 @@ export default function Recommendations({ onNav }: Props) {
         {[
           { label: 'Pending', value: pending, color: 'text-warning' },
           { label: 'Accepted', value: accepted, color: 'text-success' },
-          { label: 'Total', value: recs.length, color: 'text-foreground' },
+          { label: 'Total', value: recommendations.length, color: 'text-foreground' },
         ].map((s) => (
           <div key={s.label} className="bg-card border border-border rounded-xl p-4 text-center">
             <div className={`font-mono text-2xl font-bold ${s.color}`}>{s.value}</div>
@@ -126,121 +127,123 @@ export default function Recommendations({ onNav }: Props) {
 
       {/* Cards */}
       <div className="space-y-4">
-        {filtered.map((rec) => (
-          <div
-            key={rec.id}
-            className={`bg-card border rounded-2xl p-6 transition-all ${
-              rec.status === 'accepted'
-                ? 'border-success/30 bg-success-bg/10'
-                : rec.status === 'rejected'
-                ? 'border-border opacity-50'
-                : 'border-border'
-            }`}
-          >
-            <div className="flex items-start justify-between gap-3 mb-4">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="px-2.5 py-1 bg-secondary text-secondary-foreground text-xs font-medium rounded-full">
-                  {rec.category}
-                </span>
-                <span className="text-xs text-muted-foreground">{rec.section}</span>
-              </div>
-              {rec.status === 'accepted' && (
-                <span className="flex items-center gap-1.5 text-xs text-success font-medium">
-                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                    <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                  Accepted
-                </span>
-              )}
-              {rec.status === 'rejected' && (
-                <span className="text-xs text-muted-foreground">Rejected</span>
-              )}
-            </div>
+        {filtered.map((rec) => {
+          const status = statuses[rec.id] ?? 'pending'
+          const isEditing = editingId === rec.id
 
-            {/* Before/after */}
-            <div className="grid sm:grid-cols-2 gap-3 mb-4">
-              <div className="p-3 bg-muted/60 rounded-xl border border-border">
-                <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">Current</div>
-                <p className="text-sm text-foreground leading-relaxed">{rec.current}</p>
-              </div>
-              <div className="p-3 bg-secondary/50 rounded-xl border border-primary/10">
-                <div className="text-[10px] font-semibold text-secondary-foreground uppercase tracking-wider mb-1.5">Suggested</div>
-                {rec.status === 'editing' ? (
-                  <textarea
-                    value={rec.editValue ?? rec.suggested}
-                    onChange={(e) => update(rec.id, { editValue: e.target.value })}
-                    rows={4}
-                    className="w-full text-sm bg-card border border-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-ring resize-none"
-                  />
-                ) : (
-                  <p className="text-sm text-foreground leading-relaxed">{rec.editValue ?? rec.suggested}</p>
+          return (
+            <div
+              key={rec.id}
+              className={`bg-card border rounded-2xl p-6 transition-all ${
+                status === 'accepted'
+                  ? 'border-success/30 bg-success-bg/10'
+                  : status === 'rejected'
+                  ? 'border-border opacity-50'
+                  : 'border-border'
+              }`}
+            >
+              <div className="flex items-start justify-between gap-3 mb-4">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="px-2.5 py-1 bg-secondary text-secondary-foreground text-xs font-medium rounded-full">
+                    {rec.impact.metric}
+                  </span>
+                  <span className="text-xs text-muted-foreground">{rec.title}</span>
+                </div>
+                {status === 'accepted' && (
+                  <span className="flex items-center gap-1.5 text-xs text-success font-medium">
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                      <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                    Accepted
+                  </span>
                 )}
+                {status === 'rejected' && <span className="text-xs text-muted-foreground">Rejected</span>}
               </div>
+
+              {rec.currentText && (
+                <div className="p-3 bg-muted/60 rounded-xl border border-border mb-4">
+                  <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">Current</div>
+                  {isEditing ? (
+                    <textarea
+                      value={editedTexts[rec.id] ?? rec.currentText}
+                      onChange={(e) => setEditedText(rec.id, e.target.value)}
+                      rows={3}
+                      className="w-full text-sm bg-card border border-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-ring resize-none"
+                    />
+                  ) : (
+                    <p className="text-sm text-foreground leading-relaxed">{editedTexts[rec.id] ?? rec.currentText}</p>
+                  )}
+                </div>
+              )}
+
+              <div className="p-3 bg-secondary/50 rounded-xl border border-primary/10 mb-4">
+                <div className="text-[10px] font-semibold text-secondary-foreground uppercase tracking-wider mb-1.5">Guidance</div>
+                <p className="text-sm text-foreground leading-relaxed">{rec.guidance}</p>
+              </div>
+
+              {/* Impact */}
+              <div className="flex items-center gap-2 mb-4">
+                <div className="px-2.5 py-1 bg-success-bg rounded-lg flex items-center gap-1.5">
+                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                    <path d="M5 8V2M2 5l3-3 3 3" stroke="#10B981" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                  <span className="text-xs font-medium text-success">Potential improvement</span>
+                </div>
+                <span className="font-mono text-xs font-semibold text-success">{rec.impact.metric} +{rec.impact.delta}</span>
+                <span className="text-xs text-muted-foreground ml-1">estimated — not a guarantee</span>
+              </div>
+
+              {/* Actions */}
+              {status === 'pending' && !isEditing && (
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handleAccept(rec.id)}
+                    className="px-4 py-2 bg-success text-white text-xs font-medium rounded-lg hover:bg-success/90 transition-colors"
+                  >
+                    Accept
+                  </button>
+                  <button
+                    onClick={() => rejectRecommendation(rec.id)}
+                    className="px-4 py-2 bg-muted text-foreground text-xs font-medium rounded-lg hover:bg-muted/80 transition-colors"
+                  >
+                    Reject
+                  </button>
+                  {rec.currentText && (
+                    <button
+                      onClick={() => setEditingId(rec.id)}
+                      className="px-4 py-2 border border-border text-foreground text-xs font-medium rounded-lg hover:bg-muted transition-colors"
+                    >
+                      Edit
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {isEditing && (
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handleAccept(rec.id)}
+                    className="px-4 py-2 bg-success text-white text-xs font-medium rounded-lg hover:bg-success/90 transition-colors"
+                  >
+                    Save & Accept
+                  </button>
+                  <button
+                    onClick={() => setEditingId(null)}
+                    className="px-4 py-2 bg-muted text-foreground text-xs font-medium rounded-lg hover:bg-muted/80 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              )}
+
+              {(status === 'accepted' || status === 'rejected') && (
+                <button onClick={() => resetRecommendation(rec.id)} className="text-xs text-accent hover:underline">
+                  Undo
+                </button>
+              )}
             </div>
-
-            {/* Impact */}
-            <div className="flex items-center gap-2 mb-4">
-              <div className="px-2.5 py-1 bg-success-bg rounded-lg flex items-center gap-1.5">
-                <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                  <path d="M5 8V2M2 5l3-3 3 3" stroke="#10B981" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-                <span className="text-xs font-medium text-success">Potential improvement</span>
-              </div>
-              <span className="font-mono text-xs font-semibold text-success">{rec.impact} {rec.impactValue}</span>
-              <span className="text-xs text-muted-foreground ml-1">estimated — not a guarantee</span>
-            </div>
-
-            {/* Actions */}
-            {rec.status === 'pending' && (
-              <div className="flex gap-2">
-                <button
-                  onClick={() => update(rec.id, { status: 'accepted' })}
-                  className="px-4 py-2 bg-success text-white text-xs font-medium rounded-lg hover:bg-success/90 transition-colors"
-                >
-                  Accept
-                </button>
-                <button
-                  onClick={() => update(rec.id, { status: 'rejected' })}
-                  className="px-4 py-2 bg-muted text-foreground text-xs font-medium rounded-lg hover:bg-muted/80 transition-colors"
-                >
-                  Reject
-                </button>
-                <button
-                  onClick={() => update(rec.id, { status: 'editing', editValue: rec.suggested })}
-                  className="px-4 py-2 border border-border text-foreground text-xs font-medium rounded-lg hover:bg-muted transition-colors"
-                >
-                  Edit
-                </button>
-              </div>
-            )}
-
-            {rec.status === 'editing' && (
-              <div className="flex gap-2">
-                <button
-                  onClick={() => update(rec.id, { status: 'accepted' })}
-                  className="px-4 py-2 bg-success text-white text-xs font-medium rounded-lg hover:bg-success/90 transition-colors"
-                >
-                  Save & Accept
-                </button>
-                <button
-                  onClick={() => update(rec.id, { status: 'pending', editValue: undefined })}
-                  className="px-4 py-2 bg-muted text-foreground text-xs font-medium rounded-lg hover:bg-muted/80 transition-colors"
-                >
-                  Cancel
-                </button>
-              </div>
-            )}
-
-            {(rec.status === 'accepted' || rec.status === 'rejected') && (
-              <button
-                onClick={() => update(rec.id, { status: 'pending' })}
-                className="text-xs text-accent hover:underline"
-              >
-                Undo
-              </button>
-            )}
-          </div>
-        ))}
+          )
+        })}
       </div>
 
       {/* CTA */}
@@ -248,13 +251,13 @@ export default function Recommendations({ onNav }: Props) {
         <div className="mt-8 p-5 bg-success-bg border border-success/20 rounded-2xl flex items-center justify-between gap-4">
           <div>
             <p className="font-semibold text-foreground text-sm">{accepted} recommendation{accepted > 1 ? 's' : ''} accepted</p>
-            <p className="text-xs text-muted-foreground mt-0.5">Open the editor to apply these changes and see your updated score.</p>
+            <p className="text-xs text-muted-foreground mt-0.5">Open the editor to see your updated score.</p>
           </div>
           <button
             onClick={() => onNav('editor')}
             className="px-4 py-2 bg-primary text-primary-foreground text-sm font-medium rounded-xl hover:bg-primary/90 transition-colors flex-shrink-0"
           >
-            Apply in Editor
+            Open Editor
           </button>
         </div>
       )}

@@ -6,4 +6,10 @@ export { formattingRecommendations } from './formattingRecommendations'
 export { skillGapRecommendations } from './skillGapRecommendations'
 export { titleAlignmentRecommendations } from './titleAlignmentRecommendations'
 export { RECOMMENDATION_IMPACT } from './impactConfig'
-export type { Recommendation, RecommendationCategory, RecommendationImpact, GenerateRecommendationsInput } from './types'
+export type {
+  Recommendation,
+  RecommendationCategory,
+  RecommendationImpact,
+  RecommendationLocation,
+  GenerateRecommendationsInput,
+} from './types'

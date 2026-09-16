@@ -7,7 +7,8 @@ never a single monolithic store:
 - `analysisStore` — the ATS Compatibility Score (TASK-013)
 - `jobDescriptionStore` — the JD text/file and its parsed `JobDescription` (TASK-015)
 - `matchStore` — the resume/JD `MatchAnalysis` and JD Match Score (TASK-015)
-- `editor` — recommendation accept/reject/edit state, draft edits (TASK-016)
+- `editorStore` — the working draft `Resume`, recommendation accept/reject/edit
+  state, and the live-recalculated ATS/JD Match scores (TASK-016)
 - `versions` — resume version history (original, v1, v2, tailored) (TASK-017)
 
 There's no separate `ui` store yet — `App.tsx`'s single `useState<View>`

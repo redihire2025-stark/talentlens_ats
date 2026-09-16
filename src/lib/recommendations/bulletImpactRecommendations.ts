@@ -30,6 +30,7 @@ export function bulletImpactRecommendations(resume: Resume): Recommendation[] {
         currentText: bullet,
         guidance: `Consider adding ${missing.join(' and ')} — if they are truthful. Don't invent numbers or outcomes that didn't happen.`,
         impact: RECOMMENDATION_IMPACT['bullet-impact'],
+        location: { section: 'experience', entryIndex, bulletIndex },
       })
     })
   })

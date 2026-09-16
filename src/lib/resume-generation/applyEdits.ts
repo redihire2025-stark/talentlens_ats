@@ -1,0 +1,41 @@
+import type { Resume } from '@/types/resume'
+
+/** Replaces one experience bullet, returning a new Resume (the original is never mutated). */
+export function replaceExperienceBullet(resume: Resume, entryIndex: number, bulletIndex: number, text: string): Resume {
+  const entry = resume.experience[entryIndex]
+  if (!entry || bulletIndex < 0 || bulletIndex >= entry.bullets.length) return resume
+
+  const bullets = entry.bullets.map((bullet, i) => (i === bulletIndex ? text : bullet))
+  const experience = resume.experience.map((e, i) => (i === entryIndex ? { ...e, bullets } : e))
+
+  return { ...resume, experience }
+}
+
+export function updateSummary(resume: Resume, summary: string): Resume {
+  return { ...resume, summary: summary.trim() || null }
+}
+
+/** Replaces the skills list wholesale from a flat list of names, keeping each skill's existing category/evidence when the name is unchanged, and defaulting new/renamed entries to category "other". */
+export function updateSkillNames(resume: Resume, names: string[]): Resume {
+  const existingByLowerName = new Map(resume.skills.map((skill) => [skill.name.toLowerCase(), skill]))
+
+  const skills = names
+    .map((name) => name.trim())
+    .filter(Boolean)
+    .map((name) => {
+      const existing = existingByLowerName.get(name.toLowerCase())
+      return existing ?? { name, category: 'other' as const, evidence: [] }
+    })
+
+  return { ...resume, skills }
+}
+
+export function updateExperienceField(
+  resume: Resume,
+  entryIndex: number,
+  field: 'title' | 'company',
+  value: string,
+): Resume {
+  const experience = resume.experience.map((entry, i) => (i === entryIndex ? { ...entry, [field]: value } : entry))
+  return { ...resume, experience }
+}

@@ -1,6 +1,11 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { View } from '../App'
 import { ScoreRing, ProgressBar } from './shared'
+import { useResumeStore } from '@/stores/resumeStore'
+import { useJobDescriptionStore } from '@/stores/jobDescriptionStore'
+import { useEditorStore } from '@/stores/editorStore'
+import { ATS_SCORE_CATEGORIES } from '@/lib/ats/types'
+import { ATS_CATEGORY_LABELS } from '@/features/ats-analysis/atsCategoryDisplay'
 
 interface Props {
   onNav: (v: View) => void
@@ -9,7 +14,7 @@ interface Props {
 
 type Section = 'contact' | 'summary' | 'skills' | 'experience' | 'education' | 'projects' | 'certifications'
 
-const sections: Array<{ id: Section; label: string }> = [
+const SECTIONS: Array<{ id: Section; label: string }> = [
   { id: 'contact', label: 'Contact' },
   { id: 'summary', label: 'Summary' },
   { id: 'skills', label: 'Skills' },
@@ -19,38 +24,51 @@ const sections: Array<{ id: Section; label: string }> = [
   { id: 'certifications', label: 'Certifications' },
 ]
 
-const initialContent: Record<Section, string> = {
-  contact: 'Alex Chen\nalex.chen@email.com\nSan Francisco, CA\nlinkedin.com/in/alexchen\ngithub.com/alexchen',
-  summary:
-    'Senior Frontend Engineer with 6 years of experience building scalable React and TypeScript applications. Passionate about performance, accessibility, and clean component architecture.',
-  skills:
-    'React · TypeScript · JavaScript · HTML/CSS · REST APIs · GraphQL · AWS · Git · Webpack · Vite · Jest · Cypress',
-  experience:
-    'Senior Frontend Engineer — Acme Corp (2021–Present)\n• Built reusable React components used across multiple production applications\n• Led performance optimization initiative, reducing core load time by 45%\n• Collaborated with design team to establish component library used by 8 engineers\n\nFrontend Engineer — Startup Inc (2019–2021)\n• Developed new customer dashboard using React and TypeScript\n• Integrated REST APIs and implemented real-time data updates\n• Wrote unit and integration tests achieving 85% code coverage',
-  education:
-    'B.S. Computer Science — University of California, Berkeley (2019)\nGPA: 3.7 · Dean\'s List',
-  projects:
-    'Open Source Component Library (github.com/alexchen/ui-kit)\n• React component library with 1.2K GitHub stars\n• Full TypeScript support, Storybook documentation, 95% test coverage',
-  certifications: 'AWS Certified Developer – Associate (2022)\nGoogle Analytics Certified (2021)',
-}
-
-const liveScores = {
-  ats: { base: 87, improved: 91 },
-  jd: { base: 84, improved: 89 },
-}
-
 export default function ResumeEditor({ onNav, onExport }: Props) {
   const [activeSection, setActiveSection] = useState<Section>('experience')
-  const [content, setContent] = useState(initialContent)
-  const [edited, setEdited] = useState(false)
+  const { file, warnings } = useResumeStore()
+  const { jobDescription } = useJobDescriptionStore()
+  const {
+    draftResume,
+    originalResume,
+    liveAtsResult,
+    liveJdMatchResult,
+    ensureDraft,
+    updateSummaryText,
+    updateSkills,
+    updateExperienceBullet,
+    updateExperienceTitle,
+    updateExperienceCompany,
+    recalculate,
+  } = useEditorStore()
 
-  const handleChange = (val: string) => {
-    setContent((prev) => ({ ...prev, [activeSection]: val }))
-    if (!edited) setEdited(true)
+  useEffect(() => {
+    if (useResumeStore.getState().resume) ensureDraft(useResumeStore.getState().resume!)
+  }, [ensureDraft])
+
+  useEffect(() => {
+    if (draftResume) recalculate(warnings, jobDescription ?? undefined)
+  }, [draftResume, warnings, jobDescription, recalculate])
+
+  if (!draftResume || !originalResume) {
+    return (
+      <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-4 py-16">
+        <div className="w-full max-w-md text-center">
+          <h1 className="font-serif text-2xl text-foreground mb-2">No resume to edit yet</h1>
+          <p className="text-muted-foreground text-sm mb-8">Upload and analyze a resume first.</p>
+          <button
+            onClick={() => onNav('upload')}
+            className="px-6 py-3 bg-primary text-primary-foreground text-sm font-medium rounded-xl hover:bg-primary/90 transition-colors"
+          >
+            Upload a resume
+          </button>
+        </div>
+      </div>
+    )
   }
 
-  const atsScore = edited ? liveScores.ats.improved : liveScores.ats.base
-  const jdScore = edited ? liveScores.jd.improved : liveScores.jd.base
+  const edited = JSON.stringify(draftResume) !== JSON.stringify(originalResume)
+  const atsScore = liveAtsResult?.score ?? 0
 
   return (
     <div className="h-[calc(100vh-4rem)] flex flex-col">
@@ -58,7 +76,7 @@ export default function ResumeEditor({ onNav, onExport }: Props) {
       <div className="border-b border-border bg-card px-4 sm:px-6 py-3 flex items-center justify-between gap-3 flex-shrink-0">
         <div className="flex items-center gap-3">
           <span className="text-sm font-medium text-foreground">Resume Editor</span>
-          <span className="px-2 py-0.5 bg-muted text-muted-foreground text-xs rounded-md font-mono">resume_v2.pdf</span>
+          <span className="px-2 py-0.5 bg-muted text-muted-foreground text-xs rounded-md font-mono">{file?.name ?? 'resume'}</span>
           {edited && (
             <span className="px-2 py-0.5 bg-warning-bg text-warning text-xs rounded-md font-medium">Unsaved changes</span>
           )}
@@ -82,7 +100,7 @@ export default function ResumeEditor({ onNav, onExport }: Props) {
       <div className="flex flex-1 overflow-hidden">
         {/* Section nav */}
         <div className="w-44 flex-shrink-0 border-r border-border bg-muted/30 overflow-y-auto py-4 px-2 hidden sm:block">
-          {sections.map((s) => (
+          {SECTIONS.map((s) => (
             <button
               key={s.id}
               onClick={() => setActiveSection(s.id)}
@@ -95,44 +113,135 @@ export default function ResumeEditor({ onNav, onExport }: Props) {
               {s.label}
             </button>
           ))}
-
-          <div className="mt-4 px-3">
-            <div className="text-[10px] text-muted-foreground uppercase tracking-wider mb-2">Versions</div>
-            {['Original', 'Version 1', 'Version 2'].map((v, i) => (
-              <div key={v} className={`px-2.5 py-2 rounded-lg mb-1 cursor-pointer text-xs transition-colors ${i === 1 ? 'bg-secondary text-secondary-foreground font-medium' : 'text-muted-foreground hover:bg-card'}`}>
-                {v}
-              </div>
-            ))}
-          </div>
         </div>
 
         {/* Editor */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-6">
           <div className="max-w-2xl mx-auto">
             <div className="flex items-center justify-between mb-3">
-              <h2 className="font-semibold text-foreground">{sections.find((s) => s.id === activeSection)?.label}</h2>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => onNav('recommendations')}
-                  className="text-xs text-accent hover:underline"
-                >
-                  View recommendations
-                </button>
-              </div>
+              <h2 className="font-semibold text-foreground">{SECTIONS.find((s) => s.id === activeSection)?.label}</h2>
+              <button onClick={() => onNav('recommendations')} className="text-xs text-accent hover:underline">
+                View recommendations
+              </button>
             </div>
 
-            <textarea
-              key={activeSection}
-              value={content[activeSection]}
-              onChange={(e) => handleChange(e.target.value)}
-              rows={12}
-              className="w-full bg-card border border-border rounded-xl px-5 py-4 text-sm text-foreground leading-relaxed focus:outline-none focus:ring-2 focus:ring-ring resize-none font-sans"
-              spellCheck
-            />
+            {activeSection === 'contact' && (
+              <div className="bg-card border border-border rounded-xl px-5 py-4 text-sm text-foreground space-y-1.5">
+                <p>{draftResume.candidate.name ?? <span className="text-muted-foreground">No name found</span>}</p>
+                <p className="text-muted-foreground">{draftResume.candidate.email ?? 'No email found'}</p>
+                <p className="text-muted-foreground">{draftResume.candidate.phone ?? 'No phone found'}</p>
+                <p className="text-muted-foreground">{draftResume.candidate.location ?? 'No location found'}</p>
+                {draftResume.candidate.links.map((link) => (
+                  <p key={link.url} className="text-muted-foreground">{link.url}</p>
+                ))}
+                <p className="text-xs text-muted-foreground pt-2">Contact editing isn't available yet — this shows what was parsed.</p>
+              </div>
+            )}
 
-            <p className="mt-2 text-xs text-muted-foreground">
-              Edit directly. Changes are reflected in the live score panel.
-            </p>
+            {activeSection === 'summary' && (
+              <>
+                <textarea
+                  value={draftResume.summary ?? ''}
+                  onChange={(e) => updateSummaryText(e.target.value)}
+                  rows={6}
+                  placeholder="Add a short professional summary in your own words."
+                  className="w-full bg-card border border-border rounded-xl px-5 py-4 text-sm text-foreground leading-relaxed focus:outline-none focus:ring-2 focus:ring-ring resize-none"
+                />
+                <p className="mt-2 text-xs text-muted-foreground">Edit directly. Changes are reflected in the live score panel.</p>
+              </>
+            )}
+
+            {activeSection === 'skills' && (
+              <>
+                <textarea
+                  value={draftResume.skills.map((s) => s.name).join(', ')}
+                  onChange={(e) => updateSkills(e.target.value.split(','))}
+                  rows={4}
+                  placeholder="React, TypeScript, AWS"
+                  className="w-full bg-card border border-border rounded-xl px-5 py-4 text-sm text-foreground leading-relaxed focus:outline-none focus:ring-2 focus:ring-ring resize-none"
+                />
+                <p className="mt-2 text-xs text-muted-foreground">Comma-separated. Only list skills you genuinely have.</p>
+              </>
+            )}
+
+            {activeSection === 'experience' && (
+              <div className="space-y-6">
+                {draftResume.experience.map((entry, entryIndex) => (
+                  <div key={entryIndex} className="bg-card border border-border rounded-xl p-4">
+                    <div className="grid sm:grid-cols-2 gap-2 mb-3">
+                      <input
+                        value={entry.title}
+                        onChange={(e) => updateExperienceTitle(entryIndex, e.target.value)}
+                        placeholder="Title"
+                        className="bg-muted/50 border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                      />
+                      <input
+                        value={entry.company}
+                        onChange={(e) => updateExperienceCompany(entryIndex, e.target.value)}
+                        placeholder="Company"
+                        className="bg-muted/50 border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      {entry.bullets.map((bullet, bulletIndex) => (
+                        <textarea
+                          key={bulletIndex}
+                          value={bullet}
+                          onChange={(e) => updateExperienceBullet(entryIndex, bulletIndex, e.target.value)}
+                          rows={2}
+                          className="w-full bg-muted/50 border border-border rounded-lg px-3 py-2 text-sm text-foreground leading-relaxed focus:outline-none focus:ring-2 focus:ring-ring resize-none"
+                        />
+                      ))}
+                      {entry.bullets.length === 0 && (
+                        <p className="text-xs text-muted-foreground">No bullet points for this role.</p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+                {draftResume.experience.length === 0 && (
+                  <p className="text-sm text-muted-foreground">No experience entries were found.</p>
+                )}
+              </div>
+            )}
+
+            {activeSection === 'education' && (
+              <div className="space-y-3">
+                {draftResume.education.map((entry, i) => (
+                  <div key={i} className="bg-card border border-border rounded-xl px-5 py-4 text-sm">
+                    <p className="text-foreground font-medium">{entry.institution}</p>
+                    <p className="text-muted-foreground">{entry.degree}{entry.fieldOfStudy ? `, ${entry.fieldOfStudy}` : ''}</p>
+                  </div>
+                ))}
+                {draftResume.education.length === 0 && <p className="text-sm text-muted-foreground">No education entries were found.</p>}
+                <p className="text-xs text-muted-foreground">Education editing isn't available yet — this shows what was parsed.</p>
+              </div>
+            )}
+
+            {activeSection === 'projects' && (
+              <div className="space-y-3">
+                {draftResume.projects.map((project, i) => (
+                  <div key={i} className="bg-card border border-border rounded-xl px-5 py-4 text-sm">
+                    <p className="text-foreground font-medium">{project.name}</p>
+                    {project.description && <p className="text-muted-foreground mt-1">{project.description}</p>}
+                  </div>
+                ))}
+                {draftResume.projects.length === 0 && <p className="text-sm text-muted-foreground">No projects were found.</p>}
+              </div>
+            )}
+
+            {activeSection === 'certifications' && (
+              <div className="space-y-3">
+                {draftResume.certifications.map((cert, i) => (
+                  <div key={i} className="bg-card border border-border rounded-xl px-5 py-4 text-sm">
+                    <p className="text-foreground font-medium">{cert.name}</p>
+                    {cert.issuer && <p className="text-muted-foreground">{cert.issuer}</p>}
+                  </div>
+                ))}
+                {draftResume.certifications.length === 0 && (
+                  <p className="text-sm text-muted-foreground">No certifications were found.</p>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
@@ -145,43 +254,41 @@ export default function ResumeEditor({ onNav, onExport }: Props) {
             <div className="bg-card border border-border rounded-xl p-4 text-center">
               <ScoreRing score={atsScore} size={80} strokeWidth={7} />
               <div className="text-xs font-medium text-foreground mt-2.5">ATS Compatibility</div>
-              {edited && (
-                <div className="font-mono text-xs text-success mt-1">
-                  {liveScores.ats.base} → {liveScores.ats.improved}
-                </div>
-              )}
+              {edited && <div className="font-mono text-[10px] text-warning mt-1">unsaved edit</div>}
             </div>
 
             {/* JD match */}
-            <div className="bg-card border border-border rounded-xl p-4 text-center">
-              <ScoreRing score={jdScore} size={80} strokeWidth={7} />
-              <div className="text-xs font-medium text-foreground mt-2.5">JD Match</div>
-              {edited && (
-                <div className="font-mono text-xs text-success mt-1">
-                  {liveScores.jd.base} → {liveScores.jd.improved}
-                </div>
-              )}
-            </div>
+            {liveJdMatchResult ? (
+              <div className="bg-card border border-border rounded-xl p-4 text-center">
+                <ScoreRing score={liveJdMatchResult.score} size={80} strokeWidth={7} />
+                <div className="text-xs font-medium text-foreground mt-2.5">JD Match</div>
+              </div>
+            ) : (
+              <button
+                onClick={() => onNav('jd-match')}
+                className="w-full bg-card border border-dashed border-border rounded-xl p-4 text-center text-xs text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors"
+              >
+                Match with a job to see this score
+              </button>
+            )}
 
             {/* Mini breakdown */}
-            <div className="bg-card border border-border rounded-xl p-4">
-              <div className="text-xs font-medium text-foreground mb-3">Score factors</div>
-              <div className="space-y-2.5">
-                {[
-                  { label: 'Keywords', v: edited ? 87 : 82 },
-                  { label: 'Impact', v: edited ? 85 : 78 },
-                  { label: 'Skills', v: edited ? 88 : 85 },
-                ].map((item) => (
-                  <div key={item.label}>
-                    <div className="flex justify-between text-[10px] mb-1">
-                      <span className="text-muted-foreground">{item.label}</span>
-                      <span className="font-mono text-foreground">{item.v}%</span>
+            {liveAtsResult && (
+              <div className="bg-card border border-border rounded-xl p-4">
+                <div className="text-xs font-medium text-foreground mb-3">Score factors</div>
+                <div className="space-y-2.5">
+                  {ATS_SCORE_CATEGORIES.map((category) => (
+                    <div key={category}>
+                      <div className="flex justify-between text-[10px] mb-1">
+                        <span className="text-muted-foreground">{ATS_CATEGORY_LABELS[category]}</span>
+                        <span className="font-mono text-foreground">{liveAtsResult.breakdown[category]}%</span>
+                      </div>
+                      <ProgressBar value={liveAtsResult.breakdown[category]} height={4} />
                     </div>
-                    <ProgressBar value={item.v} height={4} />
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
       </div>
