@@ -1,4 +1,11 @@
+import { useState } from 'react'
 import type { View } from '../App'
+import { useResumeStore } from '@/stores/resumeStore'
+import { useEditorStore } from '@/stores/editorStore'
+import { useVersionsStore } from '@/stores/versionsStore'
+import { useAnalysisStore } from '@/stores/analysisStore'
+import { useMatchStore } from '@/stores/matchStore'
+import { exportResume, type ExportFormat } from '@/api/resumeExport'
 
 interface Props {
   onClose: () => void
@@ -6,6 +13,42 @@ interface Props {
 }
 
 export default function ExportModal({ onClose, onNav }: Props) {
+  const { resume: originalResume } = useResumeStore()
+  const { draftResume } = useEditorStore()
+  const { versions } = useVersionsStore()
+  const { atsResult } = useAnalysisStore()
+  const { result: matchResult } = useMatchStore()
+  const [downloading, setDownloading] = useState<ExportFormat | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  const resume = draftResume ?? originalResume
+  const original = versions.find((v) => v.id === 'original')
+  const latestVersion = [...versions].reverse().find((v) => v.id !== 'original')
+  const currentAtsScore = latestVersion?.scoreSnapshot.ats ?? atsResult?.score
+
+  const handleDownload = async (format: ExportFormat) => {
+    if (!resume) return
+    setDownloading(format)
+    setError(null)
+
+    const result = await exportResume({ resume, format })
+    setDownloading(null)
+
+    if (!result.ok) {
+      setError(result.error.message)
+      return
+    }
+
+    const url = URL.createObjectURL(result.data.blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = result.data.filename
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    URL.revokeObjectURL(url)
+  }
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-foreground/30 backdrop-blur-sm"
@@ -20,7 +63,7 @@ export default function ExportModal({ onClose, onNav }: Props) {
           <div>
             <h2 className="font-serif text-2xl text-foreground mb-1">Your resume is ready</h2>
             <p className="text-sm text-muted-foreground">
-              Download your optimized resume in your preferred format.
+              Download your resume in your preferred format.
             </p>
           </div>
           <button
@@ -35,26 +78,42 @@ export default function ExportModal({ onClose, onNav }: Props) {
         </div>
 
         {/* Score summary */}
-        <div className="bg-success-bg border border-success/20 rounded-xl px-4 py-3 mb-6 flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-success flex items-center justify-center flex-shrink-0">
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <path d="M2 7l4 4 6-7" stroke="white" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
+        {currentAtsScore !== undefined && (
+          <div className="bg-success-bg border border-success/20 rounded-xl px-4 py-3 mb-6 flex items-center gap-3">
+            <div className="w-8 h-8 rounded-full bg-success flex items-center justify-center flex-shrink-0">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <path d="M2 7l4 4 6-7" stroke="white" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-foreground">
+                {latestVersion ? latestVersion.label : 'Current resume'}
+              </p>
+              <p className="text-xs text-muted-foreground font-mono">
+                ATS Score: {original && original.scoreSnapshot.ats !== currentAtsScore ? `${original.scoreSnapshot.ats} → ` : ''}
+                {currentAtsScore}
+                {matchResult ? ` · JD Match: ${matchResult.score}` : ''}
+              </p>
+            </div>
           </div>
-          <div>
-            <p className="text-sm font-medium text-foreground">Optimized resume</p>
-            <p className="text-xs text-muted-foreground font-mono">ATS Score: 82 → 89 · JD Match: 84 → 89</p>
-          </div>
-        </div>
+        )}
+
+        {error && <p className="mb-4 text-xs text-critical font-medium">{error}</p>}
 
         {/* Download options */}
         <div className="space-y-3 mb-6">
-          <button className="w-full flex items-center gap-4 p-4 bg-muted/60 hover:bg-muted border border-border rounded-xl transition-colors group">
+          <button
+            onClick={() => handleDownload('pdf')}
+            disabled={!resume || downloading !== null}
+            className="w-full flex items-center gap-4 p-4 bg-muted/60 hover:bg-muted border border-border rounded-xl transition-colors group disabled:opacity-50 disabled:cursor-not-allowed"
+          >
             <div className="w-10 h-10 rounded-lg bg-critical/10 flex items-center justify-center flex-shrink-0">
               <span className="font-mono text-xs font-bold text-critical">PDF</span>
             </div>
             <div className="flex-1 text-left">
-              <div className="text-sm font-semibold text-foreground">Download PDF</div>
+              <div className="text-sm font-semibold text-foreground">
+                {downloading === 'pdf' ? 'Generating PDF...' : 'Download PDF'}
+              </div>
               <div className="text-xs text-muted-foreground">ATS-safe formatting, print-ready</div>
             </div>
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-muted-foreground group-hover:text-foreground transition-colors">
@@ -63,12 +122,18 @@ export default function ExportModal({ onClose, onNav }: Props) {
             </svg>
           </button>
 
-          <button className="w-full flex items-center gap-4 p-4 bg-muted/60 hover:bg-muted border border-border rounded-xl transition-colors group">
+          <button
+            onClick={() => handleDownload('docx')}
+            disabled={!resume || downloading !== null}
+            className="w-full flex items-center gap-4 p-4 bg-muted/60 hover:bg-muted border border-border rounded-xl transition-colors group disabled:opacity-50 disabled:cursor-not-allowed"
+          >
             <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center flex-shrink-0">
               <span className="font-mono text-xs font-bold text-accent">DOC</span>
             </div>
             <div className="flex-1 text-left">
-              <div className="text-sm font-semibold text-foreground">Download DOCX</div>
+              <div className="text-sm font-semibold text-foreground">
+                {downloading === 'docx' ? 'Generating DOCX...' : 'Download DOCX'}
+              </div>
               <div className="text-xs text-muted-foreground">Editable Word document</div>
             </div>
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-muted-foreground group-hover:text-foreground transition-colors">

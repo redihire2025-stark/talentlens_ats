@@ -12,3 +12,7 @@ export-ready PDF/DOCX output. Implemented in TASK-016 – TASK-018.
   and in the Before/After view (TASK-017). The `ResumeVersion` type itself
   lives in `src/types/resumeVersion.ts` alongside the other domain
   schemas, not here.
+- `exportDocx.ts` / `exportPdf.ts` — render a Resume to a real DOCX
+  (`docx` library) or PDF (`pdf-lib`), both as plain single-column,
+  bulleted text with no tables/columns/images — the same ATS-friendly
+  formatting philosophy as the scoring engine itself (TASK-018).

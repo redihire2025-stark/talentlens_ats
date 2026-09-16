@@ -4,6 +4,7 @@ export { analyzeResume } from './resumeAnalyze'
 export { parseJobDescriptionFromText, parseJobDescriptionFromFile } from './jdParse'
 export { matchResumeToJob } from './match'
 export { getRecommendations } from './recommendations'
+export { exportResume } from './resumeExport'
 export type {
   ApiError,
   ApiResult,
@@ -18,3 +19,4 @@ export type {
   RecommendationsResponse,
   HealthResponse,
 } from './types'
+export type { ExportFormat, ExportResumeRequest, ExportResumeResponse } from './resumeExport'

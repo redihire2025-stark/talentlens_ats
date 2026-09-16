@@ -1,8 +1,9 @@
 # API Spec
 
-> `src/api/` (TASK-012) implements every endpoint below except
-> `resume/optimize` and `resume/export`, which are added in TASK-016 and
-> TASK-018 once their underlying engines exist.
+> `src/api/` implements every endpoint below except `resume/optimize`,
+> which is not a separate endpoint in the client-only V1 architecture —
+> edits are applied directly to the working draft via `editorStore`
+> (TASK-016) rather than round-tripping through a service call.
 
 ## How these endpoints are implemented in V1
 
@@ -21,8 +22,8 @@ switching to a real network call later doesn't change any caller.
 | `POST /api/jd/parse` | `parseJobDescriptionFromText` / `parseJobDescriptionFromFile` | JD text, or a file | `{ jobDescription, warnings }` | `src/lib/parsers/jd` |
 | `POST /api/match` | `matchResumeToJob` | `{ resume, jobDescription, atsScore }` | `{ analysis, result: ScoreResult<JdMatchScoreBreakdown> }` | `src/lib/matching` |
 | `POST /api/recommendations` | `getRecommendations` | `{ resume, parserWarnings?, matchAnalysis? }` | `{ recommendations }` | `src/lib/recommendations` |
-| `POST /api/resume/optimize` | _(TASK-016)_ | `Resume` + accepted recommendations | Updated `Resume` JSON + new `ResumeVersion` | `src/lib/resume-generation` |
-| `POST /api/resume/export` | _(TASK-018)_ | `Resume` version + format (`pdf`\|`docx`) | Exported file | `src/lib/resume-generation` |
+| `POST /api/resume/optimize` | _(not a separate endpoint — see above)_ | — | — | `editorStore` + `src/lib/resume-generation/applyEdits.ts` |
+| `POST /api/resume/export` | `exportResume` | `{ resume, format: 'pdf' \| 'docx' }` | `{ blob, filename }` | `src/lib/resume-generation/exportDocx.ts` / `exportPdf.ts` |
 | `GET /api/health` | `getHealth` | — | `{ status: "ok" }` | — |
 
 `atsScore` is passed into `/api/match` rather than recomputed there,
