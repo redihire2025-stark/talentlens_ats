@@ -4,6 +4,7 @@ import { ScoreRing, ProgressBar } from './shared'
 import { useResumeStore } from '@/stores/resumeStore'
 import { useJobDescriptionStore } from '@/stores/jobDescriptionStore'
 import { useEditorStore } from '@/stores/editorStore'
+import { useVersionsStore } from '@/stores/versionsStore'
 import { ATS_SCORE_CATEGORIES } from '@/lib/ats/types'
 import { ATS_CATEGORY_LABELS } from '@/features/ats-analysis/atsCategoryDisplay'
 
@@ -40,7 +41,9 @@ export default function ResumeEditor({ onNav, onExport }: Props) {
     updateExperienceTitle,
     updateExperienceCompany,
     recalculate,
+    setDraft,
   } = useEditorStore()
+  const { versions, activeVersionId, saveVersion, selectVersion } = useVersionsStore()
 
   useEffect(() => {
     if (useResumeStore.getState().resume) ensureDraft(useResumeStore.getState().resume!)
@@ -83,6 +86,16 @@ export default function ResumeEditor({ onNav, onExport }: Props) {
         </div>
         <div className="flex gap-2">
           <button
+            onClick={() => {
+              const label = `Version ${versions.filter((v) => v.id !== 'original').length + 1}`
+              saveVersion(label, draftResume, liveAtsResult?.score ?? 0, liveJdMatchResult?.score ?? null)
+            }}
+            disabled={!edited}
+            className="px-3 py-1.5 border border-border text-xs font-medium text-foreground rounded-lg hover:bg-muted transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            Save Version
+          </button>
+          <button
             onClick={() => onNav('before-after')}
             className="px-3 py-1.5 border border-border text-xs font-medium text-foreground rounded-lg hover:bg-muted transition-colors"
           >
@@ -113,6 +126,29 @@ export default function ResumeEditor({ onNav, onExport }: Props) {
               {s.label}
             </button>
           ))}
+
+          {versions.length > 0 && (
+            <div className="mt-4 px-3">
+              <div className="text-[10px] text-muted-foreground uppercase tracking-wider mb-2">Versions</div>
+              {versions.map((v) => (
+                <button
+                  key={v.id}
+                  onClick={() => {
+                    const resume = selectVersion(v.id)
+                    if (resume) setDraft(resume)
+                  }}
+                  className={`w-full text-left px-2.5 py-2 rounded-lg mb-1 text-xs transition-colors ${
+                    v.id === activeVersionId
+                      ? 'bg-secondary text-secondary-foreground font-medium'
+                      : 'text-muted-foreground hover:bg-card'
+                  }`}
+                >
+                  {v.label}
+                  <span className="ml-1.5 font-mono text-[10px] opacity-70">{v.scoreSnapshot.ats}</span>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Editor */}

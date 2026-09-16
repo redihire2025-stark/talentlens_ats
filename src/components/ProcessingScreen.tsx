@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import type { View } from '../App'
 import { useResumeStore } from '@/stores/resumeStore'
 import { useAnalysisStore } from '@/stores/analysisStore'
+import { useVersionsStore } from '@/stores/versionsStore'
 
 interface Props {
   onNav: (v: View) => void
@@ -73,6 +74,11 @@ export default function ProcessingScreen({ onNav }: Props) {
         return
       }
       setCompleted(5)
+
+      const atsResult = useAnalysisStore.getState().atsResult
+      if (atsResult) {
+        useVersionsStore.getState().initOriginal(parsedResume, atsResult.score)
+      }
 
       await wait(STEPS[5].minDuration)
       if (cancelled) return

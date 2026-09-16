@@ -6,5 +6,9 @@ export-ready PDF/DOCX output. Implemented in TASK-016 – TASK-018.
 
 - `applyEdits.ts` — pure, immutable Resume field updates
   (`replaceExperienceBullet`, `updateSummary`, `updateSkillNames`,
-  `updateExperienceField`) used by `editorStore` (TASK-016). Full
-  versioning (`ResumeVersion` snapshots) is TASK-017.
+  `updateExperienceField`) used by `editorStore` (TASK-016).
+- `diffResume.ts` — `diffResumeChanges`, a human-readable summary of what
+  changed between two Resume snapshots, used when saving a `ResumeVersion`
+  and in the Before/After view (TASK-017). The `ResumeVersion` type itself
+  lives in `src/types/resumeVersion.ts` alongside the other domain
+  schemas, not here.

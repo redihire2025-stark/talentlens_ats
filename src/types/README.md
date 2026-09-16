@@ -11,5 +11,7 @@ shape used across features is defined here and imported, not redeclared.
   `docs/architecture/resume-schema.md`)
 - `jobDescription.ts` — the `JobDescription` domain schema (see
   `docs/architecture/jd-schema.md`)
+- `resumeVersion.ts` — `ResumeVersion`, an immutable snapshot in a
+  resume's edit history (parent-linked, never overwritten — TASK-017)
 
 API request/response contracts are added in TASK-012.

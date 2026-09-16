@@ -24,6 +24,8 @@ interface EditorState {
   load: (resume: Resume, recommendations: Recommendation[]) => void
   /** Initializes the draft from the resume if nothing has been loaded yet — for opening the editor directly, without visiting Recommendations first. */
   ensureDraft: (resume: Resume) => void
+  /** Replaces the draft outright — used when switching to a different saved version. */
+  setDraft: (resume: Resume) => void
   setEditedText: (id: string, text: string) => void
   acceptRecommendation: (id: string) => void
   rejectRecommendation: (id: string) => void
@@ -85,6 +87,8 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     if (get().draftResume) return
     set({ originalResume: resume, draftResume: resume })
   },
+
+  setDraft: (resume) => set({ draftResume: resume }),
 
   setEditedText: (id, text) => set((state) => ({ editedTexts: { ...state.editedTexts, [id]: text } })),
 

@@ -9,7 +9,8 @@ never a single monolithic store:
 - `matchStore` — the resume/JD `MatchAnalysis` and JD Match Score (TASK-015)
 - `editorStore` — the working draft `Resume`, recommendation accept/reject/edit
   state, and the live-recalculated ATS/JD Match scores (TASK-016)
-- `versions` — resume version history (original, v1, v2, tailored) (TASK-017)
+- `versionsStore` — resume version history: `ResumeVersion` snapshots with
+  parent links, a human-readable diff, and a score snapshot (TASK-017)
 
 There's no separate `ui` store yet — `App.tsx`'s single `useState<View>`
 is enough for V1's linear screen flow (see "Screens vs. routing" in
