@@ -1,12 +1,4 @@
-const BULLET_MARKER_RE = /^[-•*●▪◦‣]\s*/
-
-export function isBulletLine(line: string): boolean {
-  return BULLET_MARKER_RE.test(line.trim())
-}
-
-export function stripBulletMarker(line: string): string {
-  return line.trim().replace(BULLET_MARKER_RE, '').trim()
-}
+export { isBulletLine, stripBulletMarker } from '../shared/lines'
 
 /** Splits a section's lines into blank-line-separated blocks (one per entry), dropping empty blocks. */
 export function splitIntoBlocks(lines: string[]): string[][] {
