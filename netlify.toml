@@ -1,0 +1,13 @@
+[build]
+  command = "pnpm install --frozen-lockfile && pnpm build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+# Single-page app: let client-side view state handle unknown paths
+# instead of Netlify's default 404 for anything but "/".
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
