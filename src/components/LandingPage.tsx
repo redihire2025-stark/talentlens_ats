@@ -1,306 +1,345 @@
 import type { View } from '../App'
-import { ScoreRing, ProgressBar } from './shared'
+import { ProgressBar } from './shared'
 
 interface Props {
   onNav: (v: View) => void
 }
 
-const trustItems = [
-  {
-    icon: (
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-        <rect x="3" y="4" width="14" height="13" rx="2" stroke="currentColor" strokeWidth="1.5" />
-        <path d="M7 9l2 2 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    ),
-    label: 'ATS Compatibility',
-  },
-  {
-    icon: (
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-        <circle cx="10" cy="10" r="7" stroke="currentColor" strokeWidth="1.5" />
-        <path d="M7 10l2 2 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    ),
-    label: 'Skill Matching',
-  },
-  {
-    icon: (
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-        <path d="M4 15l3-3 2 2 4-5 3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-        <rect x="2" y="3" width="16" height="14" rx="2" stroke="currentColor" strokeWidth="1.5" />
-      </svg>
-    ),
-    label: 'Resume Quality',
-  },
-  {
-    icon: (
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-        <path d="M6 4h8M6 8h8M6 12h5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-        <rect x="2" y="2" width="16" height="16" rx="2" stroke="currentColor" strokeWidth="1.5" />
-      </svg>
-    ),
-    label: 'JD Analysis',
-  },
-  {
-    icon: (
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-        <path d="M10 3v14M3 10h14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-        <circle cx="10" cy="10" r="7" stroke="currentColor" strokeWidth="1.5" />
-      </svg>
-    ),
-    label: 'Actionable Recommendations',
-  },
-]
-
-const features = [
-  {
-    title: 'ATS Compatibility Analysis',
-    description:
-      'Understand how your resume performs against common ATS parsing requirements with a transparent, section-by-section breakdown.',
-    detail: '7 scoring dimensions',
-    color: '#0F766E',
-  },
-  {
-    title: 'Job Description Matching',
-    description:
-      'Paste or upload a job description and see exactly how your skills, experience, and keywords align with what the role requires.',
-    detail: '6 match dimensions',
-    color: '#14B8A6',
-  },
-  {
-    title: 'Actionable Recommendations',
-    description:
-      'Get specific, evidence-based suggestions for improving your resume — with the ability to accept, reject, or edit each one.',
-    detail: 'Accept · Reject · Edit',
-    color: '#8B5CF6',
-  },
-]
-
-const steps = [
-  { num: '01', title: 'Upload your resume', desc: 'PDF or DOCX, no account required.' },
-  { num: '02', title: 'Get your ATS score', desc: 'A transparent breakdown across 7 dimensions in seconds.' },
-  { num: '03', title: 'Match against a job', desc: 'Paste any job description to see how your resume aligns.' },
-  { num: '04', title: 'Improve with confidence', desc: 'Evidence-based suggestions you control entirely.' },
-]
-
-function DashboardMockup() {
+function MiniDashboard() {
   return (
-    <div className="relative w-full max-w-[420px]">
-      {/* Glow */}
-      <div className="absolute inset-0 rounded-3xl blur-3xl opacity-20 bg-primary pointer-events-none" />
+    <div className="relative w-full max-w-[440px] mx-auto">
+      {/* Glow backdrop */}
+      <div className="absolute -inset-6 rounded-3xl opacity-30" style={{ background: 'radial-gradient(ellipse at center, #14B8A6 0%, transparent 70%)' }} />
 
       {/* Main card */}
-      <div className="relative bg-card rounded-2xl border border-border shadow-2xl p-5 overflow-hidden">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider">ATS Analysis</div>
-            <div className="text-sm font-semibold text-foreground mt-0.5">resume_v2.pdf</div>
+      <div className="relative bg-white rounded-2xl shadow-2xl overflow-hidden border border-white/20">
+        {/* Card header bar */}
+        <div className="px-5 py-3.5 border-b border-[#E6E3DD] flex items-center justify-between bg-[#F8F7F4]">
+          <div className="flex items-center gap-2">
+            <div className="w-2.5 h-2.5 rounded-full bg-[#DC2626]/40" />
+            <div className="w-2.5 h-2.5 rounded-full bg-[#D97706]/40" />
+            <div className="w-2.5 h-2.5 rounded-full bg-[#059669]/40" />
           </div>
-          <div className="px-2.5 py-1 bg-success-bg text-success text-xs font-medium rounded-full flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-success" />
-            Analyzed
-          </div>
+          <span className="font-mono text-xs text-[#78716C]">resume_analysis.pdf</span>
+          <span className="px-2 py-0.5 bg-[#D1FAE5] text-[#059669] text-[10px] font-semibold rounded-full">✓ Analyzed</span>
         </div>
 
-        {/* Score */}
-        <div className="flex items-center gap-5 mb-5">
-          <ScoreRing score={87} size={96} strokeWidth={8} />
-          <div className="flex-1">
-            <div className="text-sm font-semibold text-foreground">ATS Compatibility</div>
-            <div className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
-              Highly compatible with common ATS-style parsing requirements.
-            </div>
-          </div>
-        </div>
-
-        {/* Breakdown */}
-        <div className="space-y-2.5">
-          {[
-            { label: 'Parsing', value: 96 },
-            { label: 'Sections', value: 100 },
-            { label: 'Keywords', value: 82 },
-            { label: 'Experience', value: 91 },
-          ].map((item) => (
-            <div key={item.label} className="flex items-center gap-3">
-              <div className="w-20 text-xs text-muted-foreground">{item.label}</div>
-              <div className="flex-1">
-                <ProgressBar value={item.value} />
-              </div>
-              <div className="w-8 text-right font-mono text-xs font-semibold text-foreground">
-                {item.value}%
+        <div className="p-6">
+          {/* Score ring + label */}
+          <div className="flex items-center gap-5 mb-5">
+            <div className="relative flex-shrink-0">
+              <svg width="88" height="88" viewBox="0 0 88 88" style={{ transform: 'rotate(-90deg)' }}>
+                <circle cx="44" cy="44" r="36" fill="none" stroke="#E6E3DD" strokeWidth="8" />
+                <circle cx="44" cy="44" r="36" fill="none" stroke="#059669" strokeWidth="8"
+                  strokeLinecap="round"
+                  strokeDasharray={`${2 * Math.PI * 36}`}
+                  strokeDashoffset={`${2 * Math.PI * 36 * 0.13}`}
+                />
+              </svg>
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <span className="font-mono text-xl font-bold text-[#1C1917]">87</span>
+                <span className="font-mono text-[9px] text-[#78716C]">/100</span>
               </div>
             </div>
-          ))}
-        </div>
+            <div>
+              <div className="text-xs font-semibold text-[#78716C] uppercase tracking-wider mb-0.5">ATS Compatibility</div>
+              <div className="font-semibold text-[#1C1917] text-sm mb-1">Highly Compatible</div>
+              <div className="text-xs text-[#78716C] leading-relaxed">Strong structure, clear formatting, good keyword coverage.</div>
+            </div>
+          </div>
 
-        {/* Skill tags */}
-        <div className="mt-4 pt-4 border-t border-border flex flex-wrap gap-1.5">
-          {['React', 'TypeScript', 'REST APIs', 'AWS'].map((s) => (
-            <span key={s} className="px-2 py-0.5 bg-secondary text-secondary-foreground text-xs rounded-md font-medium">
-              ✓ {s}
-            </span>
-          ))}
-          <span className="px-2 py-0.5 bg-critical-bg text-critical text-xs rounded-md font-medium">
-            × Docker
-          </span>
+          {/* Progress bars */}
+          <div className="space-y-2.5">
+            {[
+              { label: 'Parsing', value: 96 },
+              { label: 'Keywords', value: 82 },
+              { label: 'Experience', value: 91 },
+              { label: 'Formatting', value: 94 },
+            ].map((item) => (
+              <div key={item.label} className="flex items-center gap-3">
+                <span className="w-20 text-xs text-[#78716C] flex-shrink-0">{item.label}</span>
+                <div className="flex-1">
+                  <ProgressBar value={item.value} />
+                </div>
+                <span className="font-mono text-xs font-semibold text-[#1C1917] w-8 text-right">{item.value}%</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Skill chips */}
+          <div className="mt-4 pt-4 border-t border-[#E6E3DD] flex flex-wrap gap-1.5">
+            {['✓ React', '✓ TypeScript', '✓ AWS', '✓ REST APIs'].map((s) => (
+              <span key={s} className="px-2 py-0.5 bg-[#D1FAE5] text-[#059669] text-xs font-medium rounded-md">{s}</span>
+            ))}
+            <span className="px-2 py-0.5 bg-[#FEE2E2] text-[#DC2626] text-xs font-medium rounded-md">× Docker</span>
+          </div>
         </div>
       </div>
 
-      {/* Floating chip */}
-      <div className="absolute -bottom-3 -right-3 bg-card border border-border rounded-xl shadow-lg px-3 py-2 flex items-center gap-2">
-        <div className="w-7 h-7 rounded-full bg-success-bg flex items-center justify-center">
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-            <path d="M2 6l3 3 5-5" stroke="#059669" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      {/* Floating badge */}
+      <div className="absolute -bottom-4 -left-4 bg-white rounded-xl shadow-lg border border-[#E6E3DD] px-4 py-2.5 flex items-center gap-3">
+        <div className="w-8 h-8 rounded-full bg-[#D1FAE5] flex items-center justify-center">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M2 7l3.5 3.5 6.5-7" stroke="#059669" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </div>
         <div>
-          <div className="text-xs font-semibold text-foreground">Score improved</div>
-          <div className="font-mono text-[10px] text-success">82 → 89</div>
+          <div className="text-xs font-semibold text-[#1C1917]">Score improved</div>
+          <div className="font-mono text-[11px] text-[#059669] font-medium">82 → 89 after edits</div>
         </div>
+      </div>
+
+      {/* Floating score chip */}
+      <div className="absolute -top-4 -right-4 bg-[#0F766E] text-white rounded-xl shadow-lg px-4 py-2.5">
+        <div className="font-mono text-xs font-medium opacity-80 mb-0.5">JD Match</div>
+        <div className="font-mono text-lg font-bold">84%</div>
       </div>
     </div>
   )
 }
 
+const features = [
+  {
+    num: '01',
+    title: 'ATS Score',
+    desc: 'Instant compatibility report across 7 dimensions — parsing, keywords, sections, formatting, and more.',
+    color: '#0F766E',
+    lightBg: '#CCFBF1',
+  },
+  {
+    num: '02',
+    title: 'JD Matching',
+    desc: 'Paste any job description to see exactly how your skills and experience align with the role requirements.',
+    color: '#0891B2',
+    lightBg: '#E0F2FE',
+  },
+  {
+    num: '03',
+    title: 'Smart Suggestions',
+    desc: 'Evidence-based bullet rewrites and keyword improvements you can accept, reject, or customize.',
+    color: '#059669',
+    lightBg: '#D1FAE5',
+  },
+]
+
+const stats = [
+  { value: '87/100', label: 'Average ATS score' },
+  { value: '7', label: 'Analysis dimensions' },
+  { value: '< 10s', label: 'Time to results' },
+  { value: '0', label: 'Accounts required' },
+]
+
 export default function LandingPage({ onNav }: Props) {
   return (
     <div className="bg-background">
-      {/* Hero */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-20 lg:pt-24 lg:pb-28">
-        <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-          {/* Left */}
-          <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-secondary rounded-full text-xs font-medium text-secondary-foreground mb-6">
-              <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
-              AI-powered career intelligence
+
+      {/* ── Hero ── */}
+      <section className="relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #0C4A6E 0%, #0F766E 60%, #059669 100%)' }}>
+        {/* Subtle grid texture */}
+        <div className="absolute inset-0 opacity-[0.04]" style={{
+          backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)',
+          backgroundSize: '40px 40px'
+        }} />
+
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-24 lg:pt-24 lg:pb-32">
+          <div className="grid lg:grid-cols-2 gap-14 lg:gap-20 items-center">
+
+            {/* Left copy */}
+            <div>
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-white/10 border border-white/20 rounded-full text-xs font-medium text-white/90 mb-6 backdrop-blur-sm">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#34D399] animate-pulse" />
+                AI-powered resume intelligence
+              </div>
+
+              <h1 className="font-serif text-5xl lg:text-6xl text-white leading-[1.05] tracking-tight mb-6">
+                Know how your resume performs{' '}
+                <span className="italic text-[#6EE7B7]">before</span>{' '}
+                you apply.
+              </h1>
+
+              <p className="text-white/70 text-lg leading-relaxed mb-8 max-w-md">
+                Upload your resume, get an ATS compatibility score, match it against any job description, and improve it with evidence-based suggestions.
+              </p>
+
+              <div className="flex flex-col sm:flex-row gap-3 mb-8">
+                <button
+                  onClick={() => onNav('upload')}
+                  className="px-7 py-3.5 bg-white text-[#0F766E] font-semibold rounded-xl hover:bg-white/90 transition-all shadow-lg shadow-black/20 text-sm"
+                >
+                  Check My Resume
+                </button>
+                <button
+                  onClick={() => onNav('jd-match')}
+                  className="px-7 py-3.5 bg-white/10 border border-white/25 text-white font-medium rounded-xl hover:bg-white/20 transition-all text-sm backdrop-blur-sm"
+                >
+                  Match With a Job
+                </button>
+              </div>
+
+              <p className="text-white/40 text-xs">
+                No account required · Resume processed for analysis only · Your data stays private
+              </p>
             </div>
 
-            <h1 className="font-serif text-5xl lg:text-6xl text-foreground leading-[1.08] tracking-tight mb-6">
-              Know how your resume performs{' '}
-              <em className="not-italic text-accent">before</em> you apply.
-            </h1>
-
-            <p className="text-lg text-muted-foreground leading-relaxed mb-8 max-w-lg">
-              Analyze your resume, understand ATS compatibility, match it against a job description, and improve it with actionable recommendations.
-            </p>
-
-            <div className="flex flex-col sm:flex-row gap-3">
-              <button
-                onClick={() => onNav('upload')}
-                className="px-6 py-3 bg-primary text-primary-foreground font-medium rounded-xl hover:bg-primary/90 transition-colors text-sm"
-              >
-                Check My Resume
-              </button>
-              <button
-                onClick={() => onNav('jd-match')}
-                className="px-6 py-3 bg-secondary text-secondary-foreground font-medium rounded-xl hover:bg-secondary/80 transition-colors text-sm border border-border"
-              >
-                Match With a Job
-              </button>
+            {/* Right: dashboard */}
+            <div className="flex justify-center lg:justify-end py-8">
+              <MiniDashboard />
             </div>
-
-            <p className="mt-5 text-xs text-muted-foreground">
-              No account required. Your resume is processed for analysis only.
-            </p>
           </div>
+        </div>
 
-          {/* Right: mockup */}
-          <div className="flex justify-center lg:justify-end">
-            <DashboardMockup />
-          </div>
+        {/* Bottom wave */}
+        <div className="absolute bottom-0 left-0 right-0">
+          <svg viewBox="0 0 1440 60" fill="none" preserveAspectRatio="none" style={{ width: '100%', height: 60 }}>
+            <path d="M0 60V30C360 0 720 60 1080 30L1440 0V60H0Z" fill="#F8F7F4" />
+          </svg>
         </div>
       </section>
 
-      {/* Trust strip */}
-      <section className="border-y border-border bg-muted/40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
-          <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-4">
-            {trustItems.map((item) => (
-              <div key={item.label} className="flex items-center gap-2 text-sm text-muted-foreground">
-                <span className="text-accent">{item.icon}</span>
-                {item.label}
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Features */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-28">
-        <div className="text-center mb-14">
-          <h2 className="font-serif text-4xl text-foreground mb-4">
-            Your resume intelligence workspace
-          </h2>
-          <p className="text-muted-foreground max-w-xl mx-auto">
-            TalentLens surfaces evidence-based insights from your resume — not guesses, not generic advice.
-          </p>
-        </div>
-
-        <div className="grid md:grid-cols-3 gap-6">
-          {features.map((f) => (
-            <div key={f.title} className="bg-card border border-border rounded-2xl p-6 hover:shadow-lg transition-shadow">
-              <div
-                className="w-10 h-10 rounded-xl flex items-center justify-center mb-4"
-                style={{ backgroundColor: f.color + '15' }}
-              >
-                <div className="w-4 h-4 rounded-full" style={{ backgroundColor: f.color }} />
-              </div>
-              <h3 className="font-semibold text-foreground mb-2">{f.title}</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed mb-4">{f.description}</p>
-              <span
-                className="font-mono text-xs px-2.5 py-1 rounded-lg"
-                style={{ backgroundColor: f.color + '12', color: f.color }}
-              >
-                {f.detail}
-              </span>
+      {/* ── Stats strip ── */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="bg-white rounded-2xl shadow-lg border border-[#E6E3DD] -mt-6 relative z-10 grid grid-cols-2 lg:grid-cols-4 divide-x divide-y lg:divide-y-0 divide-[#E6E3DD]">
+          {stats.map((s) => (
+            <div key={s.label} className="px-6 py-5 text-center">
+              <div className="font-mono text-2xl font-bold text-[#0F766E] mb-1">{s.value}</div>
+              <div className="text-xs text-[#78716C]">{s.label}</div>
             </div>
           ))}
         </div>
       </section>
 
-      {/* How it works */}
-      <section className="bg-foreground text-card">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-28">
-          <div className="mb-14">
-            <h2 className="font-serif text-4xl mb-3">How it works</h2>
-            <p className="text-foreground/60 max-w-lg">
-              Four steps from upload to a stronger resume — no account, no guesswork.
-            </p>
+      {/* ── Features ── */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-28">
+        <div className="text-center mb-14">
+          <div className="inline-block px-3 py-1 bg-[#CCFBF1] text-[#0F766E] text-xs font-semibold rounded-full mb-4 uppercase tracking-wider">
+            What TalentLens does
           </div>
+          <h2 className="font-serif text-4xl lg:text-5xl text-foreground mb-4 leading-tight">
+            Your resume intelligence<br />workspace
+          </h2>
+          <p className="text-[#78716C] max-w-md mx-auto leading-relaxed">
+            Not a template generator. Not a formatter. A transparent, evidence-based analysis of how your resume actually performs.
+          </p>
+        </div>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {steps.map((s, i) => (
-              <div key={s.num} className="relative">
-                {i < steps.length - 1 && (
-                  <div className="hidden lg:block absolute top-6 left-full w-full h-px bg-white/10 z-0" style={{ width: 'calc(100% - 2.5rem)', left: '2.5rem' }} />
-                )}
-                <div className="font-mono text-3xl font-bold text-white/20 mb-3">{s.num}</div>
-                <h3 className="font-semibold text-card mb-2">{s.title}</h3>
-                <p className="text-sm text-foreground/50 leading-relaxed">{s.desc}</p>
+        <div className="grid md:grid-cols-3 gap-6">
+          {features.map((f) => (
+            <div
+              key={f.title}
+              className="group bg-white rounded-2xl border border-[#E6E3DD] p-7 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer"
+              onClick={() => onNav('upload')}
+            >
+              <div className="flex items-start justify-between mb-5">
+                <div
+                  className="w-12 h-12 rounded-2xl flex items-center justify-center"
+                  style={{ backgroundColor: f.lightBg }}
+                >
+                  <span className="font-mono text-xs font-bold" style={{ color: f.color }}>{f.num}</span>
+                </div>
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" className="text-[#E6E3DD] group-hover:text-[#0F766E] transition-colors mt-1">
+                  <path d="M3 9h12M9 3l6 6-6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
               </div>
-            ))}
+              <h3 className="font-semibold text-xl text-foreground mb-2">{f.title}</h3>
+              <p className="text-sm text-[#78716C] leading-relaxed">{f.desc}</p>
+              <div className="mt-5 pt-5 border-t border-[#E6E3DD]">
+                <span className="text-sm font-medium" style={{ color: f.color }}>Get started →</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── How it works ── */}
+      <section className="bg-[#1C1917]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-28">
+          <div className="grid lg:grid-cols-2 gap-14 items-center">
+            <div>
+              <div className="inline-block px-3 py-1 bg-white/10 text-white/70 text-xs font-semibold rounded-full mb-5 uppercase tracking-wider">
+                The process
+              </div>
+              <h2 className="font-serif text-4xl lg:text-5xl text-white leading-tight mb-5">
+                From upload to a stronger resume in minutes
+              </h2>
+              <p className="text-white/50 leading-relaxed">
+                No account, no waiting, no vague scores. Every insight is explained so you know exactly what to do next.
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              {[
+                { num: '01', title: 'Upload your resume', desc: 'PDF or DOCX. Processed instantly, not stored.' },
+                { num: '02', title: 'Get your ATS breakdown', desc: '7-dimension score with plain-language explanations for every result.' },
+                { num: '03', title: 'Match against a job', desc: 'Paste any job description to see skills alignment, gaps, and match score.' },
+                { num: '04', title: 'Improve with confidence', desc: 'Accept, reject, or edit every suggestion. You stay in control.' },
+              ].map((step, i) => (
+                <div key={step.num} className="flex gap-4 p-4 rounded-xl bg-white/5 border border-white/10 hover:bg-white/8 transition-colors">
+                  <div className="w-9 h-9 rounded-xl bg-[#0F766E]/20 flex items-center justify-center flex-shrink-0">
+                    <span className="font-mono text-xs font-bold text-[#34D399]">{step.num}</span>
+                  </div>
+                  <div>
+                    <div className="font-semibold text-white text-sm mb-0.5">{step.title}</div>
+                    <div className="text-xs text-white/40 leading-relaxed">{step.desc}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </section>
 
-
-      {/* Final CTA */}
-      <section className="border-t border-border">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
-          <h2 className="font-serif text-4xl text-foreground mb-4">
-            Ready to see how your resume scores?
-          </h2>
-          <p className="text-muted-foreground mb-8 max-w-md mx-auto">
-            Upload your resume and get a detailed ATS analysis in seconds — no account required.
+      {/* ── Trust section ── */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-28">
+        <div className="text-center mb-12">
+          <h2 className="font-serif text-4xl text-foreground mb-3">Built on transparency</h2>
+          <p className="text-[#78716C] max-w-md mx-auto">
+            Every score comes with a breakdown. Every suggestion comes with a reason. No black boxes.
           </p>
-          <button
-            onClick={() => onNav('upload')}
-            className="px-8 py-3.5 bg-primary text-primary-foreground font-medium rounded-xl hover:bg-primary/90 transition-colors"
-          >
-            Check My Resume
-          </button>
+        </div>
+
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          {[
+            { icon: '🔍', title: 'Evidence-based', desc: 'Scores reflect actual resume content — not guesses. Every dimension is shown and explained.' },
+            { icon: '🎛️', title: 'You stay in control', desc: 'Accept, reject, or edit every suggestion. TalentLens never rewrites your resume without permission.' },
+            { icon: '🔒', title: 'Private by default', desc: 'Your resume is analyzed in-session and not stored. No account needed, ever.' },
+            { icon: '⚡', title: 'Instant results', desc: 'Analysis takes seconds, not minutes. No waitlists, no queues.' },
+            { icon: '📊', title: 'Transparent scoring', desc: 'The ATS score always shows a full breakdown — never a mysterious single number.' },
+            { icon: '✏️', title: 'Honest suggestions', desc: 'We never suggest adding skills you don\'t have. Every recommendation is grounded in what\'s already in your resume.' },
+          ].map((item) => (
+            <div key={item.title} className="bg-white border border-[#E6E3DD] rounded-2xl p-6 hover:shadow-md transition-shadow">
+              <div className="text-2xl mb-4">{item.icon}</div>
+              <h3 className="font-semibold text-foreground mb-2">{item.title}</h3>
+              <p className="text-sm text-[#78716C] leading-relaxed">{item.desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── Final CTA ── */}
+      <section className="px-4 sm:px-6 lg:px-8 pb-20">
+        <div
+          className="max-w-5xl mx-auto rounded-3xl p-12 text-center relative overflow-hidden"
+          style={{ background: 'linear-gradient(135deg, #0F766E 0%, #059669 100%)' }}
+        >
+          <div className="absolute inset-0 opacity-[0.06]" style={{
+            backgroundImage: 'radial-gradient(circle at 30% 50%, white 1px, transparent 1px), radial-gradient(circle at 70% 50%, white 1px, transparent 1px)',
+            backgroundSize: '30px 30px'
+          }} />
+          <div className="relative">
+            <h2 className="font-serif text-4xl lg:text-5xl text-white mb-4 leading-tight">
+              Ready to see how your<br />resume actually scores?
+            </h2>
+            <p className="text-white/70 mb-8 max-w-md mx-auto">
+              Upload your resume and get a full ATS analysis in under 10 seconds. No account required.
+            </p>
+            <button
+              onClick={() => onNav('upload')}
+              className="px-8 py-4 bg-white text-[#0F766E] font-semibold rounded-xl hover:bg-white/90 transition-all shadow-xl shadow-black/20 text-sm"
+            >
+              Check My Resume — Free
+            </button>
+            <p className="mt-4 text-white/40 text-xs">No signup · No credit card · Just results</p>
+          </div>
         </div>
       </section>
     </div>

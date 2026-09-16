@@ -6,43 +6,44 @@ interface Props {
   onNav: (v: View) => void
 }
 
+const navLinks: Array<{ label: string; view: View }> = [
+  { label: 'Resume Checker', view: 'upload' },
+  { label: 'Resume Matcher', view: 'jd-match' },
+  { label: 'Resume Optimizer', view: 'editor' },
+]
+
 export default function Header({ view, onNav }: Props) {
   const [menuOpen, setMenuOpen] = useState(false)
   const isLanding = view === 'landing'
 
   return (
-    <header className="sticky top-0 z-50 bg-card/90 backdrop-blur-md border-b border-border">
+    <header className="sticky top-0 z-50 border-b border-[#E6E3DD] bg-white/95 backdrop-blur-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
+
           {/* Logo */}
           <button
             onClick={() => onNav('landing')}
-            className="flex items-center gap-2.5 group"
+            className="flex items-center gap-2.5 group flex-shrink-0"
           >
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-              <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                <circle cx="9" cy="9" r="7" stroke="white" strokeWidth="2" fill="none" />
-                <circle cx="9" cy="9" r="3.5" fill="white" />
-                <line x1="14" y1="14" x2="16.5" y2="16.5" stroke="white" strokeWidth="2" strokeLinecap="round" />
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center shadow-sm" style={{ background: 'linear-gradient(135deg, #0F766E, #059669)' }}>
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <circle cx="8" cy="8" r="6" stroke="white" strokeWidth="1.5" fill="none" />
+                <circle cx="8" cy="8" r="2.5" fill="white" />
+                <line x1="12.2" y1="12.2" x2="14.5" y2="14.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
               </svg>
             </div>
-            <span className="font-semibold text-foreground tracking-tight text-[15px]">
-              TalentLens
-            </span>
+            <span className="font-semibold text-[#1C1917] tracking-tight text-[15px]">TalentLens</span>
           </button>
 
           {/* Desktop nav */}
           {isLanding && (
-            <nav className="hidden md:flex items-center gap-1">
-              {[
-                { label: 'Resume Checker', view: 'upload' as View },
-                { label: 'Resume Matcher', view: 'jd-match' as View },
-                { label: 'Resume Optimizer', view: 'editor' as View },
-                ].map((item) => (
+            <nav className="hidden md:flex items-center gap-0.5">
+              {navLinks.map((item) => (
                 <button
                   key={item.label}
                   onClick={() => onNav(item.view)}
-                  className="px-3 py-2 text-sm text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors"
+                  className="px-3.5 py-2 text-sm text-[#78716C] hover:text-[#1C1917] rounded-lg hover:bg-[#F2F0EC] transition-colors font-medium"
                 >
                   {item.label}
                 </button>
@@ -50,19 +51,23 @@ export default function Header({ view, onNav }: Props) {
             </nav>
           )}
 
-          {/* Right side */}
-          <div className="flex items-center gap-3">
+          {/* Right */}
+          <div className="flex items-center gap-2">
             {isLanding ? (
               <button
                 onClick={() => onNav('upload')}
-                className="hidden sm:flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground text-sm font-medium rounded-lg hover:bg-primary/90 transition-colors"
+                className="hidden sm:flex items-center gap-2 px-4 py-2 text-white text-sm font-semibold rounded-lg transition-all shadow-sm hover:shadow-md"
+                style={{ background: 'linear-gradient(135deg, #0F766E, #059669)' }}
               >
                 Get Started
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                  <path d="M2 7h10M7 3l4 4-4 4" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
               </button>
             ) : (
               <button
                 onClick={() => onNav('dashboard')}
-                className="flex items-center gap-1.5 px-3 py-2 text-sm text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors"
+                className="flex items-center gap-1.5 px-3 py-2 text-sm text-[#78716C] hover:text-[#1C1917] rounded-lg hover:bg-[#F2F0EC] transition-colors font-medium"
               >
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                   <path d="M10 12L6 8l4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -71,11 +76,10 @@ export default function Header({ view, onNav }: Props) {
               </button>
             )}
 
-            {/* Mobile menu button */}
             {isLanding && (
               <button
                 onClick={() => setMenuOpen(!menuOpen)}
-                className="md:hidden p-2 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors"
+                className="md:hidden p-2 text-[#78716C] hover:text-[#1C1917] rounded-lg hover:bg-[#F2F0EC] transition-colors"
               >
                 <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
                   {menuOpen ? (
@@ -93,26 +97,23 @@ export default function Header({ view, onNav }: Props) {
           </div>
         </div>
 
-        {/* Mobile nav */}
+        {/* Mobile menu */}
         {isLanding && menuOpen && (
-          <div className="md:hidden border-t border-border py-3">
-            {[
-              { label: 'Resume Checker', view: 'upload' as View },
-              { label: 'Resume Matcher', view: 'jd-match' as View },
-              { label: 'Resume Optimizer', view: 'editor' as View },
-            ].map((item) => (
+          <div className="md:hidden border-t border-[#E6E3DD] py-3">
+            {navLinks.map((item) => (
               <button
                 key={item.label}
                 onClick={() => { onNav(item.view); setMenuOpen(false) }}
-                className="w-full text-left px-3 py-2.5 text-sm text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors"
+                className="w-full text-left px-3 py-2.5 text-sm text-[#78716C] hover:text-[#1C1917] rounded-lg hover:bg-[#F2F0EC] transition-colors font-medium"
               >
                 {item.label}
               </button>
             ))}
-            <div className="pt-2 mt-2 border-t border-border">
+            <div className="pt-2 mt-2 border-t border-[#E6E3DD]">
               <button
                 onClick={() => { onNav('upload'); setMenuOpen(false) }}
-                className="w-full px-4 py-2.5 bg-primary text-primary-foreground text-sm font-medium rounded-lg"
+                className="w-full py-2.5 text-white text-sm font-semibold rounded-lg"
+                style={{ background: 'linear-gradient(135deg, #0F766E, #059669)' }}
               >
                 Get Started
               </button>
