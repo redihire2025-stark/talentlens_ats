@@ -1,9 +1,6 @@
-@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 @import 'tailwindcss';
 
-@theme {
+@theme inline {
   --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
   --font-serif: 'Instrument Serif', ui-serif, Georgia, serif;
   --font-mono: 'JetBrains Mono', ui-monospace, monospace;
@@ -30,8 +27,27 @@
   --color-critical-bg: #FEE2E2;
 }
 
-*, *::before, *::after {
-  box-sizing: border-box;
+:root {
+  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-serif: 'Instrument Serif', ui-serif, Georgia, serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  --color-background: #F7F8FC;
+  --color-foreground: #0E0F1A;
+  --color-card: #FFFFFF;
+  --color-primary: #3730A3;
+  --color-primary-foreground: #FFFFFF;
+  --color-secondary: #EEF0FF;
+  --color-secondary-foreground: #3730A3;
+  --color-muted: #F1F3FA;
+  --color-muted-foreground: #6B7080;
+  --color-accent: #6366F1;
+  --color-border: #E3E5EF;
+  --color-success: #16A34A;
+  --color-success-bg: #DCFCE7;
+  --color-warning: #D97706;
+  --color-warning-bg: #FEF3C7;
+  --color-critical: #DC2626;
+  --color-critical-bg: #FEE2E2;
 }
 
 html {
@@ -39,23 +55,14 @@ html {
 }
 
 body {
-  background-color: var(--color-background);
-  color: var(--color-foreground);
-  font-family: var(--font-sans);
+  background-color: #F7F8FC;
+  color: #0E0F1A;
+  font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
+::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb {
-  background: var(--color-border);
-  border-radius: 999px;
-}
-::-webkit-scrollbar-thumb:hover { background: var(--color-muted-foreground); }
-
-.font-serif { font-family: var(--font-serif); }
-.font-mono { font-family: var(--font-mono); }
+::-webkit-scrollbar-thumb { background: #E3E5EF; border-radius: 999px; }
+::-webkit-scrollbar-thumb:hover { background: #6B7080; }
