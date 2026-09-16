@@ -124,7 +124,7 @@ export default function BeforeAfter({ onNav }: Props) {
             <div key={c} className="flex items-start gap-2.5">
               <div className="w-4 h-4 rounded-full bg-success-bg flex items-center justify-center flex-shrink-0 mt-0.5">
                 <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
-                  <path d="M1 4l2 2 4-4" stroke="#059669" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M1 4l2 2 4-4" stroke="#10B981" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </div>
               <span className="text-sm text-foreground leading-relaxed">{c}</span>

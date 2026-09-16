@@ -153,7 +153,7 @@ export default function ATSDashboard({ onNav, onExport }: Props) {
           <div className="flex items-center gap-3 mb-2">
             <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                <path d="M2 8h12M8 2v12" stroke="#0F766E" strokeWidth="1.5" strokeLinecap="round" />
+                <path d="M2 8h12M8 2v12" stroke="#A855F7" strokeWidth="1.5" strokeLinecap="round" />
               </svg>
             </div>
             <span className="font-medium text-sm text-foreground">Match With a Job</span>
@@ -168,7 +168,7 @@ export default function ATSDashboard({ onNav, onExport }: Props) {
           <div className="flex items-center gap-3 mb-2">
             <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                <path d="M3 4h10M3 8h7M3 12h5" stroke="#0F766E" strokeWidth="1.5" strokeLinecap="round" />
+                <path d="M3 4h10M3 8h7M3 12h5" stroke="#A855F7" strokeWidth="1.5" strokeLinecap="round" />
               </svg>
             </div>
             <span className="font-medium text-sm text-foreground">View Recommendations</span>
@@ -183,7 +183,7 @@ export default function ATSDashboard({ onNav, onExport }: Props) {
           <div className="flex items-center gap-3 mb-2">
             <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                <path d="M11 2l3 3-9 9H2v-3l9-9z" stroke="#0F766E" strokeWidth="1.3" strokeLinejoin="round" />
+                <path d="M11 2l3 3-9 9H2v-3l9-9z" stroke="#A855F7" strokeWidth="1.3" strokeLinejoin="round" />
               </svg>
             </div>
             <span className="font-medium text-sm text-foreground">Open Editor</span>

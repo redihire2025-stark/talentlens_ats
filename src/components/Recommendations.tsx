@@ -182,7 +182,7 @@ export default function Recommendations({ onNav }: Props) {
             <div className="flex items-center gap-2 mb-4">
               <div className="px-2.5 py-1 bg-success-bg rounded-lg flex items-center gap-1.5">
                 <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                  <path d="M5 8V2M2 5l3-3 3 3" stroke="#059669" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M5 8V2M2 5l3-3 3 3" stroke="#10B981" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
                 <span className="text-xs font-medium text-success">Potential improvement</span>
               </div>

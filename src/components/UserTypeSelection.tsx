@@ -20,8 +20,8 @@ export default function UserTypeSelection({ onNav }: Props) {
           >
             <div className="w-14 h-14 rounded-2xl bg-secondary flex items-center justify-center mb-6 group-hover:scale-105 transition-transform">
               <svg width="26" height="26" viewBox="0 0 26 26" fill="none">
-                <path d="M5 23V9l8-6 8 6v14" stroke="#0F766E" strokeWidth="1.6" strokeLinejoin="round" />
-                <rect x="9" y="14" width="8" height="9" rx="1.5" stroke="#0F766E" strokeWidth="1.6" />
+                <path d="M5 23V9l8-6 8 6v14" stroke="#A855F7" strokeWidth="1.6" strokeLinejoin="round" />
+                <rect x="9" y="14" width="8" height="9" rx="1.5" stroke="#A855F7" strokeWidth="1.6" />
               </svg>
             </div>
             <h2 className="font-semibold text-xl text-foreground mb-2">Job Seeker</h2>

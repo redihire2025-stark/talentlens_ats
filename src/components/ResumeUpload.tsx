@@ -84,8 +84,8 @@ export default function ResumeUpload({ onNav }: Props) {
             <>
               <div className="w-16 h-16 rounded-2xl bg-secondary mx-auto mb-4 flex items-center justify-center">
                 <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-                  <path d="M14 18V8M10 12l4-4 4 4" stroke="#0F766E" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                  <path d="M6 22h16" stroke="#0F766E" strokeWidth="1.8" strokeLinecap="round" />
+                  <path d="M14 18V8M10 12l4-4 4 4" stroke="#A855F7" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M6 22h16" stroke="#A855F7" strokeWidth="1.8" strokeLinecap="round" />
                 </svg>
               </div>
               <p className="font-medium text-foreground mb-1">
