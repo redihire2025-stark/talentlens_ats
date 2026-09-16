@@ -28,14 +28,23 @@ export interface RecommendationLocation {
  * verbatim quote from the resume — never altered. `guidance` explains what
  * to consider adding or changing, and it never tells the user to simply
  * insert a skill, metric, or achievement: see docs/product/v1-scope.md's
- * "no fabricated resume content" principle. Turning guidance into actual
- * edited text is the user's call, made in the resume editor (TASK-016).
+ * "no fabricated resume content" principle.
+ *
+ * `suggestedText`, when present, is a ready-to-apply replacement for
+ * `currentText` built only from words already in the resume (e.g.
+ * stripping a weak lead-in like "Responsible for managing..." down to
+ * "Managed...") — accepting the recommendation applies it directly. It's
+ * null whenever no safe, non-fabricating rewrite exists (most notably: a
+ * missing metric, since no rewrite can invent one), in which case turning
+ * guidance into edited text is the user's call, made in the resume editor
+ * (TASK-016).
  */
 export interface Recommendation {
   id: string
   category: RecommendationCategory
   title: string
   currentText: string | null
+  suggestedText: string | null
   guidance: string
   impact: RecommendationImpact
   location?: RecommendationLocation

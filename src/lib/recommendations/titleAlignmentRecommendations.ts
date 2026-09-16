@@ -13,6 +13,7 @@ export function titleAlignmentRecommendations(matchAnalysis: MatchAnalysis): Rec
       category: 'title-alignment',
       title: 'Your most recent title may not read as a close match',
       currentText: title.resumeTitle,
+      suggestedText: null,
       guidance: `The job description is titled "${title.jdTitle}". Your most recent title, "${title.resumeTitle ?? 'not found'}", reads differently. If your actual responsibilities align with the role, consider whether your resume clearly explains that overlap — but only use a title you genuinely held.`,
       impact: RECOMMENDATION_IMPACT['title-alignment'],
     },

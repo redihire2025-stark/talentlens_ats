@@ -1,5 +1,9 @@
 {
-  "description": "Enables users to input text commands and automatically executes them, streamlining workflows and boosting productivity for professionals and developers.",
+  "title": "TalentLens",
+  "description": "Smarter Resume & Talent Matching — ATS compatibility scoring, job description matching, and evidence-based resume recommendations.",
+  "icons": {
+    "icon": "/favicon.svg"
+  },
   "robots": {
     "index": false
   },

@@ -99,7 +99,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
 
     let nextDraft = draftResume
     if (recommendation.location && recommendation.currentText !== null) {
-      const text = editedTexts[id] ?? recommendation.currentText
+      const text = editedTexts[id] ?? recommendation.suggestedText ?? recommendation.currentText
       nextDraft = replaceExperienceBullet(draftResume, recommendation.location.entryIndex, recommendation.location.bulletIndex, text)
     }
 

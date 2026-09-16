@@ -32,4 +32,31 @@ describe('bulletImpactRecommendations', () => {
     const [recommendation] = bulletImpactRecommendations(resume)
     expect(recommendation?.guidance).not.toMatch(/\d/)
   })
+
+  it('provides a directly-acceptable suggestedText when the bullet has a weak lead-in', () => {
+    const resume = buildTestResume({
+      experience: [
+        {
+          company: 'Acme',
+          title: 'Engineer',
+          startDate: null,
+          endDate: null,
+          location: null,
+          bullets: ['Responsible for managing a team of 5 engineers.'],
+        },
+      ],
+    })
+    const [recommendation] = bulletImpactRecommendations(resume)
+    expect(recommendation?.suggestedText).toBe('Managed a team of 5 engineers.')
+  })
+
+  it('leaves suggestedText null when there is no safe mechanical rewrite (e.g. a missing metric)', () => {
+    const resume = buildTestResume({
+      experience: [
+        { company: 'Acme', title: 'Engineer', startDate: null, endDate: null, location: null, bullets: ['Managed the frontend team.'] },
+      ],
+    })
+    const [recommendation] = bulletImpactRecommendations(resume)
+    expect(recommendation?.suggestedText).toBeNull()
+  })
 })

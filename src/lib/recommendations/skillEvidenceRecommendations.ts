@@ -12,6 +12,7 @@ export function skillEvidenceRecommendations(resume: Resume): Recommendation[] {
     category: 'skill-evidence',
     title: `Back up "${skillName}" with an example`,
     currentText: null,
+    suggestedText: null,
     guidance: `"${skillName}" is listed as a skill but isn't mentioned in any experience or project bullet. If you've used it on a specific project, add a bullet describing what you did with it.`,
     impact: RECOMMENDATION_IMPACT['skill-evidence'],
   }))

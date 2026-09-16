@@ -163,15 +163,28 @@ export default function Recommendations({ onNav }: Props) {
               {rec.currentText && (
                 <div className="p-3 bg-muted/60 rounded-xl border border-border mb-4">
                   <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">Current</div>
+                  <p className="text-sm text-foreground leading-relaxed">{rec.currentText}</p>
+                </div>
+              )}
+
+              {/* Only bullet-level recommendations have a location to apply a replacement to — everything
+                  else (missing sections, skill gaps, title mismatches) has nothing for Accept to swap in,
+                  so it never gets a "Suggested" box or an editable textarea here. */}
+              {rec.location && (isEditing || rec.suggestedText) && (
+                <div className="p-3 bg-success-bg/40 rounded-xl border border-success/20 mb-4">
+                  <div className="text-[10px] font-semibold text-success uppercase tracking-wider mb-1.5">
+                    {isEditing ? 'Your replacement' : 'Suggested replacement'}
+                  </div>
                   {isEditing ? (
                     <textarea
-                      value={editedTexts[rec.id] ?? rec.currentText}
+                      value={editedTexts[rec.id] ?? rec.suggestedText ?? rec.currentText ?? ''}
                       onChange={(e) => setEditedText(rec.id, e.target.value)}
                       rows={3}
+                      autoFocus
                       className="w-full text-sm bg-card border border-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-ring resize-none"
                     />
                   ) : (
-                    <p className="text-sm text-foreground leading-relaxed">{editedTexts[rec.id] ?? rec.currentText}</p>
+                    <p className="text-sm text-foreground leading-relaxed">{rec.suggestedText}</p>
                   )}
                 </div>
               )}
@@ -196,24 +209,32 @@ export default function Recommendations({ onNav }: Props) {
               {/* Actions */}
               {status === 'pending' && !isEditing && (
                 <div className="flex gap-2">
-                  <button
-                    onClick={() => handleAccept(rec.id)}
-                    className="px-4 py-2 bg-success text-white text-xs font-medium rounded-lg hover:bg-success/90 transition-colors"
-                  >
-                    Accept
-                  </button>
+                  {/* A location-less recommendation (missing section, skill gap, title mismatch) has
+                      nothing for Accept to apply — it just checks the item off. A location-having one
+                      with no suggestedText (e.g. "add a metric") can't be safely auto-applied either,
+                      since we never invent numbers — so it requires writing the replacement via Edit
+                      before Accept does anything. Only show a bare Accept when it will actually apply
+                      something: no location, or a location with a ready suggestion. */}
+                  {(!rec.location || rec.suggestedText) && (
+                    <button
+                      onClick={() => handleAccept(rec.id)}
+                      className="px-4 py-2 bg-success text-white text-xs font-medium rounded-lg hover:bg-success/90 transition-colors"
+                    >
+                      {rec.suggestedText ? 'Accept suggestion' : 'Accept'}
+                    </button>
+                  )}
                   <button
                     onClick={() => rejectRecommendation(rec.id)}
                     className="px-4 py-2 bg-muted text-foreground text-xs font-medium rounded-lg hover:bg-muted/80 transition-colors"
                   >
                     Reject
                   </button>
-                  {rec.currentText && (
+                  {rec.location && (
                     <button
                       onClick={() => setEditingId(rec.id)}
                       className="px-4 py-2 border border-border text-foreground text-xs font-medium rounded-lg hover:bg-muted transition-colors"
                     >
-                      Edit
+                      {rec.suggestedText ? 'Edit suggestion' : 'Write your own'}
                     </button>
                   )}
                 </div>

@@ -58,15 +58,26 @@ function parseMetaLines(metaLines: string[], warnings: string[], entryIndex: num
     return { title: parts[0]!, company: '', location, startDate, endDate }
   }
 
-  const [first, second] = parts as [string, string]
-  const firstIsTitle = TITLE_KEYWORD_RE.test(first)
-  const secondIsTitle = TITLE_KEYWORD_RE.test(second)
+  // A company name can itself contain a separator ("Acme, Inc.", "Foo |
+  // Bar Holdings"), so once the line is split into more than two parts we
+  // can't assume "first part = title, second part = company" — that would
+  // silently drop everything past the second part. Instead, find whichever
+  // part reads like a job title and treat every other part, rejoined in
+  // its original order, as the company.
+  const titleIndex = parts.findIndex((part) => TITLE_KEYWORD_RE.test(part))
 
-  if (secondIsTitle && !firstIsTitle) {
-    return { title: second, company: first, location, startDate, endDate }
+  if (titleIndex === -1) {
+    // No part reads like a title — fall back to the "Title, Company"
+    // convention: the first part is the title, everything after it
+    // (rejoined) is the company, so a multi-part company name still
+    // survives intact instead of being truncated to its second segment.
+    const [first, ...rest] = parts as [string, ...string[]]
+    return { title: first, company: rest.join(', '), location, startDate, endDate }
   }
-  // Default convention: "Title, Company" (or "Title at Company").
-  return { title: first, company: second, location, startDate, endDate }
+
+  const title = parts[titleIndex]!
+  const company = parts.filter((_, i) => i !== titleIndex).join(', ')
+  return { title, company, location, startDate, endDate }
 }
 
 /**

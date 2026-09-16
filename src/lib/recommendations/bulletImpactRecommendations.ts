@@ -1,5 +1,5 @@
 import type { Resume } from '@/types/resume'
-import { isQuantified, startsWithActionVerb } from '@/lib/ats/bulletQuality'
+import { isQuantified, startsWithActionVerb, suggestActionVerbRewrite } from '@/lib/ats/bulletQuality'
 import { RECOMMENDATION_IMPACT } from './impactConfig'
 import type { Recommendation } from './types'
 
@@ -28,6 +28,7 @@ export function bulletImpactRecommendations(resume: Resume): Recommendation[] {
         category: 'bullet-impact',
         title: `Strengthen a bullet under ${entry.company || entry.title || 'this role'}`,
         currentText: bullet,
+        suggestedText: suggestActionVerbRewrite(bullet),
         guidance: `Consider adding ${missing.join(' and ')} — if they are truthful. Don't invent numbers or outcomes that didn't happen.`,
         impact: RECOMMENDATION_IMPACT['bullet-impact'],
         location: { section: 'experience', entryIndex, bulletIndex },

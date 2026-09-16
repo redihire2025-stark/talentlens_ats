@@ -12,6 +12,7 @@ export function formattingRecommendations(resume: Resume): Recommendation[] {
       category: 'formatting' as const,
       title: `Use bullet points for ${entry.company || entry.title || 'this role'}`,
       currentText: null,
+      suggestedText: null,
       guidance: 'Break this role’s description into 2-4 concise bullet points. ATS systems and recruiters scan bulleted accomplishments far more reliably than paragraph text.',
       impact: RECOMMENDATION_IMPACT.formatting,
     }))

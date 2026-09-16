@@ -159,6 +159,38 @@ describe('parseResumeText with a parenthesized date range', () => {
   })
 })
 
+describe('parseResumeText with a multi-part company name', () => {
+  it('keeps a comma-containing company name intact instead of truncating it', () => {
+    const text = [
+      'Priya Nair',
+      'priya.nair@example.com',
+      '',
+      'Work Experience',
+      'Software Engineer, Acme, Inc. | Mar 2021 - Present',
+      '- Designed microservices.',
+    ].join('\n')
+
+    const { resume } = parseResumeText(text)
+    expect(resume.experience[0]!.title).toBe('Software Engineer')
+    expect(resume.experience[0]!.company).toBe('Acme, Inc.')
+  })
+
+  it('keeps a multi-part company name intact when the title comes second', () => {
+    const text = [
+      'Priya Nair',
+      'priya.nair@example.com',
+      '',
+      'Work Experience',
+      'Acme, Global Holdings, Backend Engineer | Mar 2021 - Present',
+      '- Designed microservices.',
+    ].join('\n')
+
+    const { resume } = parseResumeText(text)
+    expect(resume.experience[0]!.title).toBe('Backend Engineer')
+    expect(resume.experience[0]!.company).toBe('Acme, Global Holdings')
+  })
+})
+
 describe('parseResumeText edge cases', () => {
   it('returns an empty resume with a warning when no text was extracted', () => {
     const { resume, warnings } = parseResumeText('   ')
