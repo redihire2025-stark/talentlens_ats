@@ -1,4 +1,7 @@
 export { matchResume } from './matchResume'
+export { calculateJdMatchScore } from './calculateJdMatchScore'
+export { scoreEntries, scoreSingleResult } from './categoryScores'
+export { JD_MATCH_SCORE_WEIGHTS, JD_MATCH_SCORE_CATEGORIES, type JdMatchScoreBreakdown, type JdMatchScoreCategory } from './scoringConfig'
 export { matchSkill, matchSkills } from './skillMatcher'
 export { matchTitle } from './titleMatcher'
 export { matchExperience, calculateYearsOfExperience } from './experienceMatcher'

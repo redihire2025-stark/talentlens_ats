@@ -1,8 +1,8 @@
 # Scoring Methodology
 
-> The ATS Compatibility Score section below reflects the real
-> implementation (TASK-008, `src/lib/ats/`). The JD Match Score's weighting
-> is implemented in TASK-009/TASK-010 and documented separately once built.
+> This reflects the real implementation: the ATS Compatibility Score
+> (TASK-008, `src/lib/ats/`) and the JD Match Score (TASK-009/TASK-010,
+> `src/lib/matching/`).
 
 ## Terminology
 
@@ -65,21 +65,32 @@ internal weights (`src/lib/ats/scoringConfig.ts`):
 | Content Quality | 0.10 |
 
 The JD Match Score (once a job description is supplied) combines a
-different set of components — required/preferred skills, experience,
-responsibilities, title, education, keywords, and this ATS Compatibility
-Score as one input — using its own weight configuration, built in
-TASK-009/TASK-010:
+different set of components using its own weight configuration
+(`src/lib/matching/scoringConfig.ts`):
 
-| Component | Weight |
-| --- | --- |
-| Required skills | 0.25 |
-| Preferred skills | 0.10 |
-| Experience | 0.15 |
-| Responsibilities | 0.15 |
-| Title | 0.10 |
-| Education | 0.05 |
-| Keywords | 0.10 |
-| ATS compatibility | 0.10 |
+| Component | Weight | How it's scored |
+| --- | --- | --- |
+| Required skills | 0.25 | Average of matched=100/partial=50/missing=0 across `jobDescription.requiredSkills` |
+| Preferred skills | 0.10 | Same, across `preferredSkills` |
+| Experience | 0.15 | `matchExperience` status (100/50/0); 100 if the JD stated no requirement |
+| Responsibilities | 0.15 | Average across `matchResponsibilities` entries |
+| Title | 0.10 | `matchTitle` status; 100 if the JD stated no title |
+| Education | 0.05 | `matchEducation` status; 100 if the JD listed no education requirement |
+| Keywords | 0.10 | Average across matching `jobDescription.keywords` the same way as skills |
+| ATS compatibility | 0.10 | The resume's ATS Compatibility Score, computed independently (it never depends on the JD) |
+
+A category the JD didn't actually require (no title stated, no experience
+range given, no education line) scores 100 for that category rather than
+being penalized — an absent requirement isn't a resume gap.
+
+**Known overlap**: because the JD parser (TASK-006) currently derives
+`keywords` as the deduplicated union of `requiredSkills` and
+`preferredSkills` (see `docs/architecture/jd-parser.md`), the "Keywords"
+component is presently highly correlated with the two skills components
+rather than an independent signal. This is an honest V1 limitation, not a
+scoring bug — mining additional keywords from JD prose (responsibilities,
+requirements sentences) is future work for the JD parser/normalization
+engine, not something the score engine should compensate for by guessing.
 
 ## Response shape
 

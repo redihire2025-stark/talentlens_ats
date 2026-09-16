@@ -16,6 +16,11 @@ job (TASK-010). See `docs/scoring/matching-rules.md`.
   experience" JD language given real weight
 - `responsibilityMatcher.ts` — prose-to-prose fuzzy matching (the primary
   layer here, unlike skills)
-- `matchResume.ts` — orchestrator combining all of the above
+- `matchResume.ts` — orchestrator combining all of the above into a `MatchAnalysis`
 - `semanticMatcher.ts` — the `SemanticMatcher` AI-abstraction interface
   plus `NoopSemanticMatcher`; not wired into `matchResume` in V1
+- `scoringConfig.ts` — `JD_MATCH_SCORE_WEIGHTS` (TASK-010)
+- `categoryScores.ts` — converts matched/partial/missing results into 0-100 sub-scores
+- `calculateJdMatchScore.ts` — combines a `MatchAnalysis` and the ATS
+  Compatibility Score into the final `ScoreResult<JdMatchScoreBreakdown>`
+  (TASK-010) — see `docs/scoring/scoring-methodology.md`
