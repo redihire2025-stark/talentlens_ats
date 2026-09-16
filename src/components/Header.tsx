@@ -28,12 +28,17 @@ export default function Header({ view, onNav }: Props) {
           >
             <div className="w-9 h-9 rounded-xl flex items-center justify-center shadow-lg flex-shrink-0" style={{ background: 'linear-gradient(135deg, #7C3AED 0%, #A855F7 100%)' }}>
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                {/* T — horizontal bar + vertical stem */}
-                <line x1="3" y1="5" x2="11" y2="5" stroke="white" strokeWidth="2" strokeLinecap="round" />
-                <line x1="7" y1="5" x2="7" y2="15" stroke="white" strokeWidth="2" strokeLinecap="round" />
-                {/* L — vertical + horizontal foot, offset right */}
-                <line x1="11.5" y1="7" x2="11.5" y2="15" stroke="white" strokeWidth="2" strokeLinecap="round" />
-                <line x1="11.5" y1="15" x2="17" y2="15" stroke="white" strokeWidth="2" strokeLinecap="round" />
+                {/* Document outline */}
+                <path d="M5 3h7l3 3v11a1 1 0 01-1 1H5a1 1 0 01-1-1V4a1 1 0 011-1z" stroke="white" strokeWidth="1.4" fill="none" strokeLinejoin="round" />
+                {/* Folded corner */}
+                <path d="M12 3v3h3" stroke="white" strokeWidth="1.4" strokeLinejoin="round" />
+                {/* Scan line — animated feel via gradient opacity */}
+                <line x1="4" y1="10" x2="16" y2="10" stroke="white" strokeWidth="1.5" strokeLinecap="round" opacity="0.9" />
+                {/* Spark dot on scan line */}
+                <circle cx="13.5" cy="10" r="1.5" fill="white" />
+                {/* Text lines below scan */}
+                <line x1="7" y1="13" x2="13" y2="13" stroke="white" strokeWidth="1.2" strokeLinecap="round" opacity="0.5" />
+                <line x1="7" y1="15.5" x2="11" y2="15.5" stroke="white" strokeWidth="1.2" strokeLinecap="round" opacity="0.5" />
               </svg>
             </div>
             <span className="font-semibold text-foreground tracking-tight text-[15px]">TalentLens</span>
