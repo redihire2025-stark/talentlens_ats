@@ -9,6 +9,7 @@ shape used across features is defined here and imported, not redeclared.
   Score (see `docs/scoring/scoring-methodology.md`)
 - `resume.ts` — the `Resume` domain schema (see
   `docs/architecture/resume-schema.md`)
+- `jobDescription.ts` — the `JobDescription` domain schema (see
+  `docs/architecture/jd-schema.md`)
 
-The `JobDescription` domain schema and API request/response contracts are
-added in TASK-005 and TASK-012 respectively.
+API request/response contracts are added in TASK-012.
