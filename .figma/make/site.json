@@ -1,1 +1,10 @@
-{}
+{
+  "description": "Enables users to input text commands and automatically executes them, streamlining workflows and boosting productivity for professionals and developers.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}
