@@ -1,8 +1,6 @@
 /**
- * Shared between every AI provider (geminiClient.ts, groqClient.ts) so a
- * rewrite reads the same regardless of which one actually answered — and so
- * the no-fabrication rule (see src/lib/recommendations/README.md) is defined
- * exactly once.
+ * Shared by openaiClient.ts so the no-fabrication rule (see
+ * src/lib/recommendations/README.md) is defined exactly once.
  */
 export const REWRITE_SYSTEM_INSTRUCTION = `You rewrite a single resume bullet for an ATS (Applicant Tracking System) optimization tool. Follow every rule exactly:
 

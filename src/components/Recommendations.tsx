@@ -30,7 +30,7 @@ export default function Recommendations({ onNav }: Props) {
   // Ids still waiting for their turn in the sequential queue below — shown as
   // "Queued" on the card so it's visible that the app is working through the
   // list rather than stuck, without firing every request at once and tripping
-  // Gemini's per-minute rate limit (HTTP 429).
+  // OpenAI's per-minute rate limit (HTTP 429).
   const [aiQueuedIds, setAiQueuedIds] = useState<Set<string>>(new Set())
   const [aiTotalCount, setAiTotalCount] = useState(0)
   const aiRequested = useRef(new Set<string>())
@@ -68,8 +68,8 @@ export default function Recommendations({ onNav }: Props) {
     [setEditedText],
   )
 
-  // Runs the whole batch one bullet at a time — never in parallel. Gemini's
-  // free-tier quota is per-minute, so firing every card's request at once is
+  // Runs the whole batch one bullet at a time — never in parallel. OpenAI's
+  // rate limit is per-minute, so firing every card's request at once is
   // exactly what produces a wall of 429s; queueing them means each one
   // finishes (or exhausts its own retries) before the next even starts.
   const runAiQueue = useCallback(
@@ -186,7 +186,7 @@ export default function Recommendations({ onNav }: Props) {
         </div>
       </div>
 
-      {/* AI batch progress — processed one at a time to stay under Gemini's rate limit,
+      {/* AI batch progress — processed one at a time to stay under OpenAI's rate limit,
           so this stays visible for a bit rather than resolving all at once. */}
       {aiBatchActive && (
         <div className="mb-6 p-3 bg-accent/10 border border-accent/30 rounded-xl flex items-center gap-3 text-sm text-accent">
@@ -304,7 +304,7 @@ export default function Recommendations({ onNav }: Props) {
                   ) : isAiQueued ? (
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground animate-pulse" />
-                      Queued — waiting for Gemini
+                      Queued — waiting for OpenAI
                     </div>
                   ) : (
                     <p className="text-sm text-foreground leading-relaxed">{suggestionText}</p>
