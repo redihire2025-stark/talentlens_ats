@@ -190,6 +190,43 @@ export default function JDMatch({ onNav }: Props) {
         )}
       </div>
 
+      {/* Hard requirements — reported independently of the score (spec §11/§29): a
+          missing hard requirement must never disappear inside an overall number. */}
+      {analyzed && analysis && analysis.hardRequirements.length > 0 && (
+        <div className="mt-8 bg-card border border-border rounded-2xl p-6">
+          <div className="mb-4">
+            <h2 className="font-semibold text-foreground">Hard Requirements</h2>
+            <p className="text-xs text-muted-foreground mt-1">
+              Pass/fail requirements shown on their own — never averaged away by a good overall score.
+            </p>
+          </div>
+          <div className="space-y-2">
+            {analysis.hardRequirements.map((req) => (
+              <div
+                key={req.id}
+                className={`flex items-start gap-3 px-4 py-3 rounded-xl border ${
+                  req.satisfied ? 'bg-success-bg/40 border-success/20' : 'bg-critical-bg/40 border-critical/20'
+                }`}
+              >
+                {req.satisfied ? (
+                  <svg width="14" height="14" viewBox="0 0 12 12" fill="none" className="mt-0.5 flex-shrink-0">
+                    <path d="M2 6l3 3 5-5" stroke="#10B981" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                ) : (
+                  <svg width="14" height="14" viewBox="0 0 12 12" fill="none" className="mt-0.5 flex-shrink-0">
+                    <path d="M2 2l8 8M10 2L2 10" stroke="#DC2626" strokeWidth="1.5" strokeLinecap="round" />
+                  </svg>
+                )}
+                <div>
+                  <div className="text-sm font-medium text-foreground">{req.requirementText}</div>
+                  <div className="text-xs text-muted-foreground mt-0.5">{req.reason}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Skill matching */}
       {analyzed && result && analysis && (
         <div className="mt-8 bg-card border border-border rounded-2xl p-6">

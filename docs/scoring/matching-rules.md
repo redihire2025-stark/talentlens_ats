@@ -74,6 +74,33 @@ and the resume has no Docker evidence anywhere → missing, and the system
 never infers Docker experience from adjacent skills (e.g. Kubernetes) no
 matter how related they seem.
 
+## Hard requirements
+
+Alongside the per-category match results above, `matchResume` also returns
+`hardRequirements: HardRequirement[]` (`src/lib/matching/hardRequirements.ts`,
+per the ATS Intelligence Engine spec §11/§29). A hard requirement is a
+pass/fail condition — a missing one must never disappear inside the overall
+Job Match score, so it's reported as its own list rather than folded into
+`skills`/`experience`. Two types are detected, reusing the matchers above's
+already-computed results rather than re-implementing matching logic:
+
+- **`minimum-experience`** — one entry when the JD states
+  `experience.minimumYears`, `satisfied` mirroring `matchExperience`'s own
+  `matched` status.
+- **`required-skill`** — one entry per `jobDescription.requiredSkills`,
+  `satisfied` mirroring the corresponding `matchSkills` entry's `matched`
+  status (a `partial` skill match counts as an unsatisfied hard
+  requirement, since a hard requirement is boolean, not graded).
+
+The spec lists five more types (`certification`, `license`, `education`,
+`work-authorization`, `location`); they aren't detected because the current
+`JobDescription` schema has no requirement-level field for them with
+matching signal comparable to `requiredSkills`/`experience` — see
+`docs/architecture/ats-engine-spec-gap.md`.
+
+The UI (`src/components/JDMatch.tsx`'s "Hard Requirements" section) always
+shows this list as its own ✓/✗ block, separate from the score breakdown.
+
 ## What this system will not do
 
 - It will not mark something "matched" because it merely sounds similar.

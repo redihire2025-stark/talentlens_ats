@@ -4,6 +4,7 @@ import { matchTitle } from './titleMatcher'
 import { matchExperience } from './experienceMatcher'
 import { matchEducation } from './educationMatcher'
 import { matchResponsibilities } from './responsibilityMatcher'
+import { detectHardRequirements } from './hardRequirements'
 
 /**
  * Runs every matcher over a resume/JD pair. Produces the structured
@@ -13,14 +14,18 @@ import { matchResponsibilities } from './responsibilityMatcher'
  * that matter".
  */
 export function matchResume(input: MatchInput): MatchAnalysis {
+  const skills = {
+    required: matchSkills(input.jobDescription.requiredSkills, input.resume),
+    preferred: matchSkills(input.jobDescription.preferredSkills, input.resume),
+  }
+  const experience = matchExperience(input)
+
   return {
-    skills: {
-      required: matchSkills(input.jobDescription.requiredSkills, input.resume),
-      preferred: matchSkills(input.jobDescription.preferredSkills, input.resume),
-    },
+    skills,
     title: matchTitle(input),
-    experience: matchExperience(input),
+    experience,
     education: matchEducation(input),
     responsibilities: matchResponsibilities(input),
+    hardRequirements: detectHardRequirements(input, { skills, experience }),
   }
 }

@@ -64,10 +64,37 @@ export interface ResponsibilityMatchEntry {
   status: MatchStatus
 }
 
+/**
+ * A pass/fail requirement that must never disappear inside the overall Job
+ * Match score (spec §11/§29): a missing hard requirement is reported
+ * independently, not averaged away by everything the candidate got right.
+ * Only the two types this codebase already has reliable signal for are
+ * detected — `minimum-experience` (from the JD's stated
+ * `experience.minimumYears`, reusing `matchExperience`'s own status) and
+ * `required-skill` (one entry per `jobDescription.requiredSkills`, reusing
+ * `matchSkills`'s own status) — see `hardRequirements.ts` and
+ * `docs/architecture/ats-engine-spec-gap.md` for why the spec's other hard
+ * requirement types (`certification`, `license`, `education`,
+ * `work-authorization`, `location`) aren't detected here.
+ */
+export interface HardRequirement {
+  id: string
+  type: 'minimum-experience' | 'certification' | 'license' | 'education' | 'work-authorization' | 'location' | 'required-skill'
+  /** The JD text this requirement was derived from, as written. */
+  requirementText: string
+  satisfied: boolean
+  /** Verbatim resume text supporting `satisfied`; empty when not satisfied. */
+  evidence: string[]
+  /** One human-readable sentence explaining why this is/isn't satisfied. */
+  reason: string
+}
+
 export interface MatchAnalysis {
   skills: SkillMatchResult
   title: TitleMatchResult
   experience: ExperienceMatchResult
   education: EducationMatchResult
   responsibilities: ResponsibilityMatchEntry[]
+  /** Hard requirements detected for this resume/JD pair — see `HardRequirement`. Always present (possibly empty), never merged into `skills`/`experience` above. */
+  hardRequirements: HardRequirement[]
 }

@@ -7,6 +7,7 @@ export { matchTitle } from './titleMatcher'
 export { matchExperience, calculateYearsOfExperience } from './experienceMatcher'
 export { matchEducation } from './educationMatcher'
 export { matchResponsibilities } from './responsibilityMatcher'
+export { detectHardRequirements } from './hardRequirements'
 export { tokenOverlapRatio } from './fuzzyMatch'
 export { NoopSemanticMatcher, type SemanticMatcher, type SemanticMatchResult } from './semanticMatcher'
 export type {
@@ -18,4 +19,5 @@ export type {
   ExperienceMatchResult,
   EducationMatchResult,
   ResponsibilityMatchEntry,
+  HardRequirement,
 } from './types'
