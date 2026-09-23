@@ -7,7 +7,13 @@ import type { Recommendation, RecommendationStatus } from '@/lib/recommendations
 import { analyzeAtsCompatibility } from '@/lib/ats/analyzeAtsCompatibility'
 import { matchResume } from '@/lib/matching/matchResume'
 import { calculateJdMatchScore } from '@/lib/matching/calculateJdMatchScore'
-import { replaceExperienceBullet, updateExperienceField, updateSkillNames, updateSummary } from '@/lib/resume-generation/applyEdits'
+import {
+  applyRecommendationAcceptance,
+  replaceExperienceBullet,
+  updateExperienceField,
+  updateSkillNames,
+  updateSummary,
+} from '@/lib/resume-generation/applyEdits'
 import type { JobDescription } from '@/types/jobDescription'
 
 interface EditorState {
@@ -95,16 +101,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     const recommendation = recommendations.find((r) => r.id === id)
     if (!recommendation || !draftResume) return
 
-    let nextDraft = draftResume
-    let status: RecommendationStatus = 'accepted'
-    if (recommendation.location && recommendation.currentText !== null) {
-      const userEdit = editedTexts[id]
-      const text = userEdit ?? recommendation.suggestedText ?? recommendation.currentText
-      // "edited" (PRD §15 status) means the accepted text is neither the resume's
-      // original nor the recommendation's own suggestion — the user wrote it.
-      if (userEdit !== undefined && userEdit !== recommendation.suggestedText) status = 'edited'
-      nextDraft = replaceExperienceBullet(draftResume, recommendation.location.entryIndex, recommendation.location.bulletIndex, text)
-    }
+    const { resume: nextDraft, status } = applyRecommendationAcceptance(draftResume, recommendation, editedTexts[id])
 
     set((state) => ({ draftResume: nextDraft, statuses: { ...state.statuses, [id]: status } }))
   },

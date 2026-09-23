@@ -1,4 +1,5 @@
 import type { Resume } from '@/types/resume'
+import type { Recommendation, RecommendationStatus } from '@/lib/recommendations/types'
 
 /** Replaces one experience bullet, returning a new Resume (the original is never mutated). */
 export function replaceExperienceBullet(resume: Resume, entryIndex: number, bulletIndex: number, text: string): Resume {
@@ -38,4 +39,31 @@ export function updateExperienceField(
 ): Resume {
   const experience = resume.experience.map((entry, i) => (i === entryIndex ? { ...entry, [field]: value } : entry))
   return { ...resume, experience }
+}
+
+export interface RecommendationAcceptanceResult {
+  resume: Resume
+  status: RecommendationStatus
+}
+
+/**
+ * The single rule for "what happens when a recommendation is accepted",
+ * shared by `editorStore.acceptRecommendation` (client UI state) and the
+ * `src/api/suggestions.ts` accept endpoint (PRD §19's
+ * `POST /api/suggestions/:id/accept`) — one place decides this, not two
+ * copies that could drift. A recommendation with no `location` (a missing
+ * section, a skill gap, a title mismatch) has nothing to apply to the
+ * resume text — accepting it only changes its own status. `edited` means
+ * the accepted text is neither the resume's original nor the
+ * recommendation's own `suggestedText`/`suggestedChange` — the user wrote it.
+ */
+export function applyRecommendationAcceptance(resume: Resume, recommendation: Recommendation, editedText?: string): RecommendationAcceptanceResult {
+  if (!recommendation.location || recommendation.currentText === null) {
+    return { resume, status: 'accepted' }
+  }
+
+  const text = editedText ?? recommendation.suggestedText ?? recommendation.currentText
+  const status: RecommendationStatus = editedText !== undefined && editedText !== recommendation.suggestedText ? 'edited' : 'accepted'
+  const nextResume = replaceExperienceBullet(resume, recommendation.location.entryIndex, recommendation.location.bulletIndex, text)
+  return { resume: nextResume, status }
 }
