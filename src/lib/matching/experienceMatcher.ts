@@ -6,18 +6,30 @@ const PARTIAL_TOLERANCE_YEARS = 1
 
 /**
  * Total years of experience, computed as the calendar span from the
- * earliest start date to the latest end date (or now, for an ongoing
- * role) — not the sum of each entry's duration, which would double-count
- * overlapping or concurrent roles. This is a reasonable proxy, not a
- * precise reconstruction of a career timeline with gaps.
+ * earliest start date to the latest end date (or `referenceDate`, for an
+ * ongoing role) — not the sum of each entry's duration, which would
+ * double-count overlapping or concurrent roles. This is a reasonable
+ * proxy, not a precise reconstruction of a career timeline with gaps.
+ *
+ * `referenceDate` is an explicit parameter, not an internal `new Date()`
+ * call, so this function is a pure function of its inputs: called twice
+ * with the same resume and the same `referenceDate`, it always returns the
+ * same result (the ATS engine spec's determinism principle — see
+ * docs/product/ats-engine-spec.md §4 — forbids *hidden* wall-clock
+ * dependence inside scoring logic, not a legitimate, explicit "years since
+ * X, as of a given date" calculation, which a resume tool genuinely needs
+ * to answer well for an ongoing role). It defaults to the real current
+ * date so normal callers get accurate, current results without having to
+ * pass one.
  */
-export function calculateYearsOfExperience(resume: MatchInput['resume']): number {
+export function calculateYearsOfExperience(resume: MatchInput['resume'], referenceDate: Date = new Date()): number {
   if (resume.experience.length === 0) return 0
 
   const starts = resume.experience.map((entry) => (entry.startDate ? new Date(entry.startDate).getTime() : null)).filter((t): t is number => t !== null)
   if (starts.length === 0) return 0
 
-  const ends = resume.experience.map((entry) => (entry.endDate ? new Date(entry.endDate).getTime() : Date.now()))
+  const referenceTime = referenceDate.getTime()
+  const ends = resume.experience.map((entry) => (entry.endDate ? new Date(entry.endDate).getTime() : referenceTime))
 
   const earliestStart = Math.min(...starts)
   const latestEnd = Math.max(...ends)
@@ -26,9 +38,9 @@ export function calculateYearsOfExperience(resume: MatchInput['resume']): number
 }
 
 /** Never fabricates experience: a resume with no evidence of enough years is reported as `missing`, not rounded up. */
-export function matchExperience({ resume, jobDescription }: MatchInput): ExperienceMatchResult {
+export function matchExperience({ resume, jobDescription }: MatchInput, referenceDate: Date = new Date()): ExperienceMatchResult {
   const { minimumYears, maximumYears } = jobDescription.experience
-  const candidateYears = resume.experience.length > 0 ? calculateYearsOfExperience(resume) : null
+  const candidateYears = resume.experience.length > 0 ? calculateYearsOfExperience(resume, referenceDate) : null
   // The meta lines (with their dates) of every dated entry the years figure is computed from.
   const evidence = resume.experience.filter((entry) => entry.startDate).flatMap((entry) => entry.evidence)
 

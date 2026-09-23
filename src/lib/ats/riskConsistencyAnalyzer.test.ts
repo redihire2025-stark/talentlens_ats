@@ -90,4 +90,28 @@ describe('analyzeRiskConsistency', () => {
     )
     expect(result.score).toBe(100)
   })
+
+  describe('an ongoing role (no end date)', () => {
+    const input = buildTestInput({
+      resume: buildTestResume({
+        experience: buildExperienceEntries([
+          { company: 'Acme Corp', title: 'Engineer', startDate: '2020-01-01', endDate: '2021-06-01', location: null, bullets: [] },
+          { company: 'Globex', title: 'Consultant', startDate: '2021-01-01', endDate: null, location: null, bullets: [] },
+        ]),
+      }),
+    })
+
+    it('is a pure function of its explicit referenceDate: identical calls give identical results', () => {
+      const referenceDate = new Date('2023-01-01')
+      expect(analyzeRiskConsistency(input, referenceDate)).toEqual(analyzeRiskConsistency(input, referenceDate))
+    })
+
+    it('finds the overlap using the given referenceDate, not the real wall-clock date', () => {
+      // The ongoing entry (2021-01-01 – open) overlaps Acme's 2020-01-01–2021-06-01
+      // range as of any referenceDate on or after 2021-01-01 — provably from the
+      // stated dates alone, independent of when this test actually runs.
+      const result = analyzeRiskConsistency(input, new Date('2023-01-01'))
+      expect(result.issues.join(' ')).toMatch(/overlapping employment/i)
+    })
+  })
 })

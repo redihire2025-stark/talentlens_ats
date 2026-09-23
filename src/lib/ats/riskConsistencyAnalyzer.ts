@@ -23,19 +23,22 @@ function toDate(value: string | null): Date | null {
   return Number.isNaN(date.getTime()) ? null : date
 }
 
-function toDatedEntries(experience: ExperienceEntry[]): DatedEntry[] {
+// An ongoing role (no end date) is treated as running through `referenceDate`
+// — an explicit parameter, not an internal `new Date()` call, so this
+// analyzer is a pure function of its inputs (see calculateYearsOfExperience
+// in experienceMatcher.ts for the full determinism rationale). Defaults to
+// the real current date so normal callers get accurate results.
+function toDatedEntries(experience: ExperienceEntry[], referenceDate: Date): DatedEntry[] {
   return experience.map((entry) => ({
     entry,
     start: toDate(entry.startDate),
-    end: entry.endDate ? toDate(entry.endDate) : new Date(),
+    end: entry.endDate ? toDate(entry.endDate) : referenceDate,
   }))
 }
 
 function rangesOverlap(a: DatedEntry, b: DatedEntry): boolean {
-  if (!a.start || !b.start) return false
-  const aEnd = a.end ?? new Date()
-  const bEnd = b.end ?? new Date()
-  return a.start < bEnd && b.start < aEnd
+  if (!a.start || !b.start || !a.end || !b.end) return false
+  return a.start < b.end && b.start < a.end
 }
 
 /** An entry's own end date is before its start date — internally inconsistent, not just "unusual". */
@@ -78,8 +81,8 @@ function findMalformedLinks(links: { type: string; url: string }[]): string[] {
   return links.filter((link) => link.url.trim().length > 0 && !URL_LIKE_RE.test(link.url.trim())).map((link) => link.url)
 }
 
-export function analyzeRiskConsistency({ resume }: AtsAnalysisInput): AnalyzerResult {
-  const dated = toDatedEntries(resume.experience)
+export function analyzeRiskConsistency({ resume }: AtsAnalysisInput, referenceDate: Date = new Date()): AnalyzerResult {
+  const dated = toDatedEntries(resume.experience, referenceDate)
   const inverted = findInvertedRanges(dated)
   const overlaps = findOverlaps(dated)
   const duplicates = findDuplicateEntries(dated)

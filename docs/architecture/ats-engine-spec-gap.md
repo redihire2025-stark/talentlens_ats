@@ -122,14 +122,26 @@ and each has a reason:
   `high/medium/low` from the impact delta. A failed hard requirement is
   already grouped first under "Critical Requirements" in the UI, but the
   `severity` value itself has no `critical` level yet.
-- **Clock dependence for ongoing roles.** An experience entry with no end
-  date is measured up to "now" (`Date.now()` in
-  `calculateYearsOfExperience` and `new Date()` in
-  `riskConsistencyAnalyzer.ts`). Runs within a session are identical, and
-  all ids and metadata are clock-free, but the same resume analyzed on a
-  later day can show more years. This predates the schema rewrite. The fix
-  is to pass an explicit "as of" date into the matching and Resume Health
-  entry points.
+- ~~Clock dependence for ongoing roles~~ — **fixed.** An experience entry
+  with no end date used to be measured up to `Date.now()`/`new Date()`
+  called directly inside `calculateYearsOfExperience`
+  (`src/lib/matching/experienceMatcher.ts`) and `riskConsistencyAnalyzer.ts`,
+  so the same resume analyzed on two different days could show different
+  years of experience — a real violation of "no current-time-dependent
+  scoring" (spec §4). Both functions (and `matchExperience`,
+  `analyzeRiskConsistency`) now take an explicit `referenceDate: Date`
+  parameter instead of calling the clock internally, defaulting to the real
+  current date so ordinary callers are unaffected. This makes the functions
+  provably pure: `calculateYearsOfExperience(resume, referenceDate)` called
+  twice with the *same* `referenceDate` always returns the *same* result —
+  tested directly rather than by mocking global timers. An earlier attempt
+  at this fix tried deriving a stand-in "now" purely from dates already
+  stated in the resume (e.g. the latest experience date anywhere in the
+  document); that was rejected because it badly under-counts the extremely
+  common case of a resume whose most recent role is still ongoing with no
+  later stated date — e.g. a single current job would compute to 0 years
+  of tenure. An explicit, defaulted parameter is both fully deterministic
+  *and* accurate for real resumes.
 - **Prose-only JD signal isn't scored.** `technologies`, `softSkills`, and
   `domainTerms` are extracted and typed, but the keyword component still
   covers only required and preferred skills (see

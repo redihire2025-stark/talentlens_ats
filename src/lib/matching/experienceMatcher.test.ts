@@ -29,12 +29,45 @@ describe('calculateYearsOfExperience', () => {
     expect(years).toBeGreaterThan(1.3)
     expect(years).toBeLessThan(1.6)
   })
+
+  describe('an ongoing role (no end date)', () => {
+    const resume = buildTestResume({
+      experience: buildExperienceEntries([
+        { company: 'A', title: 'Engineer', startDate: '2020-01-01', endDate: '2021-01-01', location: null, bullets: [] },
+        { company: 'B', title: 'Senior Engineer', startDate: '2021-01-01', endDate: null, location: null, bullets: [] },
+      ]),
+    })
+
+    it('is a pure function of its explicit referenceDate: identical calls give identical results', () => {
+      const referenceDate = new Date('2023-01-01')
+      expect(calculateYearsOfExperience(resume, referenceDate)).toBe(calculateYearsOfExperience(resume, referenceDate))
+    })
+
+    it('computes the span up to the given referenceDate, not the real wall-clock date', () => {
+      // 2020-01-01 to 2023-01-01 is exactly 3 years, regardless of what day this test actually runs.
+      expect(calculateYearsOfExperience(resume, new Date('2023-01-01'))).toBeCloseTo(3, 1)
+      // A different, later referenceDate legitimately gives a larger — but still deterministic — result.
+      expect(calculateYearsOfExperience(resume, new Date('2025-01-01'))).toBeCloseTo(5, 1)
+    })
+
+    it('defaults to the real current date when no referenceDate is given', () => {
+      const now = new Date()
+      expect(calculateYearsOfExperience(resume)).toBeCloseTo(calculateYearsOfExperience(resume, now), 2)
+    })
+  })
 })
 
 describe('matchExperience', () => {
   it('matches when the candidate meets the minimum', () => {
+    // An explicit, closed date range — not the default fixture's ongoing
+    // role — so this is verifiable from stated dates alone, with no
+    // dependence on the real wall-clock date (see the "ongoing role"
+    // determinism tests above).
+    const resume = buildTestResume({
+      experience: buildExperienceEntries([{ company: 'A', title: 'Engineer', startDate: '2018-01-01', endDate: '2022-01-01', location: null, bullets: [] }]),
+    })
     const result = matchExperience(
-      buildTestMatchInput({ jobDescription: buildTestJobDescription({ experience: { minimumYears: 3, maximumYears: null } }) }),
+      buildTestMatchInput({ resume, jobDescription: buildTestJobDescription({ experience: { minimumYears: 3, maximumYears: null } }) }),
     )
     expect(result.status).toBe('matched')
   })
