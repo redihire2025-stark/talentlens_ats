@@ -9,6 +9,7 @@ import { experienceGapRecommendations } from './experienceGapRecommendations'
 import { responsibilityGapRecommendations } from './responsibilityGapRecommendations'
 import { educationGapRecommendations } from './educationGapRecommendations'
 import type { GenerateRecommendationsInput, Recommendation, RecommendationDraft, RecommendationSeverity } from './types'
+import { explicitEvidence } from '@/lib/schema/evidence'
 
 /** Impact deltas of 5+ are "high" (a required-skill gap, a missing section); 3-4 "medium"; anything smaller "low". Product judgment, not a scientific scale — see `impactConfig.ts`. */
 function severityFromDelta(delta: number): RecommendationSeverity {
@@ -25,11 +26,14 @@ function severityFromDelta(delta: number): RecommendationSeverity {
  * found in the resume/JD, not estimating a probability.
  */
 export function toPrdRecommendationFields(draft: RecommendationDraft): Recommendation {
+  const { evidence, ...fields } = draft
   return {
-    ...draft,
+    ...fields,
     severity: severityFromDelta(draft.impact.delta),
     issue: draft.title,
-    evidence: draft.currentText ? [draft.currentText] : [],
+    // Generators that know where their text came from supply typed evidence;
+    // otherwise a quoted `currentText` is the evidence (its section unknown).
+    evidence: evidence ?? (draft.currentText ? [explicitEvidence(draft.currentText, 'other')] : []),
     explanation: draft.guidance,
     suggestedChange: draft.suggestedText,
     confidence: 1,

@@ -17,23 +17,25 @@ export function bulletImpactRecommendations(resume: Resume): RecommendationDraft
 
   resume.experience.forEach((entry, entryIndex) => {
     entry.bullets.forEach((bullet, bulletIndex) => {
-      if (startsWithActionVerb(bullet) && isQuantified(bullet)) return
+      const text = bullet.text
+      if (startsWithActionVerb(text) && isQuantified(text)) return
 
       const missing: string[] = []
-      if (!startsWithActionVerb(bullet)) missing.push('a strong action verb')
-      if (!isQuantified(bullet)) missing.push('a measurable scope, impact, or metric')
+      if (!startsWithActionVerb(text)) missing.push('a strong action verb')
+      if (!isQuantified(text)) missing.push('a measurable scope, impact, or metric')
 
       recommendations.push({
-        id: `bullet-impact-${entryIndex}-${bulletIndex}`,
+        id: `bullet-impact-${bullet.id}`,
         category: 'bullet-impact',
         title: `Strengthen a bullet under ${entry.company || entry.title || 'this role'}`,
-        currentText: bullet,
+        currentText: text,
         // Always a real, usable bullet — never null — so the UI never falls
         // back to generic guidance text in place of a concrete suggestion.
-        suggestedText: buildDeterministicBulletSuggestion(bullet),
+        suggestedText: buildDeterministicBulletSuggestion(text),
         guidance: `Consider adding ${missing.join(' and ')} — if they are truthful. Don't invent numbers or outcomes that didn't happen.`,
         impact: RECOMMENDATION_IMPACT['bullet-impact'],
-        location: { section: 'experience', entryIndex, bulletIndex },
+        location: { section: 'experience', entryIndex, bulletIndex, entryId: entry.id, bulletId: bullet.id },
+        evidence: bullet.evidence,
       })
     })
   })

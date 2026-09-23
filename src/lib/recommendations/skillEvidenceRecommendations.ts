@@ -15,5 +15,7 @@ export function skillEvidenceRecommendations(resume: Resume): RecommendationDraf
     suggestedText: null,
     guidance: `"${skillName}" is listed as a skill but isn't mentioned in any experience or project bullet. If you've used it on a specific project, add a bullet describing what you did with it.`,
     impact: RECOMMENDATION_IMPACT['skill-evidence'],
+    // The skills-list line the skill appears on — its only evidence so far.
+    evidence: resume.skills.find((skill) => skill.rawName === skillName)?.evidence.filter((e) => e.section === 'skills') ?? [],
   }))
 }

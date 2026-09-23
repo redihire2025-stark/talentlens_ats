@@ -25,6 +25,8 @@ export function experienceGapRecommendations(matchAnalysis: MatchAnalysis): Reco
       suggestedText: null,
       guidance: `The job description asks for ${required}; your resume shows ${years}. There's no way to close this gap by rewording — only genuine additional experience closes it. Make sure every relevant role and its dates are fully represented, since an undercounted timeline can understate real experience.`,
       impact: RECOMMENDATION_IMPACT['experience-gap'],
+      // The dated roles the years figure was computed from.
+      evidence: experience.evidence,
     },
   ]
 }

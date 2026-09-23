@@ -1,4 +1,4 @@
-import type { MatchAnalysis, SkillMatchEntry } from '@/lib/matching/types'
+import type { MatchAnalysis, MatchResult } from '@/lib/matching/types'
 import { RECOMMENDATION_IMPACT } from './impactConfig'
 import type { RecommendationDraft } from './types'
 
@@ -15,7 +15,7 @@ export function skillGapRecommendations(matchAnalysis: MatchAnalysis): Recommend
   return [...required, ...preferred].filter((r): r is RecommendationDraft => r !== null)
 }
 
-function buildEntry(entry: SkillMatchEntry, isRequired: boolean): RecommendationDraft | null {
+function buildEntry(entry: MatchResult, isRequired: boolean): RecommendationDraft | null {
   if (entry.status === 'matched') return null
 
   const importance = isRequired ? 'required' : 'preferred'
@@ -24,23 +24,25 @@ function buildEntry(entry: SkillMatchEntry, isRequired: boolean): Recommendation
 
   if (entry.status === 'missing') {
     return {
-      id: `skill-gap-${importance}-${entry.skill}`,
+      id: `skill-gap-${entry.requirementId}`,
       category: 'skill-not-demonstrated',
-      title: `${entry.skill} (${importance}) isn't demonstrated`,
+      title: `${entry.normalizedTerm} (${importance}) isn't demonstrated`,
       currentText: null,
       suggestedText: null,
-      guidance: `This job description lists "${entry.skill}" as ${importance}, but nothing in your resume shows experience with it. If you have genuine, hands-on experience, add a specific example. If you don't, please don't add it — an unsupported skill claim can hurt more than a gap.`,
+      guidance: `This job description lists "${entry.normalizedTerm}" as ${importance}, but nothing in your resume shows experience with it. If you have genuine, hands-on experience, add a specific example. If you don't, please don't add it — an unsupported skill claim can hurt more than a gap.`,
       impact: scaledImpact,
+      evidence: [],
     }
   }
 
   return {
-    id: `skill-gap-${importance}-${entry.skill}`,
+    id: `skill-gap-${entry.requirementId}`,
     category: 'skill-not-demonstrated',
-    title: `${entry.skill} (${importance}) is only loosely related`,
-    currentText: entry.evidence[0] ?? null,
+    title: `${entry.normalizedTerm} (${importance}) is only loosely related`,
+    currentText: entry.evidence[0]?.text ?? null,
     suggestedText: null,
-    guidance: `Your resume shows something related to "${entry.skill}" (${entry.evidence[0] ?? 'a related skill'}), but not an exact match. If you have direct experience with "${entry.skill}" specifically, make that explicit.`,
+    guidance: `Your resume shows something related to "${entry.normalizedTerm}" (${entry.evidence[0]?.text ?? 'a related skill'}), but not an exact match. If you have direct experience with "${entry.normalizedTerm}" specifically, make that explicit.`,
     impact: scaledImpact,
+    evidence: entry.evidence,
   }
 }

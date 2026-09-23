@@ -1,14 +1,14 @@
 import { describe, expect, it } from 'vitest'
 import { educationGapRecommendations } from './educationGapRecommendations'
 import { matchResume } from '@/lib/matching/matchResume'
-import { buildTestMatchInput, buildTestResume } from '@/lib/matching/testFixtures'
+import { buildTestMatchInput, buildTestResume, buildTestJobDescription } from '@/lib/matching/testFixtures'
 
 describe('educationGapRecommendations', () => {
   it('flags an education requirement the resume does not satisfy', () => {
     const resume = buildTestResume({ education: [] })
     const input = buildTestMatchInput({
       resume,
-      jobDescription: { ...buildTestMatchInput().jobDescription, education: ["Master's degree in Computer Science"] },
+      jobDescription: buildTestJobDescription({ education: ["Master's degree in Computer Science"] }),
     })
     const analysis = matchResume(input)
     const recommendations = educationGapRecommendations(analysis)
@@ -23,7 +23,7 @@ describe('educationGapRecommendations', () => {
   })
 
   it('does not flag anything when the JD states no education requirement', () => {
-    const input = buildTestMatchInput({ jobDescription: { ...buildTestMatchInput().jobDescription, education: [] } })
+    const input = buildTestMatchInput({ jobDescription: buildTestJobDescription({ education: [] }) })
     const analysis = matchResume(input)
     expect(educationGapRecommendations(analysis)).toHaveLength(0)
   })

@@ -20,5 +20,7 @@ export function responsibilityGapRecommendations(matchAnalysis: MatchAnalysis): 
       suggestedText: null,
       guidance: `The job description lists "${r.responsibility}" as a responsibility, but no resume bullet shows clear evidence of it. If you genuinely did this work, add or rewrite a bullet that describes it specifically. If you didn't, leave it out — don't add a bullet just to match this line.`,
       impact: RECOMMENDATION_IMPACT['responsibility-gap'],
+      // `missing` means no bullet overlapped enough to count — nothing to quote.
+      evidence: [],
     }))
 }

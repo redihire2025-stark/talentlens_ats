@@ -1,12 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import { experienceGapRecommendations } from './experienceGapRecommendations'
 import { matchResume } from '@/lib/matching/matchResume'
-import { buildTestMatchInput, buildTestResume } from '@/lib/matching/testFixtures'
+import { buildTestMatchInput, buildTestResume, buildTestJobDescription } from '@/lib/matching/testFixtures'
+import { buildExperienceEntries } from '@/lib/schema/resumeBuilders'
 
 describe('experienceGapRecommendations', () => {
   it('flags a gap when the resume shows fewer years than the JD requires', () => {
     const resume = buildTestResume({
-      experience: [
+      experience: buildExperienceEntries([
         {
           company: 'Acme Corp',
           title: 'Frontend Engineer',
@@ -15,7 +16,7 @@ describe('experienceGapRecommendations', () => {
           location: 'Remote',
           bullets: ['Built React components.'],
         },
-      ],
+      ]),
     })
     const input = buildTestMatchInput({ resume })
     const analysis = matchResume(input)
@@ -32,7 +33,7 @@ describe('experienceGapRecommendations', () => {
 
   it('does not flag anything when the JD states no experience requirement', () => {
     const input = buildTestMatchInput({
-      jobDescription: { ...buildTestMatchInput().jobDescription, experience: { minimumYears: null, maximumYears: null } },
+      jobDescription: buildTestJobDescription({ experience: { minimumYears: null, maximumYears: null } }),
     })
     const analysis = matchResume(input)
     expect(experienceGapRecommendations(analysis)).toHaveLength(0)

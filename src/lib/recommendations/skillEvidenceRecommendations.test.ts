@@ -1,12 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import { skillEvidenceRecommendations } from './skillEvidenceRecommendations'
 import { buildTestResume } from '@/lib/ats/testFixtures'
+import { buildExperienceEntries, buildResumeSkills } from '@/lib/schema/resumeBuilders'
 
 describe('skillEvidenceRecommendations', () => {
   it('flags a skill with no supporting bullet', () => {
     const resume = buildTestResume({
-      skills: [{ name: 'Docker', category: 'tool', evidence: ['Docker'] }],
-      experience: [{ company: 'Acme', title: 'Engineer', startDate: null, endDate: null, location: null, bullets: ['Built things.'] }],
+      skills: buildResumeSkills([{ rawName: 'Docker', category: 'tool' }]),
+      experience: buildExperienceEntries([{ company: 'Acme', title: 'Engineer', startDate: null, endDate: null, location: null, bullets: ['Built things.'] }]),
     })
     const [recommendation] = skillEvidenceRecommendations(resume)
     expect(recommendation?.title).toContain('Docker')

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { missingSectionRecommendations } from './missingSectionRecommendations'
 import { buildTestResume } from '@/lib/ats/testFixtures'
+import { buildContactInformation } from '@/lib/schema/resumeBuilders'
 
 describe('missingSectionRecommendations', () => {
   it('returns nothing for a resume with every section present', () => {
@@ -16,7 +17,7 @@ describe('missingSectionRecommendations', () => {
 
   it('recommends every missing section for an empty resume', () => {
     const resume = buildTestResume({
-      candidate: { name: null, email: null, phone: null, location: null, links: [] },
+      contact: buildContactInformation({ name: null, email: null, phone: null, location: null, links: [] }),
       summary: null,
       skills: [],
       experience: [],

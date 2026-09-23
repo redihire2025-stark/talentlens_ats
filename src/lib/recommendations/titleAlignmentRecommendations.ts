@@ -1,4 +1,5 @@
 import type { MatchAnalysis } from '@/lib/matching/types'
+import { explicitEvidence } from '@/lib/schema/evidence'
 import { RECOMMENDATION_IMPACT } from './impactConfig'
 import type { RecommendationDraft } from './types'
 
@@ -16,6 +17,8 @@ export function titleAlignmentRecommendations(matchAnalysis: MatchAnalysis): Rec
       suggestedText: null,
       guidance: `The job description is titled "${title.jdTitle}". Your most recent title, "${title.resumeTitle ?? 'not found'}", reads differently. If your actual responsibilities align with the role, consider whether your resume clearly explains that overlap — but only use a title you genuinely held.`,
       impact: RECOMMENDATION_IMPACT['title-alignment'],
+      // The related role's title line when there was a partial match; otherwise the title quoted as-is.
+      evidence: title.evidence.length > 0 ? title.evidence : title.resumeTitle ? [explicitEvidence(title.resumeTitle, 'experience')] : [],
     },
   ]
 }

@@ -22,5 +22,7 @@ export function missingSectionRecommendations(input: AtsAnalysisInput): Recommen
     suggestedText: null,
     guidance: GUIDANCE_BY_LABEL[label] ?? `Add ${label.toLowerCase()} to your resume.`,
     impact: RECOMMENDATION_IMPACT['missing-section'],
+    // About something the resume lacks — there's nothing to quote.
+    evidence: [],
   }))
 }
