@@ -28,6 +28,13 @@ describe('splitResumeSections', () => {
     expect(sections.education).toEqual(['UT Austin'])
   })
 
+  it('recognizes "Core Technical Skills" as a skills header', () => {
+    const text = ['CORE TECHNICAL SKILLS', 'React, TypeScript', '', 'PROFESSIONAL EXPERIENCE', 'Acme Corp'].join('\n')
+    const sections = splitResumeSections(text)
+    expect(sections.skills).toEqual(['React, TypeScript', ''])
+    expect(sections.experience).toEqual(['Acme Corp'])
+  })
+
   it('keeps unrecognized content in header rather than dropping it', () => {
     const sections = splitResumeSections('Just some text\nwith no recognized headers at all')
     expect(sections.header).toEqual(['Just some text', 'with no recognized headers at all'])

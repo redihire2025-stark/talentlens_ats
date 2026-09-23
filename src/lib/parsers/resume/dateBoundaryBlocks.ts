@@ -1,3 +1,4 @@
+import { isBulletLine } from './blocks'
 import { extractDateRange } from './dateUtils'
 
 /**
@@ -28,8 +29,24 @@ export function splitByDateBoundary(lines: string[]): string[][] {
 
   for (const line of nonEmpty) {
     if (extractDateRange(line) && current.length > 0) {
-      blocks.push(current)
-      current = []
+      // A very common meta convention puts the title/company on one line
+      // and the date/location on the next ("Senior Engineer | Acme" then
+      // "2022 - 2023 | Remote"). Without this, the date line itself would
+      // start the new block, leaving the title line — which was pushed
+      // onto `current` just before it — misattributed to the entry that's
+      // ending. Any trailing non-bullet lines at the end of `current`
+      // (i.e. lines after its last bullet, or the whole thing if it has no
+      // bullets yet) are the next entry's meta lines that simply appeared
+      // before its date line rather than after it, so they belong in the
+      // new block instead.
+      let splitAt = current.length
+      while (splitAt > 0 && !isBulletLine(current[splitAt - 1]!)) {
+        splitAt--
+      }
+      const carryOver = current.slice(splitAt)
+      current = current.slice(0, splitAt)
+      if (current.length > 0) blocks.push(current)
+      current = carryOver
     }
     current.push(line)
   }

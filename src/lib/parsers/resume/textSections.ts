@@ -7,6 +7,7 @@ const SECTION_ALIASES: Record<ResumeSectionName, string[]> = {
   skills: [
     'skills',
     'technical skills',
+    'core technical skills',
     'core competencies',
     'competencies',
     'technologies',
@@ -19,6 +20,8 @@ const SECTION_ALIASES: Record<ResumeSectionName, string[]> = {
     'skills & tools',
     'areas of expertise',
     'key skills',
+    'skills summary',
+    'technical summary',
   ],
   experience: ['experience', 'work experience', 'professional experience', 'employment history', 'work history'],
   education: ['education', 'academic background'],
