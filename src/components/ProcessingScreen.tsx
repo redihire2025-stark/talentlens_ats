@@ -17,6 +17,7 @@ const STEPS = [
   { label: 'Analyzing experience', minDuration: 500 },
   { label: 'Checking Resume Health / ATS Readiness', minDuration: 600 },
   { label: 'Preparing recommendations', minDuration: 400 },
+  { label: 'Drafting AI-assisted suggestions', minDuration: 300 },
 ]
 
 function wait(ms: number) {
@@ -29,6 +30,9 @@ export default function ProcessingScreen({ onNav }: Props) {
 
   const { file, parse } = useResumeStore()
   const { analyze } = useAnalysisStore()
+  const aiQueuedIds = useEditorStore((s) => s.aiQueuedIds)
+  const aiLoadingIds = useEditorStore((s) => s.aiLoadingIds)
+  const aiRemaining = Object.keys(aiQueuedIds).length + Object.values(aiLoadingIds).filter(Boolean).length
 
   useEffect(() => {
     if (!file) {
@@ -83,23 +87,33 @@ export default function ProcessingScreen({ onNav }: Props) {
       }
 
       // Generate recommendations now — during "Preparing recommendations" —
-      // rather than lazily when the user opens that screen, so the list
-      // (and its AI-drafted upgrades) is already ready, or visibly in
-      // progress, by the time they get there. A job description hasn't
+      // rather than lazily when the user opens that screen, so the list is
+      // fully ready before the user ever sees it. A job description hasn't
       // been supplied yet at this point (it's optional and comes later),
       // so JD-dependent recommendations aren't included yet; the
       // Recommendations screen already regenerates once a JD match exists.
       const parserWarnings = useResumeStore.getState().warnings
       const recsResult = await getRecommendations({ resume: parsedResume, parserWarnings })
       if (cancelled) return
-      if (recsResult.ok) {
-        useEditorStore.getState().load(parsedResume, recsResult.data.recommendations)
-        useEditorStore.getState().startAiUpgrades(parsedResume)
-      }
 
       await wait(STEPS[5].minDuration)
       if (cancelled) return
       setCompleted(6)
+
+      // Stay on this screen — don't navigate to the dashboard — until every
+      // AI-drafted rewrite has actually finished (or failed and silently
+      // fell back to its deterministic suggestion), so the user never sees
+      // "Queued for an AI-drafted rewrite…" appear live on the
+      // Recommendations screen itself.
+      if (recsResult.ok) {
+        useEditorStore.getState().load(parsedResume, recsResult.data.recommendations)
+        await useEditorStore.getState().startAiUpgrades(parsedResume)
+        if (cancelled) return
+      }
+
+      await wait(STEPS[6].minDuration)
+      if (cancelled) return
+      setCompleted(7)
 
       await wait(400)
       if (cancelled) return
@@ -202,6 +216,9 @@ export default function ProcessingScreen({ onNav }: Props) {
                 </span>
                 {done && (
                   <span className="ml-auto font-mono text-xs text-success">done</span>
+                )}
+                {current && step.label === 'Drafting AI-assisted suggestions' && aiRemaining > 0 && (
+                  <span className="ml-auto font-mono text-xs text-muted-foreground">{aiRemaining} left</span>
                 )}
               </div>
             )

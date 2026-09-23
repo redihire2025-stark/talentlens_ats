@@ -55,7 +55,7 @@ interface EditorState {
    * `aiUpgradesStarted`) — so both the processing screen and the
    * Recommendations screen can call it and only one queue ever runs.
    */
-  startAiUpgrades: (resume: Resume) => void
+  startAiUpgrades: (resume: Resume) => Promise<void>
   /** Requests (or re-requests, for "Regenerate") an AI rewrite for one recommendation. */
   requestAiSuggestion: (rec: Recommendation, resume: Resume) => Promise<void>
 
@@ -92,6 +92,11 @@ function recalculateScores(
  * possible (full versioning is TASK-017; this store only tracks the
  * current draft).
  */
+// Module-level (not store state) because it holds a Promise, which isn't
+// meaningful to serialize/diff as store state — it only exists to let a
+// second startAiUpgrades caller await the same in-flight run.
+let aiUpgradesPromise: Promise<void> | null = null
+
 export const useEditorStore = create<EditorState>((set, get) => ({
   originalResume: null,
   draftResume: null,
@@ -106,6 +111,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   aiUpgradesStarted: false,
 
   load: (resume, recommendations) => {
+    aiUpgradesPromise = null
     set({
       originalResume: resume,
       draftResume: resume,
@@ -169,23 +175,31 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   },
 
   startAiUpgrades: (resume) => {
-    if (get().aiUpgradesStarted) return
+    if (aiUpgradesPromise) return aiUpgradesPromise
+    if (get().aiUpgradesStarted) return Promise.resolve()
     set({ aiUpgradesStarted: true })
 
     const eligible = get().recommendations.filter((r) => r.category === 'bullet-impact' && r.location)
-    if (eligible.length === 0) return
+    if (eligible.length === 0) return Promise.resolve()
 
     set({ aiQueuedIds: Object.fromEntries(eligible.map((r) => [r.id, true])) })
 
     // Runs the whole batch one bullet at a time — never in parallel — to
-    // stay under the AI provider's rate limit. Not awaited by the caller:
-    // this must never block navigation away from the processing screen.
-    void (async () => {
+    // stay under the AI provider's rate limit. The processing screen awaits
+    // this so it can stay on "Preparing recommendations" until every
+    // suggestion (deterministic and AI-upgraded) is ready before navigating
+    // to the dashboard, rather than the AI queue finishing visibly in front
+    // of the user on the next screen. Cached on the module so a second
+    // caller (e.g. the Recommendations screen, if opened before this
+    // finishes) awaits the same in-flight run instead of starting another.
+    aiUpgradesPromise = (async () => {
       for (const rec of eligible) {
         await get().requestAiSuggestion(rec, resume)
         await sleep(600)
       }
+      aiUpgradesPromise = null
     })()
+    return aiUpgradesPromise
   },
 
   updateSummaryText: (text) =>
@@ -213,7 +227,8 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     set(recalculateScores(get().draftResume, parserWarnings, jobDescription))
   },
 
-  reset: () =>
+  reset: () => {
+    aiUpgradesPromise = null
     set({
       originalResume: null,
       draftResume: null,
@@ -226,5 +241,6 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       aiLoadingIds: {},
       aiQueuedIds: {},
       aiUpgradesStarted: false,
-    }),
+    })
+  },
 }))
