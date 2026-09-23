@@ -15,6 +15,7 @@ import {
   updateSummary,
 } from '@/lib/resume-generation/applyEdits'
 import type { JobDescription } from '@/types/jobDescription'
+import { generateAiBulletRewrite, sleep } from '@/lib/ai/aiRewrite'
 
 interface EditorState {
   originalResume: Resume | null
@@ -25,6 +26,18 @@ interface EditorState {
   liveAtsResult: ScoreResult<AtsScoreBreakdown> | null
   liveJdMatchResult: ScoreResult<JdMatchScoreBreakdown> | null
 
+  // AI-drafted bullet rewrites (PRD §14: an optional upgrade over the
+  // deterministic suggestedChange, never a dependency). Lives here rather
+  // than in the Recommendations screen's local state so it can be started
+  // during the resume-analysis processing step (`ProcessingScreen.tsx`)
+  // and is already finished — or at least in progress and visible — by the
+  // time the user opens "View Recommendations", instead of only starting
+  // when that screen mounts.
+  aiSuggestions: Record<string, string>
+  aiLoadingIds: Record<string, boolean>
+  aiQueuedIds: Record<string, boolean>
+  aiUpgradesStarted: boolean
+
   load: (resume: Resume, recommendations: Recommendation[]) => void
   /** Initializes the draft from the resume if nothing has been loaded yet — for opening the editor directly, without visiting Recommendations first. */
   ensureDraft: (resume: Resume) => void
@@ -34,6 +47,17 @@ interface EditorState {
   acceptRecommendation: (id: string) => void
   rejectRecommendation: (id: string) => void
   resetRecommendation: (id: string) => void
+
+  /**
+   * Kicks off the AI-drafted-rewrite queue for every eligible (bullet-level)
+   * recommendation, one at a time, without blocking the caller. Safe to call
+   * more than once — a no-op after the first call per `load()` (see
+   * `aiUpgradesStarted`) — so both the processing screen and the
+   * Recommendations screen can call it and only one queue ever runs.
+   */
+  startAiUpgrades: (resume: Resume) => void
+  /** Requests (or re-requests, for "Regenerate") an AI rewrite for one recommendation. */
+  requestAiSuggestion: (rec: Recommendation, resume: Resume) => Promise<void>
 
   updateSummaryText: (text: string) => void
   updateSkills: (names: string[]) => void
@@ -76,6 +100,10 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   editedTexts: {},
   liveAtsResult: null,
   liveJdMatchResult: null,
+  aiSuggestions: {},
+  aiLoadingIds: {},
+  aiQueuedIds: {},
+  aiUpgradesStarted: false,
 
   load: (resume, recommendations) => {
     set({
@@ -84,6 +112,10 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       recommendations,
       statuses: Object.fromEntries(recommendations.map((r) => [r.id, 'pending' as RecommendationStatus])),
       editedTexts: {},
+      aiSuggestions: {},
+      aiLoadingIds: {},
+      aiQueuedIds: {},
+      aiUpgradesStarted: false,
     })
   },
 
@@ -108,6 +140,53 @@ export const useEditorStore = create<EditorState>((set, get) => ({
 
   rejectRecommendation: (id) => set((state) => ({ statuses: { ...state.statuses, [id]: 'rejected' } })),
   resetRecommendation: (id) => set((state) => ({ statuses: { ...state.statuses, [id]: 'pending' } })),
+
+  requestAiSuggestion: async (rec, resume) => {
+    if (!rec.location || rec.currentText === null) return
+    const entry = resume.experience[rec.location.entryIndex]
+
+    set((state) => {
+      const { [rec.id]: _removed, ...restQueued } = state.aiQueuedIds
+      return { aiQueuedIds: restQueued, aiLoadingIds: { ...state.aiLoadingIds, [rec.id]: true } }
+    })
+
+    const result = await generateAiBulletRewrite({
+      bullet: rec.currentText,
+      role: entry?.title,
+      company: entry?.company,
+    })
+
+    set((state) => ({ aiLoadingIds: { ...state.aiLoadingIds, [rec.id]: false } }))
+    // Silent on failure/unavailability by design: the deterministic
+    // suggestedText already shown on the card is a complete, usable
+    // suggestion on its own — an AI outage is never a user-facing error here.
+    if (result.ok) {
+      set((state) => ({ aiSuggestions: { ...state.aiSuggestions, [rec.id]: result.text } }))
+      // Recorded as the "edited" text so accepting applies the AI-upgraded
+      // wording rather than falling back to the deterministic suggestedChange.
+      get().setEditedText(rec.id, result.text)
+    }
+  },
+
+  startAiUpgrades: (resume) => {
+    if (get().aiUpgradesStarted) return
+    set({ aiUpgradesStarted: true })
+
+    const eligible = get().recommendations.filter((r) => r.category === 'bullet-impact' && r.location)
+    if (eligible.length === 0) return
+
+    set({ aiQueuedIds: Object.fromEntries(eligible.map((r) => [r.id, true])) })
+
+    // Runs the whole batch one bullet at a time — never in parallel — to
+    // stay under the AI provider's rate limit. Not awaited by the caller:
+    // this must never block navigation away from the processing screen.
+    void (async () => {
+      for (const rec of eligible) {
+        await get().requestAiSuggestion(rec, resume)
+        await sleep(600)
+      }
+    })()
+  },
 
   updateSummaryText: (text) =>
     set((state) => (state.draftResume ? { draftResume: updateSummary(state.draftResume, text) } : state)),
@@ -143,5 +222,9 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       editedTexts: {},
       liveAtsResult: null,
       liveJdMatchResult: null,
+      aiSuggestions: {},
+      aiLoadingIds: {},
+      aiQueuedIds: {},
+      aiUpgradesStarted: false,
     }),
 }))

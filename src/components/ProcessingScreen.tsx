@@ -3,6 +3,8 @@ import type { View } from '../App'
 import { useResumeStore } from '@/stores/resumeStore'
 import { useAnalysisStore } from '@/stores/analysisStore'
 import { useVersionsStore } from '@/stores/versionsStore'
+import { useEditorStore } from '@/stores/editorStore'
+import { getRecommendations } from '@/api/recommendations'
 
 interface Props {
   onNav: (v: View) => void
@@ -78,6 +80,21 @@ export default function ProcessingScreen({ onNav }: Props) {
       const atsResult = useAnalysisStore.getState().atsResult
       if (atsResult) {
         useVersionsStore.getState().initOriginal(parsedResume, atsResult.score)
+      }
+
+      // Generate recommendations now — during "Preparing recommendations" —
+      // rather than lazily when the user opens that screen, so the list
+      // (and its AI-drafted upgrades) is already ready, or visibly in
+      // progress, by the time they get there. A job description hasn't
+      // been supplied yet at this point (it's optional and comes later),
+      // so JD-dependent recommendations aren't included yet; the
+      // Recommendations screen already regenerates once a JD match exists.
+      const parserWarnings = useResumeStore.getState().warnings
+      const recsResult = await getRecommendations({ resume: parsedResume, parserWarnings })
+      if (cancelled) return
+      if (recsResult.ok) {
+        useEditorStore.getState().load(parsedResume, recsResult.data.recommendations)
+        useEditorStore.getState().startAiUpgrades(parsedResume)
       }
 
       await wait(STEPS[5].minDuration)
