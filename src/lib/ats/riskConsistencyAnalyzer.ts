@@ -1,5 +1,6 @@
 import type { ExperienceEntry } from '@/types/resume'
 import type { AnalyzerResult, AtsAnalysisInput } from './types'
+import { dedupeEvidence, explicitEvidence } from '@/lib/schema/evidence'
 
 /**
  * Risk & Consistency (PRD §11): checks computable purely from the already
@@ -82,7 +83,7 @@ export function analyzeRiskConsistency({ resume }: AtsAnalysisInput): AnalyzerRe
   const inverted = findInvertedRanges(dated)
   const overlaps = findOverlaps(dated)
   const duplicates = findDuplicateEntries(dated)
-  const malformedLinks = findMalformedLinks(resume.candidate.links)
+  const malformedLinks = findMalformedLinks(resume.contact.links)
 
   const strengths: string[] = []
   const issues: string[] = []
@@ -114,10 +115,18 @@ export function analyzeRiskConsistency({ resume }: AtsAnalysisInput): AnalyzerRe
 
   const score = Math.max(0, 100 - penalty)
 
+  // The entries each flagged risk is about, so the UI can point at them.
+  const flaggedEntries = [...inverted, ...duplicates, ...(duplicates.length === 0 ? overlaps.flat() : [])]
+  const evidence = dedupeEvidence([
+    ...flaggedEntries.flatMap((entry) => entry.evidence),
+    ...malformedLinks.map((url) => explicitEvidence(url, 'contact')),
+  ])
+
   return {
     score,
     strengths,
     issues,
+    evidence,
     explanation:
       issues.length === 0
         ? 'Employment dates and links are internally consistent.'

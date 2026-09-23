@@ -1,4 +1,5 @@
 import type { AnalyzerResult, AtsAnalysisInput } from './types'
+import type { Evidence } from '@/types/evidence'
 
 /**
  * Checks the structural quality of the experience section — not whether it
@@ -20,6 +21,7 @@ export function analyzeExperienceStructure({ resume }: AtsAnalysisInput): Analyz
 
   let wellStructuredCount = 0
   const issues: string[] = []
+  const evidence: Evidence[] = []
 
   experience.forEach((entry, index) => {
     const problems: string[] = []
@@ -30,6 +32,7 @@ export function analyzeExperienceStructure({ resume }: AtsAnalysisInput): Analyz
 
     if (problems.length === 0) {
       wellStructuredCount += 1
+      evidence.push(...entry.evidence)
     } else {
       issues.push(`Experience entry ${index + 1}: ${problems.join(', ')}.`)
     }
@@ -48,5 +51,7 @@ export function analyzeExperienceStructure({ resume }: AtsAnalysisInput): Analyz
       issues.length === 0
         ? 'All experience entries have a title, company, dates, and bullet points.'
         : `${issues.length} of ${experience.length} experience entries are missing structural details.`,
+    // The meta line(s) of each fully-structured entry.
+    evidence,
   }
 }

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { analyzeKeywords } from './keywordAnalyzer'
 import { buildTestInput, buildTestResume } from './testFixtures'
+import { buildResumeSkills } from '@/lib/schema/resumeBuilders'
 
 describe('analyzeKeywords', () => {
   it('scores 0 with no skills', () => {
@@ -14,10 +15,10 @@ describe('analyzeKeywords', () => {
 
   it('deduplicates skill variants via the normalization dictionary', () => {
     const resume = buildTestResume({
-      skills: [
-        { name: 'React', category: 'framework', evidence: [] },
-        { name: 'React.js', category: 'framework', evidence: [] },
-      ],
+      skills: buildResumeSkills([
+        { rawName: 'React', category: 'framework' },
+        { rawName: 'React.js', category: 'framework' },
+      ]),
     })
     const result = analyzeKeywords(buildTestInput({ resume }))
     expect(result.strengths[0]).toContain('1 distinct skill keyword')
@@ -25,7 +26,7 @@ describe('analyzeKeywords', () => {
 
   it('caps the score at 100 for many distinct skills', () => {
     const resume = buildTestResume({
-      skills: Array.from({ length: 12 }, (_, i) => ({ name: `Skill${i}`, category: 'other' as const, evidence: [] })),
+      skills: buildResumeSkills(Array.from({ length: 12 }, (_, i) => ({ rawName: `Skill${i}` }))),
     })
     expect(analyzeKeywords(buildTestInput({ resume })).score).toBe(100)
   })

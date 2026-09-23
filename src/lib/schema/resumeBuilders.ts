@@ -114,6 +114,11 @@ export function linkSkillEvidence(resume: Resume): Resume {
   return { ...resume, skills }
 }
 
+/** `buildResumeSkill` over a list, with positional ids. */
+export function buildResumeSkills(inputs: ResumeSkillInput[]): ResumeSkill[] {
+  return inputs.map((input, index) => buildResumeSkill(input, index))
+}
+
 /** Re-assigns positional skill ids (`skill-0`, …) after the list changes, keeping each skill's evidence `entryId` in step with its new id. */
 export function reindexSkills(skills: ResumeSkill[]): ResumeSkill[] {
   return skills.map((skill, index) => {
@@ -239,6 +244,11 @@ export function buildExperienceEntry(input: ExperienceEntryInput, index: number)
   }
 }
 
+/** `buildExperienceEntry` over a list, with positional ids (`exp-0`, `exp-1`, …). */
+export function buildExperienceEntries(inputs: ExperienceEntryInput[]): ExperienceEntry[] {
+  return inputs.map((input, index) => buildExperienceEntry(input, index))
+}
+
 /** Rebuilds an entry after a field edit (title/company/bullet text) so every derived field stays consistent with the new text. Keeps the parsed meta-line evidence unless the title/company changed. */
 export function rebuildExperienceEntry(entry: ExperienceEntry, changes: Partial<Pick<ExperienceEntry, 'title' | 'company'>> & { bullets?: string[] }, index: number): ExperienceEntry {
   const title = changes.title ?? entry.title
@@ -280,6 +290,10 @@ export function buildEducationEntry(input: EducationEntryInput, index: number): 
   return { id, ...fields, evidence: lines.map((line) => explicitEvidence(line, 'education', id)) }
 }
 
+export function buildEducationEntries(inputs: EducationEntryInput[]): EducationEntry[] {
+  return inputs.map((input, index) => buildEducationEntry(input, index))
+}
+
 export interface CertificationEntryInput {
   name: string
   issuer: Nullable<string>
@@ -292,6 +306,10 @@ export function buildCertificationEntry(input: CertificationEntryInput, index: n
   const id = `cert-${index}`
   const { sourceLine, ...fields } = input
   return { id, ...fields, evidence: [explicitEvidence(sourceLine ?? input.name, 'certifications', id)] }
+}
+
+export function buildCertificationEntries(inputs: CertificationEntryInput[]): CertificationEntry[] {
+  return inputs.map((input, index) => buildCertificationEntry(input, index))
 }
 
 export interface ProjectEntryInput {
@@ -308,6 +326,10 @@ export function buildProjectEntry(input: ProjectEntryInput, index: number): Proj
   const { sourceLines, ...fields } = input
   const lines = sourceLines ?? [input.name]
   return { id, ...fields, evidence: lines.map((line) => explicitEvidence(line, 'projects', id)) }
+}
+
+export function buildProjectEntries(inputs: ProjectEntryInput[]): ProjectEntry[] {
+  return inputs.map((input, index) => buildProjectEntry(input, index))
 }
 
 export function buildLanguageEntry(input: { name: string; proficiency: Nullable<string>; sourceLine: string }, index: number): LanguageEntry {

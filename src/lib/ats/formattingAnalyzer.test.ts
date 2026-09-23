@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { analyzeFormatting } from './formattingAnalyzer'
 import { buildTestInput, buildTestResume } from './testFixtures'
+import { buildExperienceEntries } from '@/lib/schema/resumeBuilders'
 
 describe('analyzeFormatting', () => {
   it('scores 100 with no risk signals', () => {
@@ -14,9 +15,9 @@ describe('analyzeFormatting', () => {
 
   it('penalizes experience entries without bullet points', () => {
     const resume = buildTestResume({
-      experience: [
+      experience: buildExperienceEntries([
         { company: 'Acme', title: 'Engineer', startDate: null, endDate: null, location: null, bullets: [] },
-      ],
+      ]),
     })
     const result = analyzeFormatting(buildTestInput({ resume }))
     expect(result.score).toBe(90)

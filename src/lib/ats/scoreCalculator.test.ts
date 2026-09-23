@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { calculateAtsScore } from './scoreCalculator'
-import type { AtsScoreBreakdown } from './types'
+import type { AtsScoreWeights } from './types'
 
-function breakdown(overrides: Partial<AtsScoreBreakdown> = {}): AtsScoreBreakdown {
+function breakdown(overrides: Partial<AtsScoreWeights> = {}): AtsScoreWeights {
   return {
     atsEssentials: 100,
     resumeStructure: 100,

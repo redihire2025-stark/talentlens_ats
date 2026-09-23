@@ -1,51 +1,57 @@
 import type { Resume } from '@/types/resume'
-import { normalizeSkillName } from '@/lib/normalization/skillDictionary'
+import type { Evidence } from '@/types/evidence'
+import { skillMentionedIn } from '@/lib/schema/resumeBuilders'
+import { explicitEvidence } from '@/lib/schema/evidence'
 import type { AnalyzerResult, AtsAnalysisInput } from './types'
 
 export interface SkillEvidenceSplit {
+  /** `rawName` of every listed skill also mentioned in an experience/project bullet. */
   backedUp: string[]
   /** Skills present in the skills list but never mentioned in an experience/project bullet. */
   listedOnly: string[]
+  /** For each backed-up skill, the first bullet that mentions it. */
+  evidence: Evidence[]
 }
 
 /**
  * Splits a resume's skills into those with a supporting bullet mention and
  * those only present in the skills list. Shared by `analyzeSkillsEvidence`
  * below and the recommendation engine (TASK-011), so both agree on exactly
- * which skills lack supporting evidence.
+ * which skills lack supporting evidence. Uses the same `skillMentionedIn`
+ * rule `linkSkillEvidence` uses to build `ResumeSkill.sources`, recomputed
+ * here from the current bullets rather than trusting a possibly-stale
+ * `sources` field.
  */
 export function splitSkillsByEvidence(resume: Resume): SkillEvidenceSplit {
-  const bulletText = [
-    ...resume.experience.flatMap((entry) => entry.bullets),
-    ...resume.projects.flatMap((project) => project.bullets),
+  const bullets = [
+    ...resume.experience.flatMap((entry) => entry.bullets.map((bullet) => ({ text: bullet.text, section: 'experience' as const, entryId: entry.id }))),
+    ...resume.projects.flatMap((project) => project.bullets.map((text) => ({ text, section: 'projects' as const, entryId: project.id }))),
   ]
-    .join(' \n ')
-    .toLowerCase()
 
   const backedUp: string[] = []
   const listedOnly: string[] = []
+  const evidence: Evidence[] = []
 
   for (const skill of resume.skills) {
-    const normalized = normalizeSkillName(skill.name)
-    const mentioned = bulletText.includes(normalized) || bulletText.includes(skill.name.toLowerCase())
-    if (mentioned) {
-      backedUp.push(skill.name)
+    const supporting = bullets.find((bullet) => skillMentionedIn(skill, bullet.text.toLowerCase()))
+    if (supporting) {
+      backedUp.push(skill.rawName)
+      evidence.push(explicitEvidence(supporting.text, supporting.section, supporting.entryId))
     } else {
-      listedOnly.push(skill.name)
+      listedOnly.push(skill.rawName)
     }
   }
 
-  return { backedUp, listedOnly }
+  return { backedUp, listedOnly, evidence }
 }
 
 /**
  * A skill listed in the skills section but never mentioned anywhere in the
  * experience bullets is weaker evidence than one backed up by a specific
- * accomplishment. This checks, for each extracted skill, whether its
- * normalized name also appears in at least one experience or project
- * bullet — not whether the skill has an `evidence` entry at all (the
- * parser always populates that from the skills-list line itself, which
- * wouldn't distinguish anything).
+ * accomplishment (spec §33). This checks, for each extracted skill,
+ * whether its canonical or listed name also appears in at least one
+ * experience or project bullet — not whether the skill has skills-list
+ * evidence (every listed skill does, which wouldn't distinguish anything).
  */
 export function analyzeSkillsEvidence({ resume }: AtsAnalysisInput): AnalyzerResult {
   if (resume.skills.length === 0) {
@@ -57,7 +63,7 @@ export function analyzeSkillsEvidence({ resume }: AtsAnalysisInput): AnalyzerRes
     }
   }
 
-  const { backedUp, listedOnly } = splitSkillsByEvidence(resume)
+  const { backedUp, listedOnly, evidence } = splitSkillsByEvidence(resume)
   const score = Math.round((backedUp.length / resume.skills.length) * 100)
 
   return {
@@ -68,5 +74,6 @@ export function analyzeSkillsEvidence({ resume }: AtsAnalysisInput): AnalyzerRes
       listedOnly.length === 0
         ? 'Every listed skill is also demonstrated in an experience or project bullet.'
         : `${listedOnly.length} of ${resume.skills.length} skills appear only in the skills list, with no supporting bullet.`,
+    evidence,
   }
 }

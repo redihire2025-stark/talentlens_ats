@@ -1,5 +1,6 @@
 import type { AnalyzerResult, AtsAnalysisInput } from './types'
 import { isQuantified, startsWithActionVerb } from './bulletQuality'
+import { explicitEvidence } from '@/lib/schema/evidence'
 
 /**
  * A proxy for how compelling the resume's content is, independent of any
@@ -11,7 +12,8 @@ import { isQuantified, startsWithActionVerb } from './bulletQuality'
  * improvements without inventing facts).
  */
 export function analyzeContentQuality({ resume }: AtsAnalysisInput): AnalyzerResult {
-  const bullets = resume.experience.flatMap((entry) => entry.bullets)
+  const entryBullets = resume.experience.flatMap((entry) => entry.bullets.map((bullet) => ({ entryId: entry.id, text: bullet.text })))
+  const bullets = entryBullets.map((b) => b.text)
 
   if (bullets.length === 0) {
     return {
@@ -44,5 +46,9 @@ export function analyzeContentQuality({ resume }: AtsAnalysisInput): AnalyzerRes
     ],
     issues,
     explanation: `${actionVerbCount} of ${bullets.length} bullets start with an action verb; ${quantifiedCount} of ${bullets.length} include a number or metric.`,
+    // The bullets that already read as concrete accomplishments (action verb + measurable detail).
+    evidence: entryBullets
+      .filter((b) => startsWithActionVerb(b.text) && isQuantified(b.text))
+      .map((b) => explicitEvidence(b.text, 'experience', b.entryId)),
   }
 }

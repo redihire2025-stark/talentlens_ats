@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { analyzeRiskConsistency } from './riskConsistencyAnalyzer'
 import { buildTestInput, buildTestResume } from './testFixtures'
+import { buildContactInformation, buildExperienceEntries } from '@/lib/schema/resumeBuilders'
 
 describe('analyzeRiskConsistency', () => {
   it('scores a clean, non-overlapping resume at 100 with no issues', () => {
@@ -13,7 +14,7 @@ describe('analyzeRiskConsistency', () => {
     const result = analyzeRiskConsistency(
       buildTestInput({
         resume: buildTestResume({
-          experience: [
+          experience: buildExperienceEntries([
             {
               company: 'Acme Corp',
               title: 'Engineer',
@@ -22,7 +23,7 @@ describe('analyzeRiskConsistency', () => {
               location: null,
               bullets: [],
             },
-          ],
+          ]),
         }),
       }),
     )
@@ -34,10 +35,10 @@ describe('analyzeRiskConsistency', () => {
     const result = analyzeRiskConsistency(
       buildTestInput({
         resume: buildTestResume({
-          experience: [
+          experience: buildExperienceEntries([
             { company: 'Acme Corp', title: 'Engineer', startDate: '2020-01-01', endDate: '2022-01-01', location: null, bullets: [] },
             { company: 'Globex', title: 'Consultant', startDate: '2021-01-01', endDate: '2022-06-01', location: null, bullets: [] },
-          ],
+          ]),
         }),
       }),
     )
@@ -49,10 +50,10 @@ describe('analyzeRiskConsistency', () => {
     const result = analyzeRiskConsistency(
       buildTestInput({
         resume: buildTestResume({
-          experience: [
+          experience: buildExperienceEntries([
             { company: 'Acme Corp', title: 'Engineer', startDate: '2020-01-01', endDate: '2022-01-01', location: null, bullets: [] },
             { company: 'Acme Corp', title: 'Engineer', startDate: '2021-01-01', endDate: '2022-06-01', location: null, bullets: [] },
-          ],
+          ]),
         }),
       }),
     )
@@ -63,13 +64,13 @@ describe('analyzeRiskConsistency', () => {
     const result = analyzeRiskConsistency(
       buildTestInput({
         resume: buildTestResume({
-          candidate: {
+          contact: buildContactInformation({
             name: 'Jordan Rivera',
             email: 'jordan@example.com',
             phone: null,
             location: null,
             links: [{ type: 'portfolio', url: 'not a url' }],
-          },
+          }),
         }),
       }),
     )
@@ -80,10 +81,10 @@ describe('analyzeRiskConsistency', () => {
     const result = analyzeRiskConsistency(
       buildTestInput({
         resume: buildTestResume({
-          experience: [
+          experience: buildExperienceEntries([
             { company: 'Acme Corp', title: 'Engineer', startDate: '2018-01-01', endDate: '2019-01-01', location: null, bullets: [] },
             { company: 'Acme Corp', title: 'Senior Engineer', startDate: '2020-01-01', endDate: '2022-01-01', location: null, bullets: [] },
-          ],
+          ]),
         }),
       }),
     )

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { analyzeExperienceStructure } from './experienceStructureAnalyzer'
 import { buildTestInput, buildTestResume } from './testFixtures'
+import { buildExperienceEntries } from '@/lib/schema/resumeBuilders'
 
 describe('analyzeExperienceStructure', () => {
   it('scores 100 when every entry is fully structured', () => {
@@ -15,7 +16,7 @@ describe('analyzeExperienceStructure', () => {
 
   it('flags an entry missing a company or bullets, without penalizing well-structured entries', () => {
     const resume = buildTestResume({
-      experience: [
+      experience: buildExperienceEntries([
         {
           company: 'Acme Corp',
           title: 'Frontend Engineer',
@@ -25,7 +26,7 @@ describe('analyzeExperienceStructure', () => {
           bullets: ['Built things.'],
         },
         { company: '', title: 'Baker', startDate: null, endDate: null, location: null, bullets: [] },
-      ],
+      ]),
     })
     const result = analyzeExperienceStructure(buildTestInput({ resume }))
     expect(result.score).toBe(50)

@@ -1,5 +1,7 @@
 import type { ScoreResult } from '@/types/score'
-import type { AnalyzerResult, AtsAnalysisInput, AtsScoreBreakdown, AtsScoreCategory } from './types'
+import { buildScoreComponent, totalWeightedScore } from '@/lib/scoring/scoreComponents'
+import { ATS_SCORE_WEIGHTS } from './scoringConfig'
+import { ATS_SCORE_CATEGORIES, type AnalyzerResult, type AtsAnalysisInput, type AtsScoreBreakdown, type AtsScoreCategory } from './types'
 import { analyzeParsing } from './parsingAnalyzer'
 import { analyzeSections } from './sectionAnalyzer'
 import { analyzeKeywords } from './keywordAnalyzer'
@@ -8,7 +10,6 @@ import { analyzeSkillsEvidence } from './skillsEvidenceAnalyzer'
 import { analyzeFormatting } from './formattingAnalyzer'
 import { analyzeContentQuality } from './contentQualityAnalyzer'
 import { analyzeRiskConsistency } from './riskConsistencyAnalyzer'
-import { calculateAtsScore } from './scoreCalculator'
 
 /**
  * `skillsEvidence` combines two signals into one PRD §11 "Skills &
@@ -27,6 +28,7 @@ function analyzeSkillsAndEvidence(input: AtsAnalysisInput): AnalyzerResult {
     strengths: [...evidence.strengths, ...keywords.strengths],
     issues: [...evidence.issues, ...keywords.issues],
     explanation: `${evidence.explanation} ${keywords.explanation}`,
+    evidence: [...(evidence.evidence ?? []), ...(keywords.evidence ?? [])],
   }
 }
 
@@ -42,26 +44,29 @@ const ANALYZERS: Record<AtsScoreCategory, (input: AtsAnalysisInput) => AnalyzerR
 
 /**
  * Runs every Resume Health / ATS Readiness sub-analyzer (PRD §11) over a
- * resume and combines the results into one explainable score. This is the
- * single entry point the API layer and UI call — see
- * docs/scoring/scoring-methodology.md for what each category measures.
+ * resume and combines the results into one explainable score: one
+ * `ScoreComponent` per category (raw score, configured weight, weighted
+ * contribution, explanation, evidence), in `ATS_SCORE_CATEGORIES` order,
+ * and an overall score that is exactly the rounded sum of the weighted
+ * contributions. This is the single entry point the API layer and UI call —
+ * see docs/scoring/scoring-methodology.md for what each category measures.
  */
-export function analyzeAtsCompatibility(input: AtsAnalysisInput): ScoreResult<AtsScoreBreakdown> {
-  const breakdown = {} as AtsScoreBreakdown
+export function analyzeAtsCompatibility(input: AtsAnalysisInput): ScoreResult<AtsScoreCategory> {
+  const breakdown: AtsScoreBreakdown = []
   const matched: string[] = []
   const missing: string[] = []
   const explanations: string[] = []
 
-  for (const [category, analyze] of Object.entries(ANALYZERS) as [AtsScoreCategory, (input: AtsAnalysisInput) => AnalyzerResult][]) {
-    const result = analyze(input)
-    breakdown[category] = result.score
+  for (const category of ATS_SCORE_CATEGORIES) {
+    const result = ANALYZERS[category](input)
+    breakdown.push(buildScoreComponent(category, result.score, ATS_SCORE_WEIGHTS[category], result.explanation, result.evidence ?? []))
     matched.push(...result.strengths)
     missing.push(...result.issues)
     explanations.push(result.explanation)
   }
 
   return {
-    score: calculateAtsScore(breakdown),
+    score: totalWeightedScore(breakdown),
     breakdown,
     matched,
     missing,

@@ -1,4 +1,4 @@
-import type { AtsScoreBreakdown } from './types'
+import type { AtsScoreWeights } from './types'
 
 /**
  * Internal weights combining the 7 Resume Health / ATS Readiness sub-scores
@@ -7,7 +7,7 @@ import type { AtsScoreBreakdown } from './types'
  * see docs/scoring/scoring-methodology.md. Configured here, not scattered
  * across the analyzer modules.
  */
-export const ATS_SCORE_WEIGHTS: AtsScoreBreakdown = {
+export const ATS_SCORE_WEIGHTS: AtsScoreWeights = {
   atsEssentials: 0.2,
   resumeStructure: 0.2,
   contentQuality: 0.15,

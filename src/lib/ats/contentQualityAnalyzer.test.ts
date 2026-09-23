@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { analyzeContentQuality } from './contentQualityAnalyzer'
 import { buildTestInput, buildTestResume } from './testFixtures'
+import { buildExperienceEntries } from '@/lib/schema/resumeBuilders'
 
 describe('analyzeContentQuality', () => {
   it('scores highly for bullets with action verbs, metrics, and a summary', () => {
@@ -11,7 +12,7 @@ describe('analyzeContentQuality', () => {
   it('scores low for vague, unquantified bullets with no summary', () => {
     const resume = buildTestResume({
       summary: null,
-      experience: [
+      experience: buildExperienceEntries([
         {
           company: 'Acme',
           title: 'Engineer',
@@ -20,7 +21,7 @@ describe('analyzeContentQuality', () => {
           location: null,
           bullets: ['Responsible for various tasks.', 'Worked with the team.'],
         },
-      ],
+      ]),
     })
     const result = analyzeContentQuality(buildTestInput({ resume }))
     expect(result.score).toBeLessThan(30)

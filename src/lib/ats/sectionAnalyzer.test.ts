@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { analyzeSections } from './sectionAnalyzer'
 import { buildTestInput, buildTestResume } from './testFixtures'
+import { buildContactInformation } from '@/lib/schema/resumeBuilders'
 
 describe('analyzeSections', () => {
   it('scores 100 when every section is present', () => {
@@ -17,7 +18,7 @@ describe('analyzeSections', () => {
     const result = analyzeSections(
       buildTestInput({
         resume: buildTestResume({
-          candidate: { name: null, email: null, phone: null, location: null, links: [] },
+          contact: buildContactInformation({ name: null, email: null, phone: null, location: null, links: [] }),
           summary: null,
           skills: [],
           experience: [],

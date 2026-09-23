@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { analyzeSkillsEvidence } from './skillsEvidenceAnalyzer'
 import { buildTestInput, buildTestResume } from './testFixtures'
+import { buildExperienceEntries, buildResumeSkills } from '@/lib/schema/resumeBuilders'
 
 describe('analyzeSkillsEvidence', () => {
   it('scores 0 with no skills', () => {
@@ -9,8 +10,8 @@ describe('analyzeSkillsEvidence', () => {
 
   it('credits a skill mentioned in an experience bullet', () => {
     const resume = buildTestResume({
-      skills: [{ name: 'React', category: 'framework', evidence: ['React'] }],
-      experience: [
+      skills: buildResumeSkills([{ rawName: 'React', category: 'framework' }]),
+      experience: buildExperienceEntries([
         {
           company: 'Acme',
           title: 'Engineer',
@@ -19,7 +20,7 @@ describe('analyzeSkillsEvidence', () => {
           location: null,
           bullets: ['Built reusable React components.'],
         },
-      ],
+      ]),
     })
     const result = analyzeSkillsEvidence(buildTestInput({ resume }))
     expect(result.score).toBe(100)
@@ -28,10 +29,10 @@ describe('analyzeSkillsEvidence', () => {
 
   it('flags a skill that only appears in the skills list', () => {
     const resume = buildTestResume({
-      skills: [{ name: 'Docker', category: 'tool', evidence: ['Docker'] }],
-      experience: [
+      skills: buildResumeSkills([{ rawName: 'Docker', category: 'tool' }]),
+      experience: buildExperienceEntries([
         { company: 'Acme', title: 'Engineer', startDate: null, endDate: null, location: null, bullets: ['Built things.'] },
-      ],
+      ]),
     })
     const result = analyzeSkillsEvidence(buildTestInput({ resume }))
     expect(result.score).toBe(0)
