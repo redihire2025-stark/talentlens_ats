@@ -1,25 +1,25 @@
 import { ATS_SCORE_CATEGORIES, type AtsScoreCategory } from '@/lib/ats/types'
 
-/** Display labels for the ATS Compatibility Score's 7 categories — see docs/scoring/scoring-methodology.md. */
+/** Display labels for the Resume Health / ATS Readiness score's 7 categories — see docs/scoring/scoring-methodology.md. */
 export const ATS_CATEGORY_LABELS: Record<AtsScoreCategory, string> = {
-  parsing: 'Parsing',
-  sections: 'Sections',
-  keywords: 'Keywords',
-  experience: 'Experience',
-  skillsEvidence: 'Skills Evidence',
-  formatting: 'Formatting',
+  atsEssentials: 'ATS Essentials',
+  resumeStructure: 'Resume Structure',
   contentQuality: 'Content Quality',
+  skillsEvidence: 'Skills & Evidence',
+  experienceSeniority: 'Experience & Seniority',
+  recruiterReadability: 'Recruiter Readability',
+  riskConsistency: 'Risk & Consistency',
 }
 
 /** Shorter labels for the "Resume Health" summary cards. */
 export const ATS_HEALTH_CARD_LABELS: Record<AtsScoreCategory, string> = {
-  parsing: 'Parsing',
-  sections: 'Structure',
-  keywords: 'Keywords',
-  experience: 'Experience',
+  atsEssentials: 'ATS Essentials',
+  resumeStructure: 'Structure',
+  contentQuality: 'Content',
   skillsEvidence: 'Skills',
-  formatting: 'Formatting',
-  contentQuality: 'Content Impact',
+  experienceSeniority: 'Experience',
+  recruiterReadability: 'Readability',
+  riskConsistency: 'Consistency',
 }
 
 export type HealthStatus = 'strong' | 'good' | 'needs-improvement'
@@ -32,10 +32,10 @@ export function scoreToHealthStatus(score: number): HealthStatus {
 }
 
 /**
- * `analyzeAtsCompatibility` (TASK-008) builds its `explanations` array by
- * iterating `ATS_SCORE_CATEGORIES` in this exact order, so index-matching
- * against that same order is how a category's own explanation is found —
- * not string-matching or re-deriving it.
+ * `analyzeAtsCompatibility` builds its `explanations` array by iterating
+ * `ATS_SCORE_CATEGORIES` in this exact order, so index-matching against
+ * that same order is how a category's own explanation is found — not
+ * string-matching or re-deriving it.
  */
 export function explanationForCategory(explanations: string[], category: AtsScoreCategory): string {
   return explanations[ATS_SCORE_CATEGORIES.indexOf(category)] ?? ''

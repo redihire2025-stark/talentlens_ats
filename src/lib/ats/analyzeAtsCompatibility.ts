@@ -7,22 +7,43 @@ import { analyzeExperienceStructure } from './experienceStructureAnalyzer'
 import { analyzeSkillsEvidence } from './skillsEvidenceAnalyzer'
 import { analyzeFormatting } from './formattingAnalyzer'
 import { analyzeContentQuality } from './contentQualityAnalyzer'
+import { analyzeRiskConsistency } from './riskConsistencyAnalyzer'
 import { calculateAtsScore } from './scoreCalculator'
 
+/**
+ * `skillsEvidence` combines two signals into one PRD §11 "Skills &
+ * Evidence" category: whether listed skills are backed up by a bullet
+ * (`analyzeSkillsEvidence`), and how many distinct skill keywords the
+ * resume surfaces at all (`analyzeKeywords`, formerly its own top-level
+ * category — see docs/scoring/scoring-methodology.md). Averaging keeps
+ * either signal from being ignored while still producing one explainable
+ * sub-score.
+ */
+function analyzeSkillsAndEvidence(input: AtsAnalysisInput): AnalyzerResult {
+  const evidence = analyzeSkillsEvidence(input)
+  const keywords = analyzeKeywords(input)
+  return {
+    score: Math.round((evidence.score + keywords.score) / 2),
+    strengths: [...evidence.strengths, ...keywords.strengths],
+    issues: [...evidence.issues, ...keywords.issues],
+    explanation: `${evidence.explanation} ${keywords.explanation}`,
+  }
+}
+
 const ANALYZERS: Record<AtsScoreCategory, (input: AtsAnalysisInput) => AnalyzerResult> = {
-  parsing: analyzeParsing,
-  sections: analyzeSections,
-  keywords: analyzeKeywords,
-  experience: analyzeExperienceStructure,
-  skillsEvidence: analyzeSkillsEvidence,
-  formatting: analyzeFormatting,
+  atsEssentials: analyzeParsing,
+  resumeStructure: analyzeSections,
   contentQuality: analyzeContentQuality,
+  skillsEvidence: analyzeSkillsAndEvidence,
+  experienceSeniority: analyzeExperienceStructure,
+  recruiterReadability: analyzeFormatting,
+  riskConsistency: analyzeRiskConsistency,
 }
 
 /**
- * Runs every ATS sub-analyzer over a resume and combines the results into
- * one explainable ATS Compatibility Score. This is the single entry point
- * the API layer (TASK-012) and UI (TASK-014) call — see
+ * Runs every Resume Health / ATS Readiness sub-analyzer (PRD §11) over a
+ * resume and combines the results into one explainable score. This is the
+ * single entry point the API layer and UI call — see
  * docs/scoring/scoring-methodology.md for what each category measures.
  */
 export function analyzeAtsCompatibility(input: AtsAnalysisInput): ScoreResult<AtsScoreBreakdown> {

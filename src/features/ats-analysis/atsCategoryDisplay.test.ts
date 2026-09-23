@@ -16,7 +16,7 @@ describe('scoreToHealthStatus', () => {
 describe('explanationForCategory', () => {
   it('returns the explanation matching a real ScoreResult, by category order', () => {
     const result = analyzeAtsCompatibility(buildTestInput())
-    const sectionsExplanation = explanationForCategory(result.explanations, 'sections')
+    const sectionsExplanation = explanationForCategory(result.explanations, 'resumeStructure')
     expect(sectionsExplanation).toBe(result.explanations[1])
     expect(sectionsExplanation.toLowerCase()).toContain('section')
   })

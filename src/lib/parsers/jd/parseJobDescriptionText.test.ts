@@ -60,6 +60,56 @@ describe('parseJobDescriptionText', () => {
   })
 })
 
+describe('parseJobDescriptionText prose extraction (PRD §9 flagship fix)', () => {
+  it('mines a skill mentioned only in a prose requirement sentence, not just list lines', () => {
+    const { jobDescription } = parseJobDescriptionText(
+      'Backend Engineer\n\nRequirements\n3+ years building production services with Kubernetes and PostgreSQL.\n\nResponsibilities\nOwn the deployment pipeline.',
+    )
+    expect(jobDescription.requiredSkills).toEqual(expect.arrayContaining(['kubernetes', 'postgresql']))
+  })
+
+  it('mines a technology mentioned only in a responsibilities sentence into `technologies`, not requiredSkills', () => {
+    const { jobDescription } = parseJobDescriptionText(
+      'Platform Engineer\n\nResponsibilities\nMaintain our Terraform-managed AWS infrastructure and Docker-based CI pipeline.\n\nRequirements\nRequired Skills: Linux, Bash',
+    )
+    expect(jobDescription.technologies).toEqual(expect.arrayContaining(['aws', 'docker']))
+    expect(jobDescription.requiredSkills).not.toContain('aws')
+  })
+
+  it('does not mine short, ambiguous tokens like "go" or "js" out of ordinary prose', () => {
+    const { jobDescription } = parseJobDescriptionText(
+      'Program Manager\n\nResponsibilities\nGo through the backlog and report status; js not required here.\n\nRequirements\nRequired Skills: Communication',
+    )
+    expect(jobDescription.technologies).not.toContain('go')
+    expect(jobDescription.technologies).not.toContain('javascript')
+  })
+
+  it('extracts soft skills mentioned in prose', () => {
+    const { jobDescription } = parseJobDescriptionText(
+      'Team Lead\n\nResponsibilities\nStrong communication and leadership are essential for mentoring junior engineers.\n\nRequirements\nRequired Skills: React',
+    )
+    expect(jobDescription.softSkills).toEqual(expect.arrayContaining(['communication', 'leadership', 'mentoring']))
+  })
+
+  it('extracts a seniority level from the title', () => {
+    const { jobDescription } = parseJobDescriptionText(SAMPLE_JD)
+    expect(jobDescription.seniority).toBe('senior')
+  })
+
+  it('extracts a repeated domain acronym but not a one-off or generic one', () => {
+    const { jobDescription } = parseJobDescriptionText(
+      'Compliance Engineer\n\nResponsibilities\nEnsure HIPAA compliance across services; review HIPAA controls quarterly.\n\nRequirements\nRequired Skills: Python\n\nOur CEO cares about this.',
+    )
+    expect(jobDescription.domainTerms).toContain('HIPAA')
+    expect(jobDescription.domainTerms).not.toContain('CEO')
+  })
+
+  it('keeps rawText equal to the trimmed source text', () => {
+    const { jobDescription } = parseJobDescriptionText(SAMPLE_JD)
+    expect(jobDescription.rawText).toBe(SAMPLE_JD.trim())
+  })
+})
+
 describe('parseJobDescriptionText edge cases', () => {
   it('returns an empty job description with a warning when no text was extracted', () => {
     const { jobDescription, warnings } = parseJobDescriptionText('   ')

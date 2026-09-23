@@ -4,6 +4,7 @@ import type { JobDescription } from './jobDescription'
 function buildJobDescription(overrides: Partial<JobDescription> = {}): JobDescription {
   return {
     title: 'Senior Frontend Engineer',
+    seniority: 'senior',
     experience: { minimumYears: 5, maximumYears: null },
     requiredSkills: ['react', 'typescript'],
     preferredSkills: ['graphql'],
@@ -13,6 +14,10 @@ function buildJobDescription(overrides: Partial<JobDescription> = {}): JobDescri
     location: 'Austin, TX',
     employmentType: 'full-time',
     keywords: ['react', 'typescript', 'frontend'],
+    technologies: [],
+    softSkills: [],
+    domainTerms: [],
+    rawText: 'Senior Frontend Engineer. Build and maintain customer-facing web applications.',
     ...overrides,
   }
 }

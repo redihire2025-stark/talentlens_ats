@@ -44,6 +44,7 @@ export function buildTestResume(overrides: Partial<Resume> = {}): Resume {
 export function buildTestJobDescription(overrides: Partial<JobDescription> = {}): JobDescription {
   return {
     title: 'Frontend Engineer',
+    seniority: null,
     experience: { minimumYears: 5, maximumYears: null },
     requiredSkills: ['React', 'TypeScript', 'Docker'],
     preferredSkills: ['GraphQL'],
@@ -53,6 +54,10 @@ export function buildTestJobDescription(overrides: Partial<JobDescription> = {})
     location: 'Austin, TX',
     employmentType: 'full-time',
     keywords: ['react', 'typescript', 'docker', 'graphql'],
+    technologies: [],
+    softSkills: [],
+    domainTerms: [],
+    rawText: '',
     ...overrides,
   }
 }

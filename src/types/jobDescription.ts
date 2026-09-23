@@ -16,6 +16,8 @@ export interface ExperienceRequirement {
  */
 export interface JobDescription {
   title: Nullable<string>
+  /** e.g. "senior", "staff" — from `titleSeniority`'s `SeniorityLevel`, kept as a plain string here so a JD with no recognizable level doesn't need a sentinel value beyond `null`. */
+  seniority: Nullable<string>
   experience: ExperienceRequirement
   requiredSkills: string[]
   preferredSkills: string[]
@@ -25,4 +27,12 @@ export interface JobDescription {
   location: Nullable<string>
   employmentType: Nullable<EmploymentType>
   keywords: string[]
+  /** Technologies mentioned in prose (responsibilities, overview) that weren't stated as a required/preferred skill — signal, not a hard requirement. */
+  technologies: string[]
+  /** Soft skills mentioned anywhere in the posting (communication, leadership, …). */
+  softSkills: string[]
+  /** Repeated all-caps acronyms/jargon (HIPAA, SOC2, GDPR, …) not already captured as a skill — see `extractDomainTerms`. */
+  domainTerms: string[]
+  /** The full extracted JD text, kept for AI-assisted semantic matching/explanation (PRD §14) and for re-parsing without re-uploading. */
+  rawText: string
 }

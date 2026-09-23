@@ -7,7 +7,7 @@ describe('analyzeAtsCompatibility', () => {
     const result = analyzeAtsCompatibility(buildTestInput())
     expect(result.score).toBeGreaterThan(0)
     expect(Object.keys(result.breakdown).sort()).toEqual(
-      ['contentQuality', 'experience', 'formatting', 'keywords', 'parsing', 'sections', 'skillsEvidence'].sort(),
+      ['atsEssentials', 'resumeStructure', 'contentQuality', 'skillsEvidence', 'experienceSeniority', 'recruiterReadability', 'riskConsistency'].sort(),
     )
     expect(result.explanations).toHaveLength(7)
   })
@@ -32,7 +32,9 @@ describe('analyzeAtsCompatibility', () => {
         parserWarnings: ['No text could be extracted from this document.'],
       }),
     )
-    expect(result.score).toBeLessThan(10)
+    // Not exactly 0: riskConsistency (5% weight) legitimately scores 100 for
+    // an empty resume — there's no experience to have date/overlap risk.
+    expect(result.score).toBeLessThan(15)
   })
 
   it('never fabricates a strength or issue not backed by the resume content', () => {
