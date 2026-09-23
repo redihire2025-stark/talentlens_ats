@@ -24,7 +24,7 @@ export default function ATSDashboard({ onNav, onExport }: Props) {
       <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-4 py-16">
         <div className="w-full max-w-md text-center">
           <h1 className="font-serif text-2xl text-foreground mb-2">No analysis yet</h1>
-          <p className="text-muted-foreground text-sm mb-8">Upload a resume to see your ATS Compatibility Score.</p>
+          <p className="text-muted-foreground text-sm mb-8">Upload a resume to see your Resume Health / ATS Readiness score.</p>
           <button
             onClick={() => onNav('upload')}
             className="px-6 py-3 bg-primary text-primary-foreground text-sm font-medium rounded-xl hover:bg-primary/90 transition-colors"
@@ -101,7 +101,7 @@ export default function ATSDashboard({ onNav, onExport }: Props) {
       <div className="grid lg:grid-cols-3 gap-6 mb-8">
         {/* Score card */}
         <div className="bg-card border border-border rounded-2xl p-8 flex flex-col items-center text-center">
-          <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-5">ATS Compatibility</div>
+          <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-5">Resume Health</div>
           <ScoreRing score={atsResult.score} size={140} strokeWidth={10} />
           <p className="text-sm text-muted-foreground leading-relaxed mt-5 max-w-[220px]">
             {atsResult.score >= 85

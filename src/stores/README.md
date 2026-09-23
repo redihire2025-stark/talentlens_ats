@@ -4,11 +4,11 @@ Zustand state slices for anonymous session state. One store per concern —
 never a single monolithic store:
 
 - `resumeStore` — the uploaded file and its parsed `Resume` (TASK-013)
-- `analysisStore` — the ATS Compatibility Score (TASK-013)
+- `analysisStore` — the Resume Health / ATS Readiness score (TASK-013)
 - `jobDescriptionStore` — the JD text/file and its parsed `JobDescription` (TASK-015)
-- `matchStore` — the resume/JD `MatchAnalysis` and JD Match Score (TASK-015)
+- `matchStore` — the resume/JD `MatchAnalysis` and Job Match Score (TASK-015)
 - `editorStore` — the working draft `Resume`, recommendation accept/reject/edit
-  state, and the live-recalculated ATS/JD Match scores (TASK-016)
+  state, and the live-recalculated Resume Health/Job Match scores (TASK-016)
 - `versionsStore` — resume version history: `ResumeVersion` snapshots with
   parent links, a human-readable diff, and a score snapshot (TASK-017)
 

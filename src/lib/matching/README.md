@@ -2,7 +2,7 @@
 
 Resume ↔ Job Description matching engine, implemented in TASK-009. Produces
 structured per-category results (`MatchAnalysis`) — it deliberately stops
-short of computing the final JD Match Score, which is the score engine's
+short of computing the final Job Match Score, which is the score engine's
 job (TASK-010). See `docs/scoring/matching-rules.md`.
 
 - `fuzzyMatch.ts` — `tokenOverlapRatio`, the shared last-resort layer

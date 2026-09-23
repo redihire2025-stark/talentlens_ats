@@ -42,7 +42,7 @@ function MiniDashboard() {
               </div>
             </div>
             <div>
-              <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-0.5">ATS Compatibility</div>
+              <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-0.5">Resume Health</div>
               <div className="font-semibold text-foreground text-sm mb-1">Highly Compatible</div>
               <div className="text-xs text-muted-foreground leading-relaxed">Strong structure, clear formatting, good keyword coverage.</div>
             </div>
@@ -158,7 +158,7 @@ export default function LandingPage({ onNav }: Props) {
               </h1>
 
               <p className="text-white/70 text-lg leading-relaxed mb-8 max-w-md">
-                Upload your resume, get an ATS compatibility score, match it against any job description, and improve it with evidence-based suggestions.
+                Upload your resume, get a Resume Health / ATS Readiness score, match it against any job description, and improve it with evidence-based suggestions.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-3 mb-8">

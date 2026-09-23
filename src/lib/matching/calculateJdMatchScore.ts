@@ -14,8 +14,8 @@ function calculateWeightedScore(breakdown: JdMatchScoreBreakdown): number {
 
 /**
  * Combines the matching engine's per-category results (TASK-009) and the
- * resume's ATS Compatibility Score (TASK-008, computed independently since
- * it never depends on a JD) into the JD Match Score. See
+ * resume's Resume Health / ATS Readiness score (TASK-008, computed
+ * independently since it never depends on a JD) into the Job Match Score. See
  * docs/scoring/scoring-methodology.md for the weight table and a note on
  * why `keywords` currently overlaps with required/preferred skills.
  */
@@ -52,7 +52,7 @@ export function calculateJdMatchScore(
       ? `Education: ${analysis.education.matchedRequirements.length} of ${analysis.education.matchedRequirements.length + analysis.education.missingRequirements.length} requirements met.`
       : 'No specific education requirement was stated.',
     `Keywords: ${breakdown.keywords}% of job description keywords found in the resume.`,
-    `ATS Compatibility: ${atsCompatibilityScore}/100 (see the ATS Compatibility Score for its own breakdown).`,
+    `Resume Health: ${atsCompatibilityScore}/100 (see the Resume Health / ATS Readiness score for its own breakdown).`,
   ]
 
   return {

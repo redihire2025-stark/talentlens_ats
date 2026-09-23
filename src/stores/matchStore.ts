@@ -17,7 +17,7 @@ interface MatchState {
   reset: () => void
 }
 
-/** The resume/JD match analysis and JD Match Score — computed once both a resume and a job description are available. */
+/** The resume/JD match analysis and Job Match Score — computed once both a resume and a job description are available. */
 export const useMatchStore = create<MatchState>((set) => ({
   analysis: null,
   result: null,

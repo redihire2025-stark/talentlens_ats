@@ -1,6 +1,6 @@
 # features/ats-analysis
 
-ATS Compatibility dashboard and score breakdown UI. `ATSDashboard.tsx`
+Resume Health / ATS Readiness dashboard and score breakdown UI. `ATSDashboard.tsx`
 (still in `src/components` — not yet moved into this folder) is wired to
 `analysisStore`/`resumeStore` as of TASK-014.
 

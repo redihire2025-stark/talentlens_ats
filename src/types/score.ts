@@ -9,7 +9,7 @@ export type MatchStatus = 'matched' | 'partial' | 'missing'
 export type ScoreBreakdown = Record<string, number>
 
 /**
- * Shared response shape for both the ATS Compatibility Score and the JD
+ * Shared response shape for both the Resume Health / ATS Readiness score and the Job
  * Match Score (see docs/scoring/scoring-methodology.md). Every score is
  * returned with its breakdown and explanations — never a bare number — so
  * the UI never has to present a mysterious figure.

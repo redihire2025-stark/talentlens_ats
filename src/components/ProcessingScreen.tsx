@@ -13,7 +13,7 @@ const STEPS = [
   { label: 'Extracting sections', minDuration: 500 },
   { label: 'Identifying skills', minDuration: 500 },
   { label: 'Analyzing experience', minDuration: 500 },
-  { label: 'Checking ATS compatibility', minDuration: 600 },
+  { label: 'Checking Resume Health / ATS Readiness', minDuration: 600 },
   { label: 'Preparing recommendations', minDuration: 400 },
 ]
 

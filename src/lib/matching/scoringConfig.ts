@@ -14,7 +14,7 @@ export type JdMatchScoreCategory = (typeof JD_MATCH_SCORE_CATEGORIES)[number]
 export type JdMatchScoreBreakdown = Record<JdMatchScoreCategory, number>
 
 /**
- * Product weights for the JD Match Score, straight from AGENTS.md's
+ * Product weights for the Job Match Score, straight from AGENTS.md's
  * SCORING section — not a claim about how any specific ATS vendor weighs
  * these factors. Configured here, not scattered across the matchers.
  */

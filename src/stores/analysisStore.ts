@@ -14,7 +14,7 @@ interface AnalysisState {
   reset: () => void
 }
 
-/** The resume's ATS Compatibility Score — computed once from the parsed Resume, independent of any job description. */
+/** The resume's Resume Health / ATS Readiness score — computed once from the parsed Resume, independent of any job description. */
 export const useAnalysisStore = create<AnalysisState>((set) => ({
   atsResult: null,
   status: 'idle',

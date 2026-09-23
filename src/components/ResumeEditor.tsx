@@ -289,7 +289,7 @@ export default function ResumeEditor({ onNav, onExport }: Props) {
             {/* ATS score */}
             <div className="bg-card border border-border rounded-xl p-4 text-center">
               <ScoreRing score={atsScore} size={80} strokeWidth={7} />
-              <div className="text-xs font-medium text-foreground mt-2.5">ATS Compatibility</div>
+              <div className="text-xs font-medium text-foreground mt-2.5">Resume Health</div>
               {edited && <div className="font-mono text-[10px] text-warning mt-1">unsaved edit</div>}
             </div>
 

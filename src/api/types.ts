@@ -37,7 +37,7 @@ export interface ParseJobDescriptionResponse {
 export interface MatchRequest {
   resume: Resume
   jobDescription: JobDescription
-  /** The resume's ATS Compatibility Score — computed separately (it never depends on the JD) and passed in rather than recomputed here. */
+  /** The resume's Resume Health / ATS Readiness score — computed separately (it never depends on the JD) and passed in rather than recomputed here. */
   atsScore: number
 }
 export interface MatchResponse {

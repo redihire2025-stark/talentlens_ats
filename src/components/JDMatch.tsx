@@ -159,7 +159,7 @@ export default function JDMatch({ onNav }: Props) {
             <div className="bg-card border border-border rounded-2xl p-6 flex items-center gap-6">
               <ScoreRing score={result.score} size={100} strokeWidth={8} />
               <div>
-                <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">JD Match Score</div>
+                <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">Job Match Score</div>
                 <div className="font-semibold text-foreground mb-1">{jobDescription?.title ?? 'This role'}</div>
                 <p className="text-xs text-muted-foreground leading-relaxed max-w-xs">
                   {result.score >= 85

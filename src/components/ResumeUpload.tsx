@@ -60,7 +60,7 @@ export default function ResumeUpload({ onNav }: Props) {
             {"Let's analyze your resume"}
           </h1>
           <p className="text-muted-foreground">
-            Upload your resume and get a full ATS compatibility analysis in seconds.
+            Upload your resume and get a full Resume Health / ATS Readiness analysis in seconds.
           </p>
         </div>
 
