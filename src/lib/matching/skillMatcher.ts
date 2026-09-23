@@ -29,15 +29,33 @@ function allBullets(resume: Resume): string[] {
  */
 export function matchSkill(jdSkillName: string, resume: Resume): SkillMatchEntry {
   const canonical = normalizeSkillName(jdSkillName)
+  const isNormalizedVariant = canonical !== jdSkillName.trim().toLowerCase()
 
   const exactMatch = resume.skills.find((skill) => normalizeSkillName(skill.name) === canonical)
   if (exactMatch) {
-    return { skill: canonical, status: 'matched', evidence: exactMatch.evidence.length > 0 ? exactMatch.evidence : [exactMatch.name] }
+    const evidence = exactMatch.evidence.length > 0 ? exactMatch.evidence : [exactMatch.name]
+    return {
+      requirement: jdSkillName,
+      skill: canonical,
+      status: 'matched',
+      matchType: isNormalizedVariant ? 'normalized' : 'exact',
+      confidence: 1,
+      evidence,
+      reason: `Found "${exactMatch.name}" in the resume's skills list.`,
+    }
   }
 
   const bulletMatch = allBullets(resume).find((bullet) => bullet.toLowerCase().includes(canonical))
   if (bulletMatch) {
-    return { skill: canonical, status: 'matched', evidence: [bulletMatch] }
+    return {
+      requirement: jdSkillName,
+      skill: canonical,
+      status: 'matched',
+      matchType: 'synonym',
+      confidence: 0.9,
+      evidence: [bulletMatch],
+      reason: `"${canonical}" is mentioned directly in an experience or project bullet.`,
+    }
   }
 
   let bestFuzzy: { name: string; ratio: number } | null = null
@@ -46,10 +64,26 @@ export function matchSkill(jdSkillName: string, resume: Resume): SkillMatchEntry
     if (!bestFuzzy || ratio > bestFuzzy.ratio) bestFuzzy = { name: skill.name, ratio }
   }
   if (bestFuzzy && bestFuzzy.ratio >= FUZZY_PARTIAL_THRESHOLD) {
-    return { skill: canonical, status: 'partial', evidence: [bestFuzzy.name] }
+    return {
+      requirement: jdSkillName,
+      skill: canonical,
+      status: 'partial',
+      matchType: 'fuzzy',
+      confidence: Math.round(bestFuzzy.ratio * 100) / 100,
+      evidence: [bestFuzzy.name],
+      reason: `The resume lists "${bestFuzzy.name}", which is related but not a confirmed match for "${jdSkillName}".`,
+    }
   }
 
-  return { skill: canonical, status: 'missing', evidence: [] }
+  return {
+    requirement: jdSkillName,
+    skill: canonical,
+    status: 'missing',
+    matchType: 'none',
+    confidence: 1,
+    evidence: [],
+    reason: `No evidence of "${jdSkillName}" was found in the resume's skills or bullets.`,
+  }
 }
 
 export function matchSkills(jdSkillNames: string[], resume: Resume): SkillMatchEntry[] {

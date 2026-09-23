@@ -7,12 +7,26 @@ export interface MatchInput {
   jobDescription: JobDescription
 }
 
+/**
+ * How a skill was matched, in the order the deterministic layers run (see
+ * docs/scoring/matching-rules.md). `none` means no layer produced a match —
+ * paired with `status: 'missing'`.
+ */
+export type MatchType = 'exact' | 'normalized' | 'synonym' | 'fuzzy' | 'semantic' | 'none'
+
 export interface SkillMatchEntry {
-  /** The JD skill's canonical (normalized) name. */
+  /** The JD's original, as-written requirement text (e.g. "React.js"). */
+  requirement: string
+  /** The JD skill's canonical (normalized) name (e.g. "react") — see PRD §12. */
   skill: string
   status: MatchStatus
-  /** Resume text (a skill name or bullet) supporting this status; empty when missing. */
+  matchType: MatchType
+  /** 0-1. 1 for an exact/normalized match; lower for fuzzy; always 1 for a confirmed `missing` (certain there's no evidence). */
+  confidence: number
+  /** Resume text (a skill name or bullet) supporting this status; empty when missing. This is PRD §12's `resumeEvidence`, named `evidence` here for consistency with the rest of this file. */
   evidence: string[]
+  /** One human-readable sentence explaining the status — never fabricated, always derived from what was/wasn't found. */
+  reason: string
 }
 
 export interface SkillMatchResult {
