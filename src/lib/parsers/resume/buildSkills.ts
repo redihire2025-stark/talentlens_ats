@@ -1,4 +1,5 @@
-import type { Skill, SkillCategory } from '@/types/resume'
+import type { ResumeSkill, SkillCategory } from '@/types/resume'
+import { buildResumeSkill } from '@/lib/schema/resumeBuilders'
 
 const LABEL_TO_CATEGORY: [pattern: RegExp, category: SkillCategory][] = [
   [/language/i, 'language'],
@@ -21,11 +22,12 @@ function categoryForLabel(label: string): SkillCategory {
 /**
  * Splits a "Skills" section into individual skills. Lines are often
  * grouped under a label ("Languages: JavaScript, TypeScript"), which gives
- * a reasonable default category; full canonicalization (React.js → react)
- * happens in the normalization engine (TASK-007), not here.
+ * a reasonable default category. `rawName` keeps the spelling as written;
+ * `canonicalName` comes from the normalization engine's skill dictionary.
+ * Each skill's evidence quotes the full skills-list line it came from.
  */
-export function buildSkills(skillLines: string[]): Skill[] {
-  const skills: Skill[] = []
+export function buildSkills(skillLines: string[]): ResumeSkill[] {
+  const skills: ResumeSkill[] = []
   const seen = new Set<string>()
 
   for (const rawLine of skillLines) {
@@ -46,7 +48,7 @@ export function buildSkills(skillLines: string[]): Skill[] {
       const key = name.toLowerCase()
       if (seen.has(key)) continue
       seen.add(key)
-      skills.push({ name, category, evidence: [line] })
+      skills.push(buildResumeSkill({ rawName: name, category, sourceLine: line }, skills.length))
     }
   }
 

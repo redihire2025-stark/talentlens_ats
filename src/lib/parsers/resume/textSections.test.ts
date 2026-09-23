@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { splitResumeSections } from './textSections'
+import { analyzeResumeLayout, splitResumeSections } from './textSections'
 
 describe('splitResumeSections', () => {
   it('splits recognized headers, case-insensitively, with common aliases', () => {
@@ -54,4 +54,21 @@ describe('splitResumeSections', () => {
       expect(sections.skills).toEqual(['React, TypeScript'])
     },
   )
+
+  it('recognizes languages and awards headers', () => {
+    const sections = splitResumeSections('Languages\nEnglish\nHonors & Awards\nDean\'s List')
+    expect(sections.languages).toEqual(['English'])
+    expect(sections.awards).toEqual(["Dean's List"])
+  })
+})
+
+describe('analyzeResumeLayout', () => {
+  it('records every recognized header in document order, as written', () => {
+    const { detected } = analyzeResumeLayout('Jordan\nWORK EXPERIENCE\nAcme\nEducation:\nUT\nSkills\nReact')
+    expect(detected).toEqual([
+      { name: 'experience', heading: 'WORK EXPERIENCE' },
+      { name: 'education', heading: 'Education:' },
+      { name: 'skills', heading: 'Skills' },
+    ])
+  })
 })

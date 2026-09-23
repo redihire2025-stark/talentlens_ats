@@ -6,6 +6,7 @@ import {
   buildExperienceBullet,
   buildExperienceEntry,
   buildResumeSkill,
+  buildProjectEntry,
   detectExperienceType,
   emptyResume,
   linkSkillEvidence,
@@ -162,6 +163,17 @@ describe('skill linking', () => {
     const edited = linkSkillEvidence({ ...linked, experience: [rebuildExperienceEntry(linked.experience[0]!, { bullets: ['Wrote docs'] }, 0)] })
     expect(edited.skills[0]!.sources).toEqual(['skills-section'])
     expect(edited.skills[0]!.evidence).toEqual([explicitEvidence('Tools: Docker, Git', 'skills', 'skill-0')])
+  })
+
+  it('links a skill mentioned only in a project bullet to that project', () => {
+    const linked = linkSkillEvidence(
+      emptyResume({
+        skills: [buildResumeSkill({ rawName: 'Docker' }, 0)],
+        projects: [buildProjectEntry({ name: 'Infra', description: null, bullets: ['Packaged the CLI with Docker'], technologies: [], url: null }, 0)],
+      }),
+    )
+    expect(linked.skills[0]!.sources).toEqual(['skills-section', 'projects'])
+    expect(linked.skills[0]!.evidence[1]).toEqual(explicitEvidence('Packaged the CLI with Docker', 'projects', 'proj-0'))
   })
 
   it('reindexes positional skill ids and their evidence entryIds together', () => {

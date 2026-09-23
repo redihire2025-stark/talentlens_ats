@@ -1,15 +1,18 @@
-import type { Candidate } from '@/types/resume'
+import type { ContactInformation } from '@/types/resume'
+import { buildContactInformation } from '@/lib/schema/resumeBuilders'
 import { extractEmail, extractLinks, extractLocation, extractName, extractPhone } from './fieldExtractors'
 
-export function buildCandidate(headerLines: string[]): Candidate {
+/** Extracts contact fields from the header block; each found field's evidence quotes the header line it came from. */
+export function buildContact(headerLines: string[]): ContactInformation {
   const headerText = headerLines.join('\n')
-  return {
+  return buildContactInformation({
     name: extractName(headerLines),
     email: extractEmail(headerText),
     phone: extractPhone(headerText),
     location: extractLocation(headerLines),
     links: extractLinks(headerText),
-  }
+    headerLines,
+  })
 }
 
 /**
@@ -17,7 +20,7 @@ export function buildCandidate(headerLines: string[]): Candidate {
  * "Summary" section: any header lines left over once the name, contact
  * info, and links are accounted for are assumed to be a summary paragraph.
  */
-export function buildSummary(headerLines: string[], summaryLines: string[], candidate: Candidate): string | null {
+export function buildSummary(headerLines: string[], summaryLines: string[], contact: ContactInformation): string | null {
   const explicit = summaryLines.join(' ').trim()
   if (explicit) return explicit
 
@@ -25,10 +28,10 @@ export function buildSummary(headerLines: string[], summaryLines: string[], cand
     .map((line) => line.trim())
     .filter((line) => {
       if (!line) return false
-      if (candidate.name && line === candidate.name) return false
-      if (candidate.email && line.includes(candidate.email)) return false
-      if (candidate.phone && line.includes(candidate.phone)) return false
-      if (candidate.links.some((link) => line.includes(link.url))) return false
+      if (contact.name && line === contact.name) return false
+      if (contact.email && line.includes(contact.email)) return false
+      if (contact.phone && line.includes(contact.phone)) return false
+      if (contact.links.some((link) => line.includes(link.url))) return false
       return true
     })
     .join(' ')

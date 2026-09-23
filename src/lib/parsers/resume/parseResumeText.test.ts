@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { parseResumeText } from './parseResumeText'
+import { explicitEvidence } from '@/lib/schema/evidence'
 
 const SAMPLE_RESUME = `
 Jordan Rivera
@@ -39,11 +40,20 @@ describe('parseResumeText', () => {
   const { resume, warnings } = parseResumeText(SAMPLE_RESUME)
 
   it('extracts candidate contact info', () => {
-    expect(resume.candidate.name).toBe('Jordan Rivera')
-    expect(resume.candidate.email).toBe('jordan.rivera@example.com')
-    expect(resume.candidate.phone).toBe('555-010-1234')
-    expect(resume.candidate.location).toBe('Austin, TX')
-    expect(resume.candidate.links).toEqual([{ type: 'github', url: 'https://github.com/jordanrivera' }])
+    expect(resume.contact.name).toBe('Jordan Rivera')
+    expect(resume.contact.email).toBe('jordan.rivera@example.com')
+    expect(resume.contact.phone).toBe('555-010-1234')
+    expect(resume.contact.location).toBe('Austin, TX')
+    expect(resume.contact.links).toEqual([{ type: 'github', url: 'https://github.com/jordanrivera' }])
+  })
+
+  it('quotes the header line each contact field came from as typed evidence', () => {
+    expect(resume.contact.evidence).toEqual([
+      explicitEvidence('Jordan Rivera', 'contact'),
+      explicitEvidence('jordan.rivera@example.com | 555-010-1234', 'contact'),
+      explicitEvidence('Austin, TX', 'contact'),
+      explicitEvidence('https://github.com/jordanrivera', 'contact'),
+    ])
   })
 
   it('extracts the summary', () => {
@@ -52,11 +62,29 @@ describe('parseResumeText', () => {
 
   it('extracts labeled skills with a category derived from the label', () => {
     expect(resume.skills).toContainEqual(
-      expect.objectContaining({ name: 'JavaScript', category: 'language' }),
+      expect.objectContaining({ rawName: 'JavaScript', canonicalName: 'javascript', category: 'language' }),
     )
     expect(resume.skills).toContainEqual(
-      expect.objectContaining({ name: 'React', category: 'framework' }),
+      expect.objectContaining({ rawName: 'React', canonicalName: 'react', category: 'framework' }),
     )
+  })
+
+  it('gives each skill a positional id, the raw and canonical name, and typed evidence from the list line and any bullet', () => {
+    const nextJs = resume.skills.find((s) => s.rawName === 'Next.js')!
+    expect(nextJs.id).toBe('skill-3')
+    expect(nextJs.canonicalName).toBe('next.js')
+    expect(nextJs.sources).toEqual(['skills-section'])
+    expect(nextJs.evidence).toEqual([explicitEvidence('Frameworks: React, Next.js', 'skills', 'skill-3')])
+
+    const typescript = resume.skills.find((s) => s.rawName === 'TypeScript')!
+    expect(typescript.sources).toEqual(['skills-section', 'experience'])
+    expect(typescript.evidence).toEqual([
+      explicitEvidence('Languages: JavaScript, TypeScript', 'skills', 'skill-1'),
+      explicitEvidence('Led migration from JavaScript to TypeScript across the frontend codebase.', 'experience', 'exp-0'),
+    ])
+
+    const react = resume.skills.find((s) => s.rawName === 'React')!
+    expect(react.sources).toEqual(['skills-section', 'experience']) // the project's bullet doesn't name React; its Technologies line isn't a bullet
   })
 
   it('extracts multiple experience entries with title, company, dates, and bullets', () => {
@@ -67,7 +95,8 @@ describe('parseResumeText', () => {
     expect(current.company).toBe('Acme Corp')
     expect(current.startDate).toBe('2021-03-01')
     expect(current.endDate).toBeNull() // "Present" → ongoing
-    expect(current.bullets).toEqual([
+    expect(current.isCurrent).toBe(true)
+    expect(current.bullets.map((b) => b.text)).toEqual([
       'Built reusable React components used across 4 production applications.',
       'Led migration from JavaScript to TypeScript across the frontend codebase.',
     ])
@@ -76,6 +105,35 @@ describe('parseResumeText', () => {
     expect(previous.title).toBe('Software Engineer')
     expect(previous.company).toBe('Beta Inc')
     expect(previous.endDate).toBe('2021-02-01')
+    expect(previous.isCurrent).toBe(false)
+  })
+
+  it('builds each bullet as its own entity with id, action verb, metrics, technologies, and evidence', () => {
+    const [first, second] = resume.experience[0]!.bullets
+    expect(first!.id).toBe('exp-0-bullet-0')
+    expect(first!.actionVerb).toBe('built')
+    expect(first!.metrics).toEqual([{ text: '4', value: 4, kind: 'count' }])
+    expect(first!.technologies.map((t) => t.canonicalName)).toEqual(['react'])
+    expect(first!.achievements).toEqual([first!.text])
+    expect(first!.evidence).toEqual([explicitEvidence(first!.text, 'experience', 'exp-0')])
+
+    expect(second!.id).toBe('exp-0-bullet-1')
+    expect(second!.technologies.map((t) => [t.rawName, t.canonicalName])).toEqual([
+      ['JavaScript', 'javascript'],
+      ['TypeScript', 'typescript'],
+    ])
+    expect(second!.responsibilities).toEqual([second!.text])
+  })
+
+  it('gives each experience entry an id, normalized title, aggregated technologies, and its meta line as evidence', () => {
+    const current = resume.experience[0]!
+    expect(current.id).toBe('exp-0')
+    expect(current.normalizedJobTitle).toBe('frontend engineer')
+    expect(current.technologies).toEqual(['react', 'javascript', 'typescript'])
+    expect(current.experienceType).toBe('unspecified')
+    expect(current.evidence).toEqual([explicitEvidence('Frontend Engineer, Acme Corp | Remote | Mar 2021 - Present', 'experience', 'exp-0')])
+    expect(current.warnings).toEqual([])
+    expect(resume.experience[1]!.id).toBe('exp-1')
   })
 
   it('extracts education with degree and field of study split out', () => {
@@ -86,11 +144,22 @@ describe('parseResumeText', () => {
     expect(entry.fieldOfStudy).toBe('Computer Science')
     expect(entry.startDate).toBe('2015-01-01')
     expect(entry.endDate).toBe('2019-01-01')
+    expect(entry.id).toBe('edu-0')
+    expect(entry.evidence).toEqual([
+      explicitEvidence('University of Texas, B.S. in Computer Science, Austin, TX | 2015 - 2019', 'education', 'edu-0'),
+    ])
   })
 
   it('extracts certifications with issuer and issue date', () => {
     expect(resume.certifications).toEqual([
-      { name: 'AWS Certified Solutions Architect', issuer: 'Amazon Web Services', issueDate: '2022-01-01', expirationDate: null },
+      {
+        id: 'cert-0',
+        name: 'AWS Certified Solutions Architect',
+        issuer: 'Amazon Web Services',
+        issueDate: '2022-01-01',
+        expirationDate: null,
+        evidence: [explicitEvidence('AWS Certified Solutions Architect - Amazon Web Services (2022)', 'certifications', 'cert-0')],
+      },
     ])
   })
 
@@ -102,10 +171,44 @@ describe('parseResumeText', () => {
     expect(project.technologies).toEqual(['React', 'Node.js'])
     expect(project.bullets).toEqual(['Built a scoring engine from scratch.'])
     expect(project.url).toBe('https://github.com/jordanrivera/resume-analyzer')
+    expect(project.id).toBe('proj-0')
+    expect(project.evidence).toEqual([
+      explicitEvidence('Resume Analyzer - A tool that scores resumes against job descriptions', 'projects', 'proj-0'),
+    ])
   })
 
   it('produces no warnings for a well-formed resume', () => {
     expect(warnings).toEqual([])
+    expect(resume.parserWarnings).toEqual([])
+  })
+
+  it('records the detected sections in document order, with the literal heading', () => {
+    expect(resume.sections).toEqual([
+      { id: 'section-0', type: 'contact', heading: null, order: 0, lineCount: 4 },
+      { id: 'section-1', type: 'summary', heading: 'Summary', order: 1, lineCount: 1 },
+      { id: 'section-2', type: 'skills', heading: 'Technical Skills', order: 2, lineCount: 2 },
+      { id: 'section-3', type: 'experience', heading: 'Work Experience', order: 3, lineCount: 5 },
+      { id: 'section-4', type: 'education', heading: 'Education', order: 4, lineCount: 1 },
+      { id: 'section-5', type: 'certifications', heading: 'Certifications', order: 5, lineCount: 1 },
+      { id: 'section-6', type: 'projects', heading: 'Projects', order: 6, lineCount: 4 },
+    ])
+  })
+
+  it('records deterministic metadata and a content-derived id — no timestamps', () => {
+    expect(resume.id).toMatch(/^resume-[0-9a-f]{8}$/)
+    expect(resume.metadata).toEqual({ sourceFormat: 'text', characterCount: SAMPLE_RESUME.trim().length, lineCount: 24 })
+    expect(resume.parserMetadata).toEqual({ parser: 'talentlens-rule-based', parserVersion: '2.0.0', taxonomyVersion: '1.0.0' })
+    expect(parseResumeText(SAMPLE_RESUME, { sourceFormat: 'pdf' }).resume.metadata.sourceFormat).toBe('pdf')
+  })
+
+  it('is fully deterministic: the same text always parses to an identical Resume', () => {
+    expect(parseResumeText(SAMPLE_RESUME)).toEqual(parseResumeText(SAMPLE_RESUME))
+    expect(parseResumeText(SAMPLE_RESUME).resume.id).not.toBe(parseResumeText(`${SAMPLE_RESUME}\nExtra line`).resume.id)
+  })
+
+  it('has empty languages/awards when the resume has no such sections', () => {
+    expect(resume.languages).toEqual([])
+    expect(resume.awards).toEqual([])
   })
 })
 
@@ -137,6 +240,7 @@ describe('parseResumeText with DOCX-shaped input', () => {
     expect(resume.experience).toHaveLength(2)
     expect(resume.experience[0]!.company).toBe('Acme Corp')
     expect(resume.experience[0]!.bullets).toHaveLength(2)
+    expect(resume.experience[0]!.bullets.map((b) => b.id)).toEqual(['exp-0-bullet-0', 'exp-0-bullet-1'])
     expect(resume.experience[1]!.company).toBe('Beta Inc')
     expect(resume.experience[1]!.bullets).toHaveLength(1)
   })
@@ -194,9 +298,10 @@ describe('parseResumeText with a multi-part company name', () => {
 describe('parseResumeText edge cases', () => {
   it('returns an empty resume with a warning when no text was extracted', () => {
     const { resume, warnings } = parseResumeText('   ')
-    expect(resume.candidate.name).toBeNull()
+    expect(resume.contact.name).toBeNull()
     expect(resume.skills).toEqual([])
     expect(warnings).toContain('No text could be extracted from this document.')
+    expect(resume.parserWarnings).toEqual(warnings)
   })
 
   it('warns when the document is very short', () => {
@@ -248,12 +353,77 @@ describe('parseResumeText edge cases', () => {
     expect(resume.experience).toHaveLength(1)
     expect(resume.experience[0]!.company).toBe('')
     expect(warnings.some((w) => w.includes("couldn't separate the title from the company"))).toBe(true)
+    expect(resume.experience[0]!.warnings).toEqual(["Experience entry 1: couldn't separate the title from the company."])
   })
 
   it('never fabricates a skill, an employer, or contact info that is not in the source text', () => {
     const { resume } = parseResumeText('Jordan Rivera\n\nWork Experience\n\nEducation\n')
     expect(resume.skills).toEqual([])
     expect(resume.experience).toEqual([])
-    expect(resume.candidate.email).toBeNull()
+    expect(resume.contact.email).toBeNull()
+    expect(resume.languages).toEqual([])
+    expect(resume.awards).toEqual([])
+  })
+
+  it('only marks a role current when the text literally says so', () => {
+    const text = `Jordan Rivera\njordan@example.com\n\nWork Experience\nEngineer, Acme | 2019\n- Shipped things.\n`
+    const { resume } = parseResumeText(text)
+    expect(resume.experience[0]!.endDate).toBeNull()
+    expect(resume.experience[0]!.isCurrent).toBe(false)
+  })
+
+  it('reads an internship from the entry text', () => {
+    const text = `Jordan Rivera\njordan@example.com\n\nWork Experience\nSoftware Engineering Intern, Acme | Jun 2019 - Aug 2019\n- Shipped things.\n`
+    expect(parseResumeText(text).resume.experience[0]!.experienceType).toBe('internship')
+  })
+})
+
+describe('parseResumeText languages and awards', () => {
+  it('parses a spoken-languages section with proficiency', () => {
+    const text = [
+      'Jordan Rivera',
+      'jordan@example.com',
+      '',
+      'Languages',
+      'English (Native), Spanish - Fluent',
+      'French',
+    ].join('\n')
+    const { resume } = parseResumeText(text)
+    expect(resume.languages).toEqual([
+      { id: 'lang-0', name: 'English', proficiency: 'Native', evidence: [explicitEvidence('English (Native), Spanish - Fluent', 'other', 'lang-0')] },
+      { id: 'lang-1', name: 'Spanish', proficiency: 'Fluent', evidence: [explicitEvidence('English (Native), Spanish - Fluent', 'other', 'lang-1')] },
+      { id: 'lang-2', name: 'French', proficiency: null, evidence: [explicitEvidence('French', 'other', 'lang-2')] },
+    ])
+    expect(resume.skills).toEqual([])
+  })
+
+  it('routes a "Languages" section of programming languages to skills instead', () => {
+    const text = ['Jordan Rivera', 'jordan@example.com', '', 'Languages', 'JavaScript, Python, Go'].join('\n')
+    const { resume } = parseResumeText(text)
+    expect(resume.languages).toEqual([])
+    expect(resume.skills.map((s) => s.rawName)).toEqual(['JavaScript', 'Python', 'Go'])
+  })
+
+  it('parses an awards section into title, issuer, and date', () => {
+    const text = [
+      'Jordan Rivera',
+      'jordan@example.com',
+      '',
+      'Honors & Awards',
+      "- Dean's List, University of Texas (2018)",
+      '- Hackathon Winner',
+    ].join('\n')
+    const { resume } = parseResumeText(text)
+    expect(resume.awards).toEqual([
+      {
+        id: 'award-0',
+        title: "Dean's List",
+        issuer: 'University of Texas',
+        date: '2018-01-01',
+        evidence: [explicitEvidence("Dean's List, University of Texas (2018)", 'other', 'award-0')],
+      },
+      { id: 'award-1', title: 'Hackathon Winner', issuer: null, date: null, evidence: [explicitEvidence('Hackathon Winner', 'other', 'award-1')] },
+    ])
+    expect(resume.sections.map((s) => s.type)).toEqual(['contact', 'awards'])
   })
 })

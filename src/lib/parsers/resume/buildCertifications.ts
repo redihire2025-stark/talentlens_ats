@@ -1,13 +1,14 @@
-import type { Certification } from '@/types/resume'
+import type { CertificationEntry } from '@/types/resume'
+import { buildCertificationEntry } from '@/lib/schema/resumeBuilders'
 import { stripBulletMarker } from './blocks'
 import { extractDateRange } from './dateUtils'
 
 /** Each non-blank line is treated as one certification — resumes rarely wrap a single credential across lines. */
-export function buildCertifications(lines: string[]): Certification[] {
+export function buildCertifications(lines: string[]): CertificationEntry[] {
   return lines
     .map(stripBulletMarker)
     .filter(Boolean)
-    .map((line) => {
+    .map((line, index) => {
       let text = line
       let issueDate: string | null = null
       let expirationDate: string | null = null
@@ -25,11 +26,6 @@ export function buildCertifications(lines: string[]): Certification[] {
         .map((part) => part.trim())
         .filter(Boolean)
 
-      return {
-        name: name ?? text,
-        issuer: issuer ?? null,
-        issueDate,
-        expirationDate,
-      }
+      return buildCertificationEntry({ name: name ?? text, issuer: issuer ?? null, issueDate, expirationDate, sourceLine: line }, index)
     })
 }

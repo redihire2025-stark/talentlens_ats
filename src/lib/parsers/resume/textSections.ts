@@ -1,4 +1,4 @@
-export type ResumeSectionName = 'summary' | 'skills' | 'experience' | 'education' | 'certifications' | 'projects'
+export type ResumeSectionName = 'summary' | 'skills' | 'experience' | 'education' | 'certifications' | 'projects' | 'languages' | 'awards'
 
 export type ResumeSections = Record<ResumeSectionName, string[]> & { header: string[] }
 
@@ -27,6 +27,11 @@ const SECTION_ALIASES: Record<ResumeSectionName, string[]> = {
   education: ['education', 'academic background'],
   certifications: ['certifications', 'certifications & licenses', 'licenses', 'licenses & certifications'],
   projects: ['projects', 'personal projects', 'selected projects', 'side projects'],
+  // A bare "Languages" header is ambiguous (spoken vs. programming) — the
+  // parser routes a languages section whose items are known technical
+  // skills back into `skills`; see `buildLanguages.ts`.
+  languages: ['languages', 'spoken languages', 'language skills', 'language proficiency', 'language proficiencies'],
+  awards: ['awards', 'honors', 'honors & awards', 'honors and awards', 'awards & honors', 'awards and honors', 'awards & recognition', 'awards and recognition'],
 }
 
 function normalizeHeaderCandidate(line: string): string {
@@ -46,15 +51,29 @@ function matchSectionHeader(line: string): ResumeSectionName | null {
   return null
 }
 
+/** One recognized section header, in document order. */
+export interface DetectedResumeSection {
+  name: ResumeSectionName
+  /** The header line exactly as written (trimmed). */
+  heading: string
+}
+
+export interface ResumeLayout {
+  sections: ResumeSections
+  /** Every recognized header, in the order it appeared — a section named twice appears twice. */
+  detected: DetectedResumeSection[]
+}
+
 /**
  * Splits raw resume text into named sections by matching lines against a
- * known set of common section-header aliases. This only recognizes
- * conventional headers (see SECTION_ALIASES) — a resume with unusual or
- * missing headers will have that content fall into `header` (treated as
- * name/contact/summary) rather than being dropped. See
+ * known set of common section-header aliases, and records which headers
+ * were seen in what order (the basis for `Resume.sections`). This only
+ * recognizes conventional headers (see SECTION_ALIASES) — a resume with
+ * unusual or missing headers will have that content fall into `header`
+ * (treated as name/contact/summary) rather than being dropped. See
  * docs/architecture/resume-parser.md for known limitations.
  */
-export function splitResumeSections(rawText: string): ResumeSections {
+export function analyzeResumeLayout(rawText: string): ResumeLayout {
   const sections: ResumeSections = {
     header: [],
     summary: [],
@@ -63,7 +82,10 @@ export function splitResumeSections(rawText: string): ResumeSections {
     education: [],
     certifications: [],
     projects: [],
+    languages: [],
+    awards: [],
   }
+  const detected: DetectedResumeSection[] = []
 
   const lines = rawText.split('\n')
   let current: keyof ResumeSections = 'header'
@@ -72,10 +94,15 @@ export function splitResumeSections(rawText: string): ResumeSections {
     const matchedSection = matchSectionHeader(line)
     if (matchedSection) {
       current = matchedSection
+      detected.push({ name: matchedSection, heading: line.trim() })
       continue
     }
     sections[current].push(line)
   }
 
-  return sections
+  return { sections, detected }
+}
+
+export function splitResumeSections(rawText: string): ResumeSections {
+  return analyzeResumeLayout(rawText).sections
 }

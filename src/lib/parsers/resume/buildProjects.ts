@@ -1,10 +1,11 @@
-import type { Project } from '@/types/resume'
+import type { ProjectEntry } from '@/types/resume'
+import { buildProjectEntry } from '@/lib/schema/resumeBuilders'
 import { isBulletLine, splitIntoBlocks, stripBulletMarker } from './blocks'
 
 const TECH_LABEL_RE = /^(technologies|tech stack|stack|tools)\s*:\s*(.+)$/i
 const URL_RE = /\bhttps?:\/\/[^\s,;)]+/i
 
-function parseProjectBlock(block: string[]): Project {
+function parseProjectBlock(block: string[], index: number): ProjectEntry {
   const [firstLine, ...rest] = block
   const [name, inlineDescription] = (firstLine ?? '')
     .split(/\s*(?:-|–|—|:)\s*/, 2)
@@ -40,15 +41,19 @@ function parseProjectBlock(block: string[]): Project {
     }
   }
 
-  return {
-    name: name || (firstLine ?? '').trim(),
-    description,
-    bullets: bulletLines.filter(Boolean),
-    technologies,
-    url,
-  }
+  return buildProjectEntry(
+    {
+      name: name || (firstLine ?? '').trim(),
+      description,
+      bullets: bulletLines.filter(Boolean),
+      technologies,
+      url,
+      sourceLines: firstLine ? [firstLine.trim()] : [],
+    },
+    index,
+  )
 }
 
-export function buildProjects(projectLines: string[]): Project[] {
+export function buildProjects(projectLines: string[]): ProjectEntry[] {
   return splitIntoBlocks(projectLines).map(parseProjectBlock)
 }

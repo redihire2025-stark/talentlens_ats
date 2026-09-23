@@ -1,4 +1,5 @@
 import type { EducationEntry } from '@/types/resume'
+import { buildEducationEntry } from '@/lib/schema/resumeBuilders'
 import { splitByDateBoundary } from './dateBoundaryBlocks'
 import { extractDateRange } from './dateUtils'
 import { extractLocation } from './fieldExtractors'
@@ -7,7 +8,7 @@ const DEGREE_KEYWORD_RE = /\b(bachelor|master|associate|diploma|ph\.?d\.?|b\.?s\
 const FIELD_OF_STUDY_RE = /\bin\s+([A-Za-z][A-Za-z\s]+)$/i
 const SEPARATOR_RE = /\s*(?:,|\||–|—)\s*/
 
-function parseEducationBlock(block: string[]): EducationEntry {
+function parseEducationBlock(block: string[], index: number): EducationEntry {
   let text = block.join(' — ')
   let startDate: string | null = null
   let endDate: string | null = null
@@ -50,7 +51,7 @@ function parseEducationBlock(block: string[]): EducationEntry {
     }
   }
 
-  return { institution, degree, fieldOfStudy, startDate, endDate, location }
+  return buildEducationEntry({ institution, degree, fieldOfStudy, startDate, endDate, location, sourceLines: block }, index)
 }
 
 export function buildEducation(educationLines: string[]): EducationEntry[] {

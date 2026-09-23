@@ -16,7 +16,7 @@ export async function parseResumeFile(file: File): Promise<ParseResumeFileResult
   }
 
   const rawText = await extractResumeText(file, validation.sourceFormat)
-  const { resume, warnings } = parseResumeText(rawText)
+  const { resume, warnings } = parseResumeText(rawText, { sourceFormat: validation.sourceFormat })
 
   return { resume, warnings, sourceFormat: validation.sourceFormat }
 }

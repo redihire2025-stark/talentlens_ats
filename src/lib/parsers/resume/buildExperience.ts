@@ -1,4 +1,5 @@
 import type { ExperienceEntry } from '@/types/resume'
+import { buildExperienceEntry } from '@/lib/schema/resumeBuilders'
 import { isBulletLine, stripBulletMarker } from './blocks'
 import { splitByDateBoundary } from './dateBoundaryBlocks'
 import { extractDateRange } from './dateUtils'
@@ -33,18 +34,26 @@ interface MetaParseResult {
   location: string | null
   startDate: string | null
   endDate: string | null
+  /** True only when the matched date range literally says Present/Current/Now. */
+  isCurrent: boolean
+  warnings: string[]
 }
 
-function parseMetaLines(metaLines: string[], warnings: string[], entryIndex: number): MetaParseResult {
+const PRESENT_WORD_RE = /\b(present|current|now)\b/i
+
+function parseMetaLines(metaLines: string[], entryIndex: number): MetaParseResult {
   let text = metaLines.join(' — ')
   let startDate: string | null = null
   let endDate: string | null = null
+  let isCurrent = false
+  const warnings: string[] = []
 
   for (const line of metaLines) {
     const range = extractDateRange(line)
     if (range) {
       startDate = range.startDate
       endDate = range.endDate
+      isCurrent = range.endDate === null && PRESENT_WORD_RE.test(range.matchedText)
       text = text.replace(range.matchedText, ' ')
       break
     }
@@ -78,12 +87,12 @@ function parseMetaLines(metaLines: string[], warnings: string[], entryIndex: num
 
   if (parts.length === 0) {
     warnings.push(`Experience entry ${entryIndex + 1}: couldn't identify a title or company.`)
-    return { title: '', company: '', location, startDate, endDate }
+    return { title: '', company: '', location, startDate, endDate, isCurrent, warnings }
   }
 
   if (parts.length === 1) {
     warnings.push(`Experience entry ${entryIndex + 1}: couldn't separate the title from the company.`)
-    return { title: parts[0]!, company: '', location, startDate, endDate }
+    return { title: parts[0]!, company: '', location, startDate, endDate, isCurrent, warnings }
   }
 
   // A company name can itself contain a separator ("Acme, Inc.", "Foo |
@@ -100,19 +109,21 @@ function parseMetaLines(metaLines: string[], warnings: string[], entryIndex: num
     // (rejoined) is the company, so a multi-part company name still
     // survives intact instead of being truncated to its second segment.
     const [first, ...rest] = parts as [string, ...string[]]
-    return { title: first, company: rest.join(', '), location, startDate, endDate }
+    return { title: first, company: rest.join(', '), location, startDate, endDate, isCurrent, warnings }
   }
 
   const title = parts[titleIndex]!
   const company = parts.filter((_, i) => i !== titleIndex).join(', ')
-  return { title, company, location, startDate, endDate }
+  return { title, company, location, startDate, endDate, isCurrent, warnings }
 }
 
 /**
  * Parses one blank-line-separated block into an experience entry. The
  * lines before the first bullet are treated as "meta" (title/company/
  * location/dates); everything from the first bullet onward is a bullet.
- * See docs/architecture/resume-parser.md for the supported conventions and
+ * The meta lines become the entry's evidence; each bullet becomes an
+ * `ExperienceBullet` entity (see `buildExperienceBullet`). See
+ * docs/architecture/resume-parser.md for the supported conventions and
  * known limitations of this heuristic.
  */
 function parseExperienceBlock(block: string[], warnings: string[], entryIndex: number): ExperienceEntry {
@@ -120,17 +131,23 @@ function parseExperienceBlock(block: string[], warnings: string[], entryIndex: n
   const metaLines = firstBulletIndex === -1 ? block.slice(0, 1) : block.slice(0, firstBulletIndex)
   const bulletLines = firstBulletIndex === -1 ? block.slice(1) : block.slice(firstBulletIndex)
 
-  const meta = parseMetaLines(metaLines, warnings, entryIndex)
-  const bullets = bulletLines.map(stripBulletMarker).filter(Boolean)
+  const meta = parseMetaLines(metaLines, entryIndex)
+  warnings.push(...meta.warnings)
 
-  return {
-    company: meta.company,
-    title: meta.title,
-    startDate: meta.startDate,
-    endDate: meta.endDate,
-    location: meta.location,
-    bullets,
-  }
+  return buildExperienceEntry(
+    {
+      company: meta.company,
+      title: meta.title,
+      startDate: meta.startDate,
+      endDate: meta.endDate,
+      isCurrent: meta.isCurrent,
+      location: meta.location,
+      bullets: bulletLines.map(stripBulletMarker).filter(Boolean),
+      metaLines: metaLines.map((line) => line.trim()).filter(Boolean),
+      warnings: meta.warnings,
+    },
+    entryIndex,
+  )
 }
 
 export function buildExperience(experienceLines: string[], warnings: string[]): ExperienceEntry[] {
