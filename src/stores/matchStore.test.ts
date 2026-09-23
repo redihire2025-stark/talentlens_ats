@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { useMatchStore } from './matchStore'
 import { buildTestResume, buildTestJobDescription } from '@/lib/matching/testFixtures'
+import { getScoreComponent } from '@/lib/scoring/scoreComponents'
 
 describe('useMatchStore', () => {
   beforeEach(() => {
@@ -16,7 +17,7 @@ describe('useMatchStore', () => {
     await useMatchStore.getState().match(buildTestResume(), buildTestJobDescription(), 85)
     const state = useMatchStore.getState()
     expect(state.status).toBe('ready')
-    expect(state.result?.breakdown.atsCompatibility).toBe(85)
+    expect(getScoreComponent(state.result!.breakdown, 'atsCompatibility')?.rawScore).toBe(85)
     expect(state.analysis?.skills.required.length).toBeGreaterThan(0)
   })
 })

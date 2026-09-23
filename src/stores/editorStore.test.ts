@@ -2,11 +2,13 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { useEditorStore } from './editorStore'
 import { buildTestResume } from '@/lib/ats/testFixtures'
 import { generateRecommendations } from '@/lib/recommendations/generateRecommendations'
+import { buildExperienceEntries } from '@/lib/schema/resumeBuilders'
+import { getScoreComponent } from '@/lib/scoring/scoreComponents'
 
 function loadFixture() {
   const resume = buildTestResume({
     summary: null,
-    experience: [
+    experience: buildExperienceEntries([
       {
         company: 'Acme',
         title: 'Engineer',
@@ -15,7 +17,7 @@ function loadFixture() {
         location: null,
         bullets: ['Worked on stuff.', 'Reduced load time by 35%.'],
       },
-    ],
+    ]),
   })
   const recommendations = generateRecommendations({ resume, parserWarnings: [] })
   useEditorStore.getState().load(resume, recommendations)
@@ -53,7 +55,7 @@ describe('useEditorStore', () => {
     useEditorStore.getState().acceptRecommendation(bulletRec.id)
     const state = useEditorStore.getState()
     expect(state.statuses[bulletRec.id]).toBe('accepted')
-    expect(state.draftResume!.experience[0]!.bullets[0]).toBe('Worked on stuff.')
+    expect(state.draftResume!.experience[0]!.bullets[0]!.text).toBe('Worked on stuff.')
   })
 
   it('accepting a bullet-impact recommendation with an edit applies the edited text to the draft', () => {
@@ -61,7 +63,7 @@ describe('useEditorStore', () => {
     const bulletRec = recommendations.find((r) => r.category === 'bullet-impact' && r.currentText === 'Worked on stuff.')!
     useEditorStore.getState().setEditedText(bulletRec.id, 'Led a project that reduced onboarding time by 20%.')
     useEditorStore.getState().acceptRecommendation(bulletRec.id)
-    expect(useEditorStore.getState().draftResume!.experience[0]!.bullets[0]).toBe(
+    expect(useEditorStore.getState().draftResume!.experience[0]!.bullets[0]!.text).toBe(
       'Led a project that reduced onboarding time by 20%.',
     )
   })
@@ -96,11 +98,11 @@ describe('useEditorStore', () => {
   it('recalculate() reflects edits: a stronger bullet should not lower the content-quality score', () => {
     loadFixture()
     useEditorStore.getState().recalculate([])
-    const before = useEditorStore.getState().liveAtsResult!.breakdown.contentQuality
+    const before = getScoreComponent(useEditorStore.getState().liveAtsResult!.breakdown, 'contentQuality')!.rawScore
 
     useEditorStore.getState().updateExperienceBullet(0, 0, 'Reduced onboarding time by 20% through process automation.')
     useEditorStore.getState().recalculate([])
-    const after = useEditorStore.getState().liveAtsResult!.breakdown.contentQuality
+    const after = getScoreComponent(useEditorStore.getState().liveAtsResult!.breakdown, 'contentQuality')!.rawScore
 
     expect(after).toBeGreaterThanOrEqual(before)
   })

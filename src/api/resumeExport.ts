@@ -14,7 +14,7 @@ export interface ExportResumeResponse {
 }
 
 function filenameFor(resume: Resume, format: ExportFormat): string {
-  const base = (resume.candidate.name ?? 'resume').trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+  const base = (resume.contact.name ?? 'resume').trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
   return `${base || 'resume'}.${format}`
 }
 

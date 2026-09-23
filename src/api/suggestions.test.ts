@@ -2,13 +2,14 @@ import { describe, expect, it } from 'vitest'
 import { acceptSuggestion, rejectSuggestion } from './suggestions'
 import { generateRecommendations } from '@/lib/recommendations/generateRecommendations'
 import { buildTestResume } from '@/lib/ats/testFixtures'
+import { buildExperienceEntries } from '@/lib/schema/resumeBuilders'
 
 function buildResumeWithBullet() {
   return buildTestResume({
     summary: null,
-    experience: [
+    experience: buildExperienceEntries([
       { company: 'Acme', title: 'Engineer', startDate: '2020-01-01', endDate: null, location: null, bullets: ['Worked on stuff.'] },
-    ],
+    ]),
   })
 }
 
@@ -29,7 +30,7 @@ describe('acceptSuggestion', () => {
     expect(result.ok).toBe(true)
     if (!result.ok) return
     expect(result.data.status).toBe('edited')
-    expect(result.data.resume.experience[0]!.bullets[0]).toBe('A hand-written replacement.')
+    expect(result.data.resume.experience[0]!.bullets[0]!.text).toBe('A hand-written replacement.')
   })
 
   it('rejects a request missing the recommendation', async () => {

@@ -2,7 +2,7 @@ import { matchResume } from '@/lib/matching/matchResume'
 import { calculateJdMatchScore } from '@/lib/matching/calculateJdMatchScore'
 import { generateRecommendations } from '@/lib/recommendations/generateRecommendations'
 import type { MatchAnalysis } from '@/lib/matching/types'
-import type { JdMatchScoreBreakdown } from '@/lib/matching/scoringConfig'
+import type { JdMatchScoreCategory } from '@/lib/matching/scoringConfig'
 import type { Recommendation } from '@/lib/recommendations/types'
 import type { ScoreResult } from '@/types/score'
 import type { Resume } from '@/types/resume'
@@ -18,7 +18,7 @@ export interface TailorResumeRequest {
 }
 export interface TailorResumeResponse {
   analysis: MatchAnalysis
-  matchResult: ScoreResult<JdMatchScoreBreakdown>
+  matchResult: ScoreResult<JdMatchScoreCategory>
   /** Every deterministic + AI-assistable recommendation for closing the gap to this specific job — resume-wide checks and JD-specific gaps together, exactly what the "Tailor Resume" screen (PRD §22) needs in one call. */
   recommendations: Recommendation[]
 }

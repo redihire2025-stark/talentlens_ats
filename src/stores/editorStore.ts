@@ -1,8 +1,8 @@
 import { create } from 'zustand'
 import type { Resume } from '@/types/resume'
 import type { ScoreResult } from '@/types/score'
-import type { AtsScoreBreakdown } from '@/lib/ats/types'
-import type { JdMatchScoreBreakdown } from '@/lib/matching/scoringConfig'
+import type { AtsScoreCategory } from '@/lib/ats/types'
+import type { JdMatchScoreCategory } from '@/lib/matching/scoringConfig'
 import type { Recommendation, RecommendationStatus } from '@/lib/recommendations/types'
 import { analyzeAtsCompatibility } from '@/lib/ats/analyzeAtsCompatibility'
 import { matchResume } from '@/lib/matching/matchResume'
@@ -23,8 +23,8 @@ interface EditorState {
   recommendations: Recommendation[]
   statuses: Record<string, RecommendationStatus>
   editedTexts: Record<string, string>
-  liveAtsResult: ScoreResult<AtsScoreBreakdown> | null
-  liveJdMatchResult: ScoreResult<JdMatchScoreBreakdown> | null
+  liveAtsResult: ScoreResult<AtsScoreCategory> | null
+  liveJdMatchResult: ScoreResult<JdMatchScoreCategory> | null
 
   // AI-drafted bullet rewrites (PRD §14: an optional upgrade over the
   // deterministic suggestedChange, never a dependency). Lives here rather
@@ -149,7 +149,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
 
   requestAiSuggestion: async (rec, resume) => {
     if (!rec.location || rec.currentText === null) return
-    const entry = resume.experience[rec.location.entryIndex]
+    const entry = resume.experience.find((e) => e.id === rec.location!.entryId) ?? resume.experience[rec.location.entryIndex]
 
     set((state) => {
       const { [rec.id]: _removed, ...restQueued } = state.aiQueuedIds

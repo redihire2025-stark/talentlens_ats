@@ -3,14 +3,14 @@ import type { Resume } from '@/types/resume'
 import type { JobDescription } from '@/types/jobDescription'
 import type { ScoreResult } from '@/types/score'
 import type { MatchAnalysis } from '@/lib/matching/types'
-import type { JdMatchScoreBreakdown } from '@/lib/matching/scoringConfig'
+import type { JdMatchScoreCategory } from '@/lib/matching/scoringConfig'
 import { matchResumeToJob } from '@/api/match'
 
 export type MatchStoreStatus = 'idle' | 'matching' | 'ready' | 'error'
 
 interface MatchState {
   analysis: MatchAnalysis | null
-  result: ScoreResult<JdMatchScoreBreakdown> | null
+  result: ScoreResult<JdMatchScoreCategory> | null
   status: MatchStoreStatus
   error: string | null
   match: (resume: Resume, jobDescription: JobDescription, atsScore: number) => Promise<void>

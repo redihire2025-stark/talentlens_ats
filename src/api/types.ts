@@ -1,9 +1,9 @@
 import type { Resume } from '@/types/resume'
 import type { JobDescription } from '@/types/jobDescription'
 import type { ScoreResult } from '@/types/score'
-import type { AtsScoreBreakdown } from '@/lib/ats/types'
+import type { AtsScoreCategory } from '@/lib/ats/types'
 import type { MatchAnalysis } from '@/lib/matching/types'
-import type { JdMatchScoreBreakdown } from '@/lib/matching/scoringConfig'
+import type { JdMatchScoreCategory } from '@/lib/matching/scoringConfig'
 import type { Recommendation } from '@/lib/recommendations/types'
 
 export interface ApiError {
@@ -23,7 +23,7 @@ export interface AnalyzeResumeRequest {
   parserWarnings?: string[]
 }
 export interface AnalyzeResumeResponse {
-  result: ScoreResult<AtsScoreBreakdown>
+  result: ScoreResult<AtsScoreCategory>
 }
 
 export interface ParseJobDescriptionTextRequest {
@@ -42,7 +42,7 @@ export interface MatchRequest {
 }
 export interface MatchResponse {
   analysis: MatchAnalysis
-  result: ScoreResult<JdMatchScoreBreakdown>
+  result: ScoreResult<JdMatchScoreCategory>
 }
 
 export interface RecommendationsRequest {
