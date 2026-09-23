@@ -34,6 +34,30 @@ about what their resume actually shows.
 - **Missing** — no evidence found. Never fabricated, and never silently
   treated as present.
 
+## Match result shape (target architecture PRD §12)
+
+Every skill match (`SkillMatchEntry` in `src/lib/matching/types.ts`) carries
+the requirement text, the normalized term, the status, which layer produced
+it, a confidence, the supporting evidence, and a plain-language reason —
+never just a status:
+
+```ts
+{
+  requirement: 'GraphQL',   // as written in the JD
+  skill: 'graphql',         // normalized term
+  status: 'missing',
+  matchType: 'none',        // 'exact' | 'normalized' | 'synonym' | 'fuzzy' | 'semantic' | 'none'
+  confidence: 1,
+  evidence: [],
+  reason: 'No evidence of "GraphQL" was found in the resume's skills or bullets.',
+}
+```
+
+`confidence` is 1 for an exact/normalized match or a confirmed miss (the
+matcher is certain either way), and the fuzzy layer's token-overlap ratio
+(< 1) for a `partial` match — never a probability estimate for anything
+else.
+
 ## Experience matching
 
 Beyond skill keywords, experience matching considers:

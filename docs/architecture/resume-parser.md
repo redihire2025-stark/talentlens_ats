@@ -104,7 +104,7 @@ gracefully (never crashes, never fabricates data) on unconventional ones:
   the order the PDF encodes it, which for multi-column resumes may not
   match visual reading order. This is a real limitation of PDF text
   extraction in general — and not coincidentally, exactly the kind of
-  formatting the ATS Compatibility engine (TASK-008) flags as a risk.
+  formatting the Resume Health / ATS Readiness engine flags as a risk.
 - **Education without bullets**: the `EducationEntry` schema (TASK-003)
   intentionally has no `bullets` field, so honors/coursework lines within
   an education block aren't captured — this is a schema decision, not a

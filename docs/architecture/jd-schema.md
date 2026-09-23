@@ -9,15 +9,20 @@ requires one.
 | Field | Type | Notes |
 | --- | --- | --- |
 | `title` | `string \| null` | Job title as posted |
+| `seniority` | `string \| null` | e.g. `"senior"`, `"staff"` — from the title's recognized seniority prefix, or a standalone seniority word elsewhere in the text |
 | `experience` | `ExperienceRequirement` | `{ minimumYears, maximumYears }`, each `number \| null` |
-| `requiredSkills` | `string[]` | As extracted/normalized from the posting |
-| `preferredSkills` | `string[]` | "Nice to have" skills |
+| `requiredSkills` | `string[]` | As extracted/normalized from the posting — from list lines *and* mined from prose (PRD §9; see `docs/architecture/jd-parser.md`) |
+| `preferredSkills` | `string[]` | "Nice to have" skills, same list + prose extraction |
 | `responsibilities` | `string[]` | One entry per responsibility/duty line |
 | `education` | `string[]` | Free-text requirement lines (e.g. "Bachelor's in CS or equivalent") |
 | `certifications` | `string[]` | Free-text requirement lines |
 | `location` | `string \| null` | |
 | `employmentType` | `EmploymentType \| null` | `full-time \| part-time \| contract \| internship \| temporary \| other` |
-| `keywords` | `string[]` | General important terms, used for ATS-style keyword matching |
+| `keywords` | `string[]` | Deduplicated union of `requiredSkills`/`preferredSkills`, used for ATS-style keyword matching |
+| `technologies` | `string[]` | Technologies mentioned in prose (responsibilities, overview) that weren't stated as a required/preferred skill — signal, not a requirement |
+| `softSkills` | `string[]` | Soft skills mentioned anywhere in the posting (communication, leadership, …) |
+| `domainTerms` | `string[]` | Repeated all-caps acronyms/jargon (HIPAA, SOC2, GDPR, …) not already captured as a skill |
+| `rawText` | `string` | The full extracted JD text, kept for AI-assisted semantic matching/explanation and re-parsing without re-uploading |
 
 ## Why skills/education/certifications are plain strings here, unlike `Resume`
 

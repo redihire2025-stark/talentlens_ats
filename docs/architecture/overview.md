@@ -3,9 +3,10 @@
 ## What TalentLens is
 
 TalentLens turns an uploaded resume into a structured, typed model, scores
-its ATS compatibility deterministically, and (optionally) matches it against
-a job description. V1 is anonymous and session-only: nothing is persisted
-server-side, and no LLM call is a hard dependency of the scoring pipeline.
+its Resume Health / ATS Readiness deterministically, and (optionally)
+matches it against a job description. V1 is anonymous and session-only:
+nothing is persisted server-side, and no LLM call is a hard dependency of
+the scoring pipeline.
 
 ## Data flow
 
@@ -21,7 +22,7 @@ Normalization  (skills, titles, keywords → canonical form)
     ▼
 Deterministic Analysis
     │
-    ├──► ATS Engine  ──────► ATS Compatibility Score + breakdown
+    ├──► Resume Health Engine ──► Resume Health / ATS Readiness score + breakdown
     │
     └──► (if JD provided)
               │
@@ -55,7 +56,7 @@ anywhere in this pipeline (see "No hard LLM dependency" below).
 | `src/types` | Shared TypeScript schemas (Resume, JobDescription, scores, API contracts) |
 | `src/lib/parsers` | PDF/DOCX → Resume JSON, JD text → JD JSON |
 | `src/lib/normalization` | Skill/title/keyword canonicalization (`skillDictionary`, `skillSynonyms`, `titleSynonyms`) |
-| `src/lib/ats` | ATS Compatibility engine (parseability, sections, formatting, keywords, score calculator) |
+| `src/lib/ats` | Resume Health / ATS Readiness engine (7 PRD categories: ATS Essentials, Resume Structure, Content Quality, Skills & Evidence, Experience & Seniority, Recruiter Readability, Risk & Consistency) |
 | `src/lib/matching` | Resume ↔ JD matching engine and JD match score |
 | `src/lib/recommendations` | Evidence-based recommendation generation |
 | `src/lib/resume-generation` | Applying accepted edits, versioning, export rendering |
