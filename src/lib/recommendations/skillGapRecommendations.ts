@@ -1,6 +1,6 @@
 import type { MatchAnalysis, SkillMatchEntry } from '@/lib/matching/types'
 import { RECOMMENDATION_IMPACT } from './impactConfig'
-import type { Recommendation } from './types'
+import type { RecommendationDraft } from './types'
 
 /**
  * Turns missing/partial required or preferred skills (TASK-009's matching
@@ -9,13 +9,13 @@ import type { Recommendation } from './types'
  * genuinely has that experience, and make the "if not, don't add it"
  * framing explicit rather than assumed.
  */
-export function skillGapRecommendations(matchAnalysis: MatchAnalysis): Recommendation[] {
+export function skillGapRecommendations(matchAnalysis: MatchAnalysis): RecommendationDraft[] {
   const required = matchAnalysis.skills.required.map((entry) => buildEntry(entry, true))
   const preferred = matchAnalysis.skills.preferred.map((entry) => buildEntry(entry, false))
-  return [...required, ...preferred].filter((r): r is Recommendation => r !== null)
+  return [...required, ...preferred].filter((r): r is RecommendationDraft => r !== null)
 }
 
-function buildEntry(entry: SkillMatchEntry, isRequired: boolean): Recommendation | null {
+function buildEntry(entry: SkillMatchEntry, isRequired: boolean): RecommendationDraft | null {
   if (entry.status === 'matched') return null
 
   const importance = isRequired ? 'required' : 'preferred'

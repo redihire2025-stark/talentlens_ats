@@ -1,7 +1,7 @@
 import type { Resume } from '@/types/resume'
 import { isQuantified, startsWithActionVerb, suggestActionVerbRewrite } from '@/lib/ats/bulletQuality'
 import { RECOMMENDATION_IMPACT } from './impactConfig'
-import type { Recommendation } from './types'
+import type { RecommendationDraft } from './types'
 
 /**
  * Flags bullets that read as vague duty statements rather than concrete
@@ -12,8 +12,8 @@ import type { Recommendation } from './types'
  * are truthful." Never proposes replacement wording with invented
  * specifics — that would be fabrication.
  */
-export function bulletImpactRecommendations(resume: Resume): Recommendation[] {
-  const recommendations: Recommendation[] = []
+export function bulletImpactRecommendations(resume: Resume): RecommendationDraft[] {
+  const recommendations: RecommendationDraft[] = []
 
   resume.experience.forEach((entry, entryIndex) => {
     entry.bullets.forEach((bullet, bulletIndex) => {

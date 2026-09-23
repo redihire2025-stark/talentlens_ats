@@ -23,6 +23,24 @@ export interface RecommendationLocation {
   bulletIndex: number
 }
 
+/** How severe an issue is, derived from its configured impact (see `impactConfig.ts`) — used for sorting/highlighting, never for hiding a recommendation. */
+export type RecommendationSeverity = 'high' | 'medium' | 'low'
+
+/**
+ * Where a recommendation's content came from (PRD §14/§15). `deterministic`
+ * is every generator in this folder — pure functions over the parsed
+ * Resume/MatchAnalysis, no network call, always reproducible. `ai-suggestion`
+ * is a drafted rewrite from the AI bullet-rewrite feature (`src/lib/ai/`):
+ * it never determines score, category, or whether an issue exists — it only
+ * ever fills in `suggestedChange` text for a recommendation a deterministic
+ * generator already raised, and is always clearly labeled as such in the UI
+ * (`src/components/Recommendations.tsx`'s "AI-drafted, unverified" badge)
+ * and left for the user to accept, edit, or reject.
+ */
+export type RecommendationSource = 'deterministic' | 'ai-suggestion'
+
+export type RecommendationStatus = 'pending' | 'accepted' | 'rejected' | 'edited'
+
 /**
  * A single, evidence-based suggestion. `currentText`, when present, is a
  * verbatim quote from the resume — never altered. `guidance` explains what
@@ -37,7 +55,13 @@ export interface RecommendationLocation {
  * null whenever no safe, non-fabricating rewrite exists (most notably: a
  * missing metric, since no rewrite can invent one), in which case turning
  * guidance into edited text is the user's call, made in the resume editor
- * (TASK-016).
+ * (TASK-016) or via an AI-drafted suggestion (`source: 'ai-suggestion'`).
+ *
+ * The fields below `location` mirror the target architecture PRD §15's
+ * Recommendation shape one-for-one; they're computed from the fields above
+ * (see `toPrdRecommendationFields` in `generateRecommendations.ts`) rather
+ * than duplicated by every generator, so there's exactly one place that
+ * decides e.g. what counts as "high severity".
  */
 export interface Recommendation {
   id: string
@@ -48,7 +72,36 @@ export interface Recommendation {
   guidance: string
   impact: RecommendationImpact
   location?: RecommendationLocation
+  severity: RecommendationSeverity
+  /** PRD §15 `issue` — alias of `title`, kept separate so the two can diverge later without a breaking rename. */
+  issue: string
+  /** PRD §15 `evidence` — the verbatim resume text this recommendation is based on, if any (mirrors `currentText`). */
+  evidence: string[]
+  /** PRD §15 `explanation` — alias of `guidance`. */
+  explanation: string
+  /** PRD §15 `suggestedChange` — alias of `suggestedText`. */
+  suggestedChange: string | null
+  /** 1 for every deterministic generator: it's reporting exactly what it found, never a probabilistic guess. An AI-drafted suggestedChange does not raise this — it stays a human-reviewed draft, not a more "confident" fact. */
+  confidence: number
+  source: RecommendationSource
+  /** True when there's nothing safe to auto-apply (`suggestedText`/`suggestedChange` is null) — the user must supply real content (or explicitly decide not to) before this can be accepted as a text change. */
+  requiresUserInput: boolean
+  /** Initial value is always `pending`; the resume editor (`src/stores/editorStore.ts`) tracks the live, user-driven value per recommendation id. */
+  status: RecommendationStatus
 }
+
+/**
+ * What each individual generator (`bulletImpactRecommendations.ts` etc.)
+ * builds — the original, hand-written fields only. `generateRecommendations`
+ * enriches every draft into a full `Recommendation` via
+ * `toPrdRecommendationFields`, so "what counts as high severity" or
+ * "requires user input" is decided in exactly one place, not duplicated
+ * across six generator files.
+ */
+export type RecommendationDraft = Omit<
+  Recommendation,
+  'severity' | 'issue' | 'evidence' | 'explanation' | 'suggestedChange' | 'confidence' | 'source' | 'requiresUserInput' | 'status'
+>
 
 export interface GenerateRecommendationsInput {
   resume: Resume

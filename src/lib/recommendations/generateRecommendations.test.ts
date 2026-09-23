@@ -32,4 +32,21 @@ describe('generateRecommendations', () => {
     const bulletRec = recommendations.find((r) => r.category === 'bullet-impact')
     expect(bulletRec?.currentText).toBe('Worked on stuff.')
   })
+
+  it('every recommendation carries the PRD §15 fields, defaulted correctly', () => {
+    const resume = buildTestResume({ summary: null })
+    const recommendations = generateRecommendations({ resume, parserWarnings: [] })
+    expect(recommendations.length).toBeGreaterThan(0)
+    for (const rec of recommendations) {
+      expect(rec.status).toBe('pending')
+      expect(rec.source).toBe('deterministic')
+      expect(rec.confidence).toBe(1)
+      expect(rec.issue).toBe(rec.title)
+      expect(rec.explanation).toBe(rec.guidance)
+      expect(rec.suggestedChange).toBe(rec.suggestedText)
+      expect(rec.requiresUserInput).toBe(rec.suggestedText === null)
+      expect(['high', 'medium', 'low']).toContain(rec.severity)
+      expect(rec.evidence).toEqual(rec.currentText ? [rec.currentText] : [])
+    }
+  })
 })

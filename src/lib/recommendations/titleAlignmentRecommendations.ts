@@ -1,9 +1,9 @@
 import type { MatchAnalysis } from '@/lib/matching/types'
 import { RECOMMENDATION_IMPACT } from './impactConfig'
-import type { Recommendation } from './types'
+import type { RecommendationDraft } from './types'
 
 /** Suggests reviewing title framing when it doesn't closely match the JD's — never suggests adopting a title the candidate didn't actually hold. */
-export function titleAlignmentRecommendations(matchAnalysis: MatchAnalysis): Recommendation[] {
+export function titleAlignmentRecommendations(matchAnalysis: MatchAnalysis): RecommendationDraft[] {
   const { title } = matchAnalysis
   if (!title.required || title.status === 'matched') return []
 

@@ -1,7 +1,7 @@
 import type { AtsAnalysisInput } from '@/lib/ats/types'
 import { getMissingSections } from '@/lib/ats/sectionAnalyzer'
 import { RECOMMENDATION_IMPACT } from './impactConfig'
-import type { Recommendation } from './types'
+import type { RecommendationDraft } from './types'
 
 const GUIDANCE_BY_LABEL: Record<string, string> = {
   Name: 'Add your name at the top of the resume so it can be clearly identified.',
@@ -13,7 +13,7 @@ const GUIDANCE_BY_LABEL: Record<string, string> = {
 }
 
 /** Turns each missing required section/field (TASK-008's sectionAnalyzer) into a concrete, low-risk suggestion — never invented content, just structure. */
-export function missingSectionRecommendations(input: AtsAnalysisInput): Recommendation[] {
+export function missingSectionRecommendations(input: AtsAnalysisInput): RecommendationDraft[] {
   return getMissingSections(input).map((label) => ({
     id: `missing-section-${label}`,
     category: 'missing-section',

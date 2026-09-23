@@ -1,10 +1,10 @@
 import type { Resume } from '@/types/resume'
 import { splitSkillsByEvidence } from '@/lib/ats/skillsEvidenceAnalyzer'
 import { RECOMMENDATION_IMPACT } from './impactConfig'
-import type { Recommendation } from './types'
+import type { RecommendationDraft } from './types'
 
 /** For each skill listed but never demonstrated in a bullet (TASK-008's skillsEvidenceAnalyzer), suggests adding a real example — never inventing one. */
-export function skillEvidenceRecommendations(resume: Resume): Recommendation[] {
+export function skillEvidenceRecommendations(resume: Resume): RecommendationDraft[] {
   const { listedOnly } = splitSkillsByEvidence(resume)
 
   return listedOnly.map((skillName) => ({

@@ -3,14 +3,12 @@ import type { Resume } from '@/types/resume'
 import type { ScoreResult } from '@/types/score'
 import type { AtsScoreBreakdown } from '@/lib/ats/types'
 import type { JdMatchScoreBreakdown } from '@/lib/matching/scoringConfig'
-import type { Recommendation } from '@/lib/recommendations/types'
+import type { Recommendation, RecommendationStatus } from '@/lib/recommendations/types'
 import { analyzeAtsCompatibility } from '@/lib/ats/analyzeAtsCompatibility'
 import { matchResume } from '@/lib/matching/matchResume'
 import { calculateJdMatchScore } from '@/lib/matching/calculateJdMatchScore'
 import { replaceExperienceBullet, updateExperienceField, updateSkillNames, updateSummary } from '@/lib/resume-generation/applyEdits'
 import type { JobDescription } from '@/types/jobDescription'
-
-export type RecommendationStatus = 'pending' | 'accepted' | 'rejected'
 
 interface EditorState {
   originalResume: Resume | null
@@ -98,12 +96,17 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     if (!recommendation || !draftResume) return
 
     let nextDraft = draftResume
+    let status: RecommendationStatus = 'accepted'
     if (recommendation.location && recommendation.currentText !== null) {
-      const text = editedTexts[id] ?? recommendation.suggestedText ?? recommendation.currentText
+      const userEdit = editedTexts[id]
+      const text = userEdit ?? recommendation.suggestedText ?? recommendation.currentText
+      // "edited" (PRD §15 status) means the accepted text is neither the resume's
+      // original nor the recommendation's own suggestion — the user wrote it.
+      if (userEdit !== undefined && userEdit !== recommendation.suggestedText) status = 'edited'
       nextDraft = replaceExperienceBullet(draftResume, recommendation.location.entryIndex, recommendation.location.bulletIndex, text)
     }
 
-    set((state) => ({ draftResume: nextDraft, statuses: { ...state.statuses, [id]: 'accepted' } }))
+    set((state) => ({ draftResume: nextDraft, statuses: { ...state.statuses, [id]: status } }))
   },
 
   rejectRecommendation: (id) => set((state) => ({ statuses: { ...state.statuses, [id]: 'rejected' } })),

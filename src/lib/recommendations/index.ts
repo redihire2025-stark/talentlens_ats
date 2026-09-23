@@ -11,5 +11,9 @@ export type {
   RecommendationCategory,
   RecommendationImpact,
   RecommendationLocation,
+  RecommendationSeverity,
+  RecommendationSource,
+  RecommendationStatus,
+  RecommendationDraft,
   GenerateRecommendationsInput,
 } from './types'

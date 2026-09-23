@@ -157,8 +157,13 @@ export default function Recommendations({ onNav }: Props) {
     )
   }
 
-  const filtered = recommendations.filter((r) => filter === 'all' || statuses[r.id] === filter)
-  const accepted = recommendations.filter((r) => statuses[r.id] === 'accepted').length
+  const filtered = recommendations.filter((r) => {
+    if (filter === 'all') return true
+    // "edited" (PRD §15 status) is an accepted change with user-written text — grouped with "accepted" in this filter.
+    if (filter === 'accepted') return statuses[r.id] === 'accepted' || statuses[r.id] === 'edited'
+    return statuses[r.id] === filter
+  })
+  const accepted = recommendations.filter((r) => statuses[r.id] === 'accepted' || statuses[r.id] === 'edited').length
   const pending = recommendations.filter((r) => statuses[r.id] === 'pending').length
 
   const handleAccept = (id: string) => {
@@ -247,7 +252,7 @@ export default function Recommendations({ onNav }: Props) {
             <div
               key={rec.id}
               className={`bg-card border rounded-2xl p-6 transition-all ${
-                status === 'accepted'
+                status === 'accepted' || status === 'edited'
                   ? 'border-success/30 bg-success-bg/10'
                   : status === 'rejected'
                   ? 'border-border opacity-50'
@@ -261,7 +266,7 @@ export default function Recommendations({ onNav }: Props) {
                   </span>
                   <span className="text-xs text-muted-foreground">{rec.title}</span>
                 </div>
-                {status === 'accepted' && (
+                {(status === 'accepted' || status === 'edited') && (
                   <span className="flex items-center gap-1.5 text-xs text-success font-medium">
                     <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                       <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -401,7 +406,7 @@ export default function Recommendations({ onNav }: Props) {
                 </div>
               )}
 
-              {(status === 'accepted' || status === 'rejected') && (
+              {(status === 'accepted' || status === 'edited' || status === 'rejected') && (
                 <button onClick={() => resetRecommendation(rec.id)} className="text-xs text-accent hover:underline">
                   Undo
                 </button>

@@ -1,9 +1,9 @@
 import type { Resume } from '@/types/resume'
 import { RECOMMENDATION_IMPACT } from './impactConfig'
-import type { Recommendation } from './types'
+import type { RecommendationDraft } from './types'
 
 /** Flags experience entries with no bullet points — a structural, not content, suggestion. */
-export function formattingRecommendations(resume: Resume): Recommendation[] {
+export function formattingRecommendations(resume: Resume): RecommendationDraft[] {
   return resume.experience
     .map((entry, index) => ({ entry, index }))
     .filter(({ entry }) => entry.bullets.length === 0)
