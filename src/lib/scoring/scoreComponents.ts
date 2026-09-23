@@ -28,3 +28,8 @@ export function getScoreComponent<TCategory extends string>(
 export function rawScoresByCategory<TCategory extends string>(breakdown: ScoreBreakdown<TCategory>): Record<TCategory, number> {
   return Object.fromEntries(breakdown.map((component) => [component.category, component.rawScore])) as Record<TCategory, number>
 }
+
+/** "12.8 of 15 pts" — a component's contribution to the overall score, next to the most it could contribute. For display only. */
+export function formatContribution(component: Pick<ScoreComponent, 'weightedScore' | 'weight'>): string {
+  return `${component.weightedScore.toFixed(1)} of ${Math.round(component.weight * 100)} pts`
+}

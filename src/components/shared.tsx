@@ -1,3 +1,5 @@
+import type { Evidence, EvidenceSection } from '@/types/evidence'
+
 interface ScoreRingProps {
   score: number
   size?: number
@@ -91,4 +93,50 @@ export function StatusBadge({ status, label }: BadgeProps) {
 
 export function ScoreColor(score: number) {
   return score >= 85 ? '#7C3AED' : score >= 70 ? '#D97706' : '#DC2626'
+}
+
+const EVIDENCE_SECTION_LABELS: Record<EvidenceSection, string> = {
+  contact: 'Contact',
+  summary: 'Summary',
+  skills: 'Skills',
+  experience: 'Experience',
+  education: 'Education',
+  projects: 'Projects',
+  certifications: 'Certifications',
+  other: 'Resume',
+}
+
+interface EvidenceListProps {
+  evidence: Evidence[]
+  /** Show at most this many items (the rest are summarized as "+N more"). */
+  max?: number
+}
+
+/**
+ * Where a score, match, or recommendation comes from, in the resume's own
+ * words. A verbatim quote is shown in quotes; an `inferred-from-structure`
+ * observation (e.g. "3 experience entries detected.") is labeled as such,
+ * never presented as if the resume said it.
+ */
+export function EvidenceList({ evidence, max = 2 }: EvidenceListProps) {
+  if (evidence.length === 0) return null
+  const shown = evidence.slice(0, max)
+  const hidden = evidence.length - shown.length
+  return (
+    <ul className="space-y-1">
+      {shown.map((e, i) => (
+        <li key={`${e.section}-${e.entryId ?? ''}-${i}`} className="text-[11px] leading-snug text-muted-foreground flex gap-1.5">
+          <span className="flex-shrink-0 font-medium text-foreground/70">{EVIDENCE_SECTION_LABELS[e.section]}:</span>
+          {e.sourceType === 'explicit' ? (
+            <span className="italic truncate" title={e.text}>“{e.text}”</span>
+          ) : (
+            <span className="truncate" title={e.text}>
+              {e.text} <span className="not-italic text-[10px] uppercase tracking-wider">(inferred)</span>
+            </span>
+          )}
+        </li>
+      ))}
+      {hidden > 0 && <li className="text-[10px] text-muted-foreground">+{hidden} more</li>}
+    </ul>
+  )
 }

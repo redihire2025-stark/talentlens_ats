@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event'
 import App from '../src/App'
 import { buildResumeDocx } from '../src/lib/resume-generation/exportDocx'
 import type { Resume } from '../src/types/resume'
+import { buildContactInformation, buildExperienceEntries, buildResumeSkills, emptyResume } from '../src/lib/schema/resumeBuilders'
 import { useResumeStore } from '../src/stores/resumeStore'
 import { useAnalysisStore } from '../src/stores/analysisStore'
 import { useEditorStore } from '../src/stores/editorStore'
@@ -18,20 +19,19 @@ import { useVersionsStore } from '../src/stores/versionsStore'
  * actually produce; nothing here is asserted against a hardcoded mock
  * value, since those were removed from every screen in TASK-013 – TASK-018.
  */
-const FIXTURE_RESUME: Resume = {
-  candidate: {
+const FIXTURE_RESUME: Resume = emptyResume({
+  contact: buildContactInformation({
     name: 'Priya Nair',
     email: 'priya.nair@example.com',
     phone: '555-020-3456',
     location: 'Seattle, WA',
-    links: [],
-  },
+  }),
   summary: 'Backend engineer with production experience building distributed systems.',
-  skills: [
-    { name: 'Python', category: 'language', evidence: [] },
-    { name: 'Kubernetes', category: 'platform', evidence: [] },
-  ],
-  experience: [
+  skills: buildResumeSkills([
+    { rawName: 'Python', category: 'language' },
+    { rawName: 'Kubernetes', category: 'platform' },
+  ]),
+  experience: buildExperienceEntries([
     {
       company: 'Nimbus Systems',
       title: 'Backend Engineer',
@@ -43,11 +43,8 @@ const FIXTURE_RESUME: Resume = {
         'Reduced infrastructure costs by 30% through Kubernetes migration.',
       ],
     },
-  ],
-  education: [],
-  certifications: [],
-  projects: [],
-}
+  ]),
+})
 
 async function buildFixtureFile(): Promise<File> {
   const blob = await buildResumeDocx(FIXTURE_RESUME)
@@ -107,6 +104,17 @@ describe('primary V1 user journey', () => {
 
       await user.click(screen.getByRole('button', { name: 'Experience' }))
       expect(screen.getByDisplayValue('Nimbus Systems')).toBeInTheDocument()
+      // Bullets render from ExperienceBullet.text — the parsed entity's text, not the object.
+      expect(screen.getByDisplayValue('Reduced infrastructure costs by 30% through Kubernetes migration.')).toBeInTheDocument()
+
+      // The parsed resume carries the canonical schema end to end: typed evidence and ids from a real upload.
+      const parsed = useResumeStore.getState().resume!
+      expect(parsed.metadata.sourceFormat).toBe('docx')
+      expect(parsed.experience[0]!.bullets[1]!.metrics).toEqual([{ text: '30%', value: 30, kind: 'percentage' }])
+      expect(parsed.skills.find((s) => s.rawName === 'Kubernetes')!.sources).toEqual(['skills-section', 'experience'])
+      // Every Resume Health component on screen came from a ScoreComponent whose weighted parts sum to the score.
+      const health = useAnalysisStore.getState().atsResult!
+      expect(health.score).toBe(Math.round(health.breakdown.reduce((sum, c) => sum + c.weightedScore, 0)))
     },
     20000,
   )

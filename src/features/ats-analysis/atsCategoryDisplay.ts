@@ -35,7 +35,9 @@ export function scoreToHealthStatus(score: number): HealthStatus {
  * `analyzeAtsCompatibility` builds its `explanations` array by iterating
  * `ATS_SCORE_CATEGORIES` in this exact order, so index-matching against
  * that same order is how a category's own explanation is found — not
- * string-matching or re-deriving it.
+ * string-matching or re-deriving it. Equivalent to that category's
+ * `ScoreComponent.explanation`, which the dashboards read directly; kept
+ * for callers holding only the `explanations` list.
  */
 export function explanationForCategory(explanations: string[], category: AtsScoreCategory): string {
   return explanations[ATS_SCORE_CATEGORIES.indexOf(category)] ?? ''

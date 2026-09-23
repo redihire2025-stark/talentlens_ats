@@ -6,6 +6,7 @@ import { useMatchStore } from '@/stores/matchStore'
 import { useEditorStore } from '@/stores/editorStore'
 import { getRecommendations } from '@/api/recommendations'
 import type { Recommendation, RecommendationCategory } from '@/lib/recommendations/types'
+import { EvidenceList } from './shared'
 
 interface Props {
   onNav: (v: View) => void
@@ -265,6 +266,16 @@ export default function Recommendations({ onNav }: Props) {
                       <div className="p-3 bg-muted/60 rounded-xl border border-border mb-4">
                         <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">Current</div>
                         <p className="text-sm text-foreground leading-relaxed">{rec.currentText}</p>
+                      </div>
+                    )}
+
+                    {/* Evidence behind a recommendation that doesn't quote a single bullet (a listed-only
+                        skill's skills-list line, a role's title line, what the resume shows for an unmet
+                        requirement). Recommendations about something the resume lacks have none. */}
+                    {!rec.currentText && rec.evidence.length > 0 && (
+                      <div className="p-3 bg-muted/40 rounded-xl border border-border mb-4">
+                        <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">Evidence in your resume</div>
+                        <EvidenceList evidence={rec.evidence} max={3} />
                       </div>
                     )}
 

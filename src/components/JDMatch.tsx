@@ -1,10 +1,11 @@
 import type { View } from '../App'
-import { ScoreRing, ProgressBar } from './shared'
+import { ScoreRing, ProgressBar, EvidenceList } from './shared'
 import { useResumeStore } from '@/stores/resumeStore'
 import { useAnalysisStore } from '@/stores/analysisStore'
 import { useJobDescriptionStore } from '@/stores/jobDescriptionStore'
 import { useMatchStore } from '@/stores/matchStore'
-import { JD_MATCH_CATEGORY_LABELS, JD_MATCH_SCORE_CATEGORIES } from '@/features/job-description/jdMatchDisplay'
+import { JD_MATCH_CATEGORY_LABELS } from '@/features/job-description/jdMatchDisplay'
+import { formatContribution } from '@/lib/scoring/scoreComponents'
 
 interface Props {
   onNav: (v: View) => void
@@ -173,15 +174,25 @@ export default function JDMatch({ onNav }: Props) {
 
             {/* Breakdown */}
             <div className="bg-card border border-border rounded-2xl p-6">
-              <h3 className="font-semibold text-foreground mb-4">Match Breakdown</h3>
+              <h3 className="font-semibold text-foreground mb-1">Match Breakdown</h3>
+              <p className="text-xs text-muted-foreground mb-4">
+                Each component's own score, and how many points it contributes to the {result.score}/100 total.
+              </p>
               <div className="space-y-3.5">
-                {JD_MATCH_SCORE_CATEGORIES.map((category) => (
-                  <div key={category}>
+                {result.breakdown.map((component) => (
+                  <div key={component.category}>
                     <div className="flex justify-between mb-1.5">
-                      <span className="text-sm text-foreground">{JD_MATCH_CATEGORY_LABELS[category]}</span>
-                      <span className="font-mono text-sm font-semibold text-foreground">{result.breakdown[category]}%</span>
+                      <span className="text-sm text-foreground">
+                        {JD_MATCH_CATEGORY_LABELS[component.category]}
+                        <span className="ml-2 font-mono text-[10px] text-muted-foreground">{Math.round(component.weight * 100)}% weight</span>
+                      </span>
+                      <span className="font-mono text-sm font-semibold text-foreground">{component.rawScore}%</span>
                     </div>
-                    <ProgressBar value={result.breakdown[category]} />
+                    <ProgressBar value={component.rawScore} />
+                    <div className="flex justify-between gap-3 mt-1">
+                      <span className="text-[11px] text-muted-foreground leading-snug">{component.explanation}</span>
+                      <span className="font-mono text-[10px] text-muted-foreground flex-shrink-0">{formatContribution(component)}</span>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -217,9 +228,14 @@ export default function JDMatch({ onNav }: Props) {
                     <path d="M2 2l8 8M10 2L2 10" stroke="#DC2626" strokeWidth="1.5" strokeLinecap="round" />
                   </svg>
                 )}
-                <div>
+                <div className="min-w-0">
                   <div className="text-sm font-medium text-foreground">{req.requirementText}</div>
                   <div className="text-xs text-muted-foreground mt-0.5">{req.reason}</div>
+                  {req.evidence.length > 0 && (
+                    <div className="mt-1.5">
+                      <EvidenceList evidence={req.evidence} max={1} />
+                    </div>
+                  )}
                 </div>
               </div>
             ))}

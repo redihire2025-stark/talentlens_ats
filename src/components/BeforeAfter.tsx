@@ -91,6 +91,10 @@ export default function BeforeAfter({ onNav }: Props) {
                   >
                     {c.delta > 0 ? '+' : ''}
                     {c.delta} {c.label}
+                    <span className="ml-1 font-normal opacity-75">
+                      ({c.weightedDelta > 0 ? '+' : ''}
+                      {c.weightedDelta.toFixed(1)} pts overall)
+                    </span>
                   </span>
                 ))}
               </div>
@@ -109,6 +113,10 @@ export default function BeforeAfter({ onNav }: Props) {
                   >
                     {c.delta > 0 ? '+' : ''}
                     {c.delta} {c.label}
+                    <span className="ml-1 font-normal opacity-75">
+                      ({c.weightedDelta > 0 ? '+' : ''}
+                      {c.weightedDelta.toFixed(1)} pts overall)
+                    </span>
                   </span>
                 ))}
               </div>
@@ -130,15 +138,15 @@ export default function BeforeAfter({ onNav }: Props) {
           </div>
           <div className="p-5 space-y-4">
             {originalExperience.map((entry, i) => (
-              <div key={i}>
+              <div key={entry.id}>
                 <div className="font-semibold text-sm text-foreground mb-1">{entry.title} — {entry.company}</div>
                 <ul className="space-y-1.5">
                   {entry.bullets.map((b, bi) => {
-                    const changed = comparisonExperience[i]?.bullets[bi] !== b
+                    const changed = comparisonExperience[i]?.bullets[bi]?.text !== b.text
                     return (
-                      <li key={bi} className={`flex gap-2 text-xs leading-relaxed ${changed ? 'text-muted-foreground' : 'text-foreground'}`}>
+                      <li key={b.id} className={`flex gap-2 text-xs leading-relaxed ${changed ? 'text-muted-foreground' : 'text-foreground'}`}>
                         <span className="mt-0.5">•</span>
-                        <span>{b}</span>
+                        <span>{b.text}</span>
                       </li>
                     )
                   })}
@@ -147,7 +155,7 @@ export default function BeforeAfter({ onNav }: Props) {
             ))}
             <div>
               <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2">Skills</div>
-              <div className="text-xs text-foreground leading-relaxed">{original.resume.skills.map((s) => s.name).join(' · ')}</div>
+              <div className="text-xs text-foreground leading-relaxed">{original.resume.skills.map((s) => s.rawName).join(' · ')}</div>
             </div>
           </div>
         </div>
@@ -163,15 +171,15 @@ export default function BeforeAfter({ onNav }: Props) {
           </div>
           <div className="p-5 space-y-4">
             {comparisonExperience.map((entry, i) => (
-              <div key={i}>
+              <div key={entry.id}>
                 <div className="font-semibold text-sm text-foreground mb-1">{entry.title} — {entry.company}</div>
                 <ul className="space-y-1.5">
                   {entry.bullets.map((b, bi) => {
-                    const changed = originalExperience[i]?.bullets[bi] !== b
+                    const changed = originalExperience[i]?.bullets[bi]?.text !== b.text
                     return (
-                      <li key={bi} className="flex gap-2 text-xs leading-relaxed">
+                      <li key={b.id} className="flex gap-2 text-xs leading-relaxed">
                         <span className="text-muted-foreground mt-0.5">•</span>
-                        <span className={changed ? 'bg-success-bg/50 text-foreground rounded px-0.5' : 'text-foreground'}>{b}</span>
+                        <span className={changed ? 'bg-success-bg/50 text-foreground rounded px-0.5' : 'text-foreground'}>{b.text}</span>
                       </li>
                     )
                   })}
@@ -180,7 +188,7 @@ export default function BeforeAfter({ onNav }: Props) {
             ))}
             <div>
               <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2">Skills</div>
-              <div className="text-xs text-foreground leading-relaxed">{comparison.resume.skills.map((s) => s.name).join(' · ')}</div>
+              <div className="text-xs text-foreground leading-relaxed">{comparison.resume.skills.map((s) => s.rawName).join(' · ')}</div>
             </div>
           </div>
         </div>

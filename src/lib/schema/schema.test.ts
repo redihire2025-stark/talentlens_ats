@@ -78,6 +78,13 @@ describe('buildExperienceBullet', () => {
     expect(bullet.evidence).toEqual([explicitEvidence('Reduced page load time by 35% using React.js code splitting.', 'experience', 'exp-1')])
   })
 
+  it('keeps the text verbatim (e.g. a trailing space while typing in the editor) but analyzes the trimmed form', () => {
+    const bullet = buildExperienceBullet('Built Docker images ', 'exp-0', 0)
+    expect(bullet.text).toBe('Built Docker images ')
+    expect(bullet.evidence[0]!.text).toBe('Built Docker images')
+    expect(bullet.technologies.map((t) => t.canonicalName)).toEqual(['docker'])
+  })
+
   it('states a duty bullet as a responsibility with the weak lead-in stripped, and has no actionVerb', () => {
     const bullet = buildExperienceBullet('Responsible for managing the design system', 'exp-0', 0)
     expect(bullet).not.toHaveProperty('actionVerb')

@@ -5,7 +5,6 @@ import { useResumeStore } from '@/stores/resumeStore'
 import { useJobDescriptionStore } from '@/stores/jobDescriptionStore'
 import { useEditorStore } from '@/stores/editorStore'
 import { useVersionsStore } from '@/stores/versionsStore'
-import { ATS_SCORE_CATEGORIES } from '@/lib/ats/types'
 import { ATS_CATEGORY_LABELS } from '@/features/ats-analysis/atsCategoryDisplay'
 
 interface Props {
@@ -170,11 +169,11 @@ export default function ResumeEditor({ onNav, onExport }: Props) {
 
             {activeSection === 'contact' && (
               <div className="bg-card border border-border rounded-xl px-5 py-4 text-sm text-foreground space-y-1.5">
-                <p>{draftResume.candidate.name ?? <span className="text-muted-foreground">No name found</span>}</p>
-                <p className="text-muted-foreground">{draftResume.candidate.email ?? 'No email found'}</p>
-                <p className="text-muted-foreground">{draftResume.candidate.phone ?? 'No phone found'}</p>
-                <p className="text-muted-foreground">{draftResume.candidate.location ?? 'No location found'}</p>
-                {draftResume.candidate.links.map((link) => (
+                <p>{draftResume.contact.name ?? <span className="text-muted-foreground">No name found</span>}</p>
+                <p className="text-muted-foreground">{draftResume.contact.email ?? 'No email found'}</p>
+                <p className="text-muted-foreground">{draftResume.contact.phone ?? 'No phone found'}</p>
+                <p className="text-muted-foreground">{draftResume.contact.location ?? 'No location found'}</p>
+                {draftResume.contact.links.map((link) => (
                   <p key={link.url} className="text-muted-foreground">{link.url}</p>
                 ))}
                 <p className="text-xs text-muted-foreground pt-2">Contact editing isn't available yet — this shows what was parsed.</p>
@@ -197,7 +196,7 @@ export default function ResumeEditor({ onNav, onExport }: Props) {
             {activeSection === 'skills' && (
               <>
                 <textarea
-                  value={draftResume.skills.map((s) => s.name).join(', ')}
+                  value={draftResume.skills.map((s) => s.rawName).join(', ')}
                   onChange={(e) => updateSkills(e.target.value.split(','))}
                   rows={4}
                   placeholder="React, TypeScript, AWS"
@@ -210,7 +209,7 @@ export default function ResumeEditor({ onNav, onExport }: Props) {
             {activeSection === 'experience' && (
               <div className="space-y-6">
                 {draftResume.experience.map((entry, entryIndex) => (
-                  <div key={entryIndex} className="bg-card border border-border rounded-xl p-4">
+                  <div key={entry.id} className="bg-card border border-border rounded-xl p-4">
                     <div className="grid sm:grid-cols-2 gap-2 mb-3">
                       <input
                         value={entry.title}
@@ -228,8 +227,8 @@ export default function ResumeEditor({ onNav, onExport }: Props) {
                     <div className="space-y-2">
                       {entry.bullets.map((bullet, bulletIndex) => (
                         <textarea
-                          key={bulletIndex}
-                          value={bullet}
+                          key={bullet.id}
+                          value={bullet.text}
                           onChange={(e) => updateExperienceBullet(entryIndex, bulletIndex, e.target.value)}
                           rows={2}
                           className="w-full bg-muted/50 border border-border rounded-lg px-3 py-2 text-sm text-foreground leading-relaxed focus:outline-none focus:ring-2 focus:ring-ring resize-none"
@@ -320,13 +319,13 @@ export default function ResumeEditor({ onNav, onExport }: Props) {
               <div className="bg-card border border-border rounded-xl p-4">
                 <div className="text-xs font-medium text-foreground mb-3">Score factors</div>
                 <div className="space-y-2.5">
-                  {ATS_SCORE_CATEGORIES.map((category) => (
-                    <div key={category}>
+                  {liveAtsResult.breakdown.map((component) => (
+                    <div key={component.category} title={component.explanation}>
                       <div className="flex justify-between text-[10px] mb-1">
-                        <span className="text-muted-foreground">{ATS_CATEGORY_LABELS[category]}</span>
-                        <span className="font-mono text-foreground">{liveAtsResult.breakdown[category]}%</span>
+                        <span className="text-muted-foreground">{ATS_CATEGORY_LABELS[component.category]}</span>
+                        <span className="font-mono text-foreground">{component.rawScore}%</span>
                       </div>
-                      <ProgressBar value={liveAtsResult.breakdown[category]} height={4} />
+                      <ProgressBar value={component.rawScore} height={4} />
                     </div>
                   ))}
                 </div>

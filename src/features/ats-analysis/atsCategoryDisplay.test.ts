@@ -20,4 +20,11 @@ describe('explanationForCategory', () => {
     expect(sectionsExplanation).toBe(result.explanations[1])
     expect(sectionsExplanation.toLowerCase()).toContain('section')
   })
+
+  it('agrees with each ScoreComponent\'s own explanation', () => {
+    const result = analyzeAtsCompatibility(buildTestInput())
+    for (const component of result.breakdown) {
+      expect(explanationForCategory(result.explanations, component.category)).toBe(component.explanation)
+    }
+  })
 })

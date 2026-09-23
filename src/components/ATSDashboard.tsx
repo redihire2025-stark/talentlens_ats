@@ -1,14 +1,9 @@
 import type { View } from '../App'
-import { ScoreRing, ProgressBar, StatusBadge } from './shared'
+import { ScoreRing, ProgressBar, StatusBadge, EvidenceList } from './shared'
 import { useResumeStore } from '@/stores/resumeStore'
 import { useAnalysisStore } from '@/stores/analysisStore'
-import { ATS_SCORE_CATEGORIES } from '@/lib/ats/types'
-import {
-  ATS_CATEGORY_LABELS,
-  ATS_HEALTH_CARD_LABELS,
-  explanationForCategory,
-  scoreToHealthStatus,
-} from '@/features/ats-analysis/atsCategoryDisplay'
+import { ATS_CATEGORY_LABELS, ATS_HEALTH_CARD_LABELS, scoreToHealthStatus } from '@/features/ats-analysis/atsCategoryDisplay'
+import { formatContribution } from '@/lib/scoring/scoreComponents'
 
 interface Props {
   onNav: (v: View) => void
@@ -36,23 +31,26 @@ export default function ATSDashboard({ onNav, onExport }: Props) {
     )
   }
 
-  const breakdown = ATS_SCORE_CATEGORIES.map((category) => ({
-    category,
-    label: ATS_CATEGORY_LABELS[category],
-    value: atsResult.breakdown[category],
-    desc: explanationForCategory(atsResult.explanations, category),
+  // One row per ScoreComponent, in the scoring config's category order:
+  // the category's own 0-100 score, how many points it actually contributes
+  // to the overall score (its weighted share), and the analyzer's own
+  // explanation — never a bare percentage.
+  const breakdown = atsResult.breakdown.map((component) => ({
+    category: component.category,
+    label: ATS_CATEGORY_LABELS[component.category],
+    value: component.rawScore,
+    contribution: formatContribution(component),
+    desc: component.explanation,
   }))
 
-  const healthCards = ATS_SCORE_CATEGORIES.map((category) => {
-    const score = atsResult.breakdown[category]
-    return {
-      category,
-      title: ATS_HEALTH_CARD_LABELS[category],
-      status: scoreToHealthStatus(score),
-      score,
-      detail: explanationForCategory(atsResult.explanations, category),
-    }
-  })
+  const healthCards = atsResult.breakdown.map((component) => ({
+    category: component.category,
+    title: ATS_HEALTH_CARD_LABELS[component.category],
+    status: scoreToHealthStatus(component.rawScore),
+    score: component.rawScore,
+    detail: component.explanation,
+    evidence: component.evidence,
+  }))
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
@@ -132,6 +130,7 @@ export default function ATSDashboard({ onNav, onExport }: Props) {
                   </div>
                 </div>
                 <ProgressBar value={item.value} />
+                <div className="mt-1 font-mono text-[10px] text-muted-foreground text-right">contributes {item.contribution}</div>
               </div>
             ))}
           </div>
@@ -162,6 +161,11 @@ export default function ATSDashboard({ onNav, onExport }: Props) {
                 <span className="font-mono text-xs font-semibold text-foreground flex-shrink-0">{card.score}%</span>
               </div>
               <p className="text-xs text-muted-foreground leading-relaxed mb-3">{card.detail}</p>
+              {card.evidence.length > 0 && (
+                <div className="mb-3">
+                  <EvidenceList evidence={card.evidence} max={2} />
+                </div>
+              )}
               <button
                 onClick={() => onNav('recommendations')}
                 className="text-xs text-accent hover:underline font-medium"

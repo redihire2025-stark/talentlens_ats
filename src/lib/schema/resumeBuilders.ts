@@ -153,6 +153,9 @@ const OUTCOME_VERB_RE =
  */
 export function buildExperienceBullet(text: string, entryId: string, index: number): ExperienceBullet {
   const id = `${entryId}-bullet-${index}`
+  // `text` is stored exactly as given (the parser already hands over trimmed
+  // lines; the editor must be able to hold a trailing space mid-typing) —
+  // only the analysis below runs on the trimmed form.
   const trimmed = text.trim()
   const metrics = extractMetrics(trimmed)
   const actionVerb = leadingActionVerb(trimmed)
@@ -174,7 +177,7 @@ export function buildExperienceBullet(text: string, entryId: string, index: numb
 
   return {
     id,
-    text: trimmed,
+    text,
     ...(actionVerb ? { actionVerb } : {}),
     metrics,
     technologies,
