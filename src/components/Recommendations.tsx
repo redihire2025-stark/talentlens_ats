@@ -298,7 +298,7 @@ export default function Recommendations({ onNav }: Props) {
               )}
               {rec.location && isAiSuggestion && (
                 <p className="text-xs text-muted-foreground mb-4">
-                  The suggestion above was drafted by AI — review it (especially any placeholder number) before accepting.
+                  The suggestion above was drafted by AI — review it for accuracy before accepting.
                 </p>
               )}
 
