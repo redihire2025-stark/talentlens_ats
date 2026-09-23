@@ -1,4 +1,5 @@
 export * from './common'
+export * from './evidence'
 export * from './score'
 export * from './resume'
 export * from './jobDescription'

@@ -1,4 +1,6 @@
 import type { Resume } from '@/types/resume'
+import type { Evidence } from '@/types/evidence'
+import type { ScoreBreakdown } from '@/types/score'
 
 /**
  * What the ATS engine analyzes: the parsed Resume plus whatever warnings
@@ -33,7 +35,11 @@ export const ATS_SCORE_CATEGORIES = [
 
 export type AtsScoreCategory = (typeof ATS_SCORE_CATEGORIES)[number]
 
-export type AtsScoreBreakdown = Record<AtsScoreCategory, number>
+/** The 7 Resume Health `ScoreComponent`s, in `ATS_SCORE_CATEGORIES` order. */
+export type AtsScoreBreakdown = ScoreBreakdown<AtsScoreCategory>
+
+/** Per-category weights (or any other per-category number). */
+export type AtsScoreWeights = Record<AtsScoreCategory, number>
 
 /** One analyzer's contribution: its 0-100 sub-score plus what it found, in plain language. */
 export interface AnalyzerResult {
@@ -44,4 +50,6 @@ export interface AnalyzerResult {
   issues: string[]
   /** One or two human-readable sentences explaining the score. */
   explanation: string
+  /** Resume text (or, where no literal quote exists, a structural observation) behind the score. Becomes the category's `ScoreComponent.evidence`. */
+  evidence?: Evidence[]
 }

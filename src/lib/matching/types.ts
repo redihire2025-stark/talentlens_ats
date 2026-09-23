@@ -1,6 +1,7 @@
 import type { Resume } from '@/types/resume'
 import type { JobDescription } from '@/types/jobDescription'
 import type { MatchStatus } from '@/types/score'
+import type { Evidence } from '@/types/evidence'
 
 export interface MatchInput {
   resume: Resume
@@ -14,24 +15,31 @@ export interface MatchInput {
  */
 export type MatchType = 'exact' | 'normalized' | 'synonym' | 'fuzzy' | 'semantic' | 'none'
 
-export interface SkillMatchEntry {
+/**
+ * The spec's `MatchResult` (§19): one JD requirement compared against the
+ * resume. Every field is derived from what was or wasn't found — never
+ * fabricated.
+ */
+export interface MatchResult {
+  /** The `JobRequirement.id` (or `Keyword.id`) this result is for. */
+  requirementId: string
   /** The JD's original, as-written requirement text (e.g. "React.js"). */
   requirement: string
-  /** The JD skill's canonical (normalized) name (e.g. "react") — see PRD §12. */
-  skill: string
+  /** The requirement's canonical (normalized) term (e.g. "react"). */
+  normalizedTerm: string
   status: MatchStatus
   matchType: MatchType
-  /** 0-1. 1 for an exact/normalized match; lower for fuzzy; always 1 for a confirmed `missing` (certain there's no evidence). */
+  /** 0-1. 1 for an exact/normalized match; lower for synonym-in-bullet and fuzzy; always 1 for a confirmed `missing` (certain there's no evidence). */
   confidence: number
-  /** Resume text (a skill name or bullet) supporting this status; empty when missing. This is PRD §12's `resumeEvidence`, named `evidence` here for consistency with the rest of this file. */
-  evidence: string[]
+  /** Typed pointers to the resume text supporting this status; empty when missing. */
+  evidence: Evidence[]
   /** One human-readable sentence explaining the status — never fabricated, always derived from what was/wasn't found. */
   reason: string
 }
 
 export interface SkillMatchResult {
-  required: SkillMatchEntry[]
-  preferred: SkillMatchEntry[]
+  required: MatchResult[]
+  preferred: MatchResult[]
 }
 
 export interface TitleMatchResult {
@@ -41,6 +49,8 @@ export interface TitleMatchResult {
   jdTitle: string | null
   resumeTitle: string | null
   explanation: string
+  /** The matching experience entry's title line, when one matched or partially matched. */
+  evidence: Evidence[]
 }
 
 export interface ExperienceMatchResult {
@@ -50,41 +60,65 @@ export interface ExperienceMatchResult {
   requiredMinimumYears: number | null
   requiredMaximumYears: number | null
   explanation: string
+  /** The dated experience entries' meta lines the years figure was computed from. */
+  evidence: Evidence[]
+}
+
+/** One JD education requirement line compared against the resume's education. */
+export interface EducationRequirementMatch {
+  requirementId: string
+  requirement: string
+  status: MatchStatus
+  evidence: Evidence[]
 }
 
 export interface EducationMatchResult {
   status: MatchStatus
   required: boolean
+  /** Per-requirement results, in JD order. */
+  requirements: EducationRequirementMatch[]
+  /** Raw text of every `matched` requirement (convenience view over `requirements`). */
   matchedRequirements: string[]
+  /** Raw text of every `partial` or `missing` requirement. */
   missingRequirements: string[]
 }
 
 export interface ResponsibilityMatchEntry {
   responsibility: string
   status: MatchStatus
+  /** The best-overlapping resume bullet, when `matched`/`partial`; empty when `missing`. */
+  evidence: Evidence[]
 }
+
+export type HardRequirementType =
+  | 'minimum-experience'
+  | 'certification'
+  | 'license'
+  | 'education'
+  | 'work-authorization'
+  | 'location'
+  | 'required-skill'
 
 /**
  * A pass/fail requirement that must never disappear inside the overall Job
  * Match score (spec §11/§29): a missing hard requirement is reported
  * independently, not averaged away by everything the candidate got right.
- * Only the two types this codebase already has reliable signal for are
- * detected — `minimum-experience` (from the JD's stated
- * `experience.minimumYears`, reusing `matchExperience`'s own status) and
- * `required-skill` (one entry per `jobDescription.requiredSkills`, reusing
- * `matchSkills`'s own status) — see `hardRequirements.ts` and
- * `docs/architecture/ats-engine-spec-gap.md` for why the spec's other hard
- * requirement types (`certification`, `license`, `education`,
- * `work-authorization`, `location`) aren't detected here.
+ * The union lists all seven spec types; `hardRequirements.ts` detects the
+ * four this codebase has real signal for (`minimum-experience`,
+ * `required-skill`, `education`, `location`) — see that file and
+ * docs/architecture/ats-engine-spec-gap.md for why `certification`,
+ * `license`, and `work-authorization` are not detected.
  */
 export interface HardRequirement {
   id: string
-  type: 'minimum-experience' | 'certification' | 'license' | 'education' | 'work-authorization' | 'location' | 'required-skill'
+  type: HardRequirementType
+  /** The `JobRequirement.id` this was derived from, when there is one (required skills, education lines). */
+  requirementId?: string
   /** The JD text this requirement was derived from, as written. */
   requirementText: string
   satisfied: boolean
-  /** Verbatim resume text supporting `satisfied`; empty when not satisfied. */
-  evidence: string[]
+  /** Typed resume evidence supporting `satisfied`; empty when nothing supports it. */
+  evidence: Evidence[]
   /** One human-readable sentence explaining why this is/isn't satisfied. */
   reason: string
 }

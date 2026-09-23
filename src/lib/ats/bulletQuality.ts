@@ -7,8 +7,7 @@ const QUANTIFICATION_RE = /\d/
 
 /** Shared by contentQualityAnalyzer.ts and the recommendation engine (TASK-011) so both judge bullets the same way. */
 export function startsWithActionVerb(bullet: string): boolean {
-  const firstWord = bullet.trim().split(/\s+/)[0]?.toLowerCase().replace(/[^a-z]/g, '')
-  return Boolean(firstWord && ACTION_VERBS.includes(firstWord))
+  return leadingActionVerb(bullet) !== null
 }
 
 export function isQuantified(bullet: string): boolean {
@@ -27,6 +26,19 @@ const GERUND_TO_ACTION_VERB: Record<string, string> = {
   architecting: 'architected', delivering: 'delivered', driving: 'drove', establishing: 'established',
   automating: 'automated', streamlining: 'streamlined', mentoring: 'mentored', coordinating: 'coordinated',
   analyzing: 'analyzed', migrating: 'migrated', scaling: 'scaled', shipping: 'shipped',
+}
+
+/** Removes a recognized weak lead-in ("Responsible for …") from the front of a bullet, returning the remainder unchanged otherwise. Used to state a bullet's underlying responsibility (`ExperienceBullet.responsibilities`). */
+export function stripWeakLeadIn(bullet: string): string {
+  const trimmed = bullet.trim()
+  const leadInMatch = trimmed.match(WEAK_LEAD_IN_RE)
+  return leadInMatch ? trimmed.slice(leadInMatch[0].length).trim() : trimmed
+}
+
+/** The bullet's opening word, lowercased, when it's on `ACTION_VERBS`; null otherwise. */
+export function leadingActionVerb(bullet: string): string | null {
+  const firstWord = bullet.trim().split(/\s+/)[0]?.toLowerCase().replace(/[^a-z]/g, '')
+  return firstWord && ACTION_VERBS.includes(firstWord) ? firstWord : null
 }
 
 /**

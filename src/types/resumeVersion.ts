@@ -6,9 +6,9 @@ export interface ResumeVersionScoreSnapshot {
   ats: number
   /** Null when this version was saved before any job description had been analyzed. */
   jdMatch: Nullable<number>
-  /** Resume Health's 7-category breakdown at the time this version was saved — lets a later before/after comparison explain *why* the ATS score changed (spec §48), not just report the two numbers. Optional only for backward compatibility with any snapshot saved before this field existed. */
+  /** Resume Health's 7 `ScoreComponent`s at the time this version was saved — lets a later before/after comparison explain *why* the ATS score changed (spec §48), not just report the two numbers. Optional only for backward compatibility with any snapshot saved before this field existed. */
   atsBreakdown?: ScoreBreakdown
-  /** Job Match's 8-component breakdown, when a JD was active when this version was saved. */
+  /** Job Match's 8 `ScoreComponent`s, when a JD was active when this version was saved. */
   jdMatchBreakdown?: ScoreBreakdown
 }
 

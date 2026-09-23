@@ -1,5 +1,6 @@
 import type { Resume } from '@/types/resume'
 import type { MatchAnalysis } from '@/lib/matching/types'
+import type { Evidence } from '@/types/evidence'
 
 export type RecommendationCategory =
   | 'bullet-impact'
@@ -24,11 +25,19 @@ export interface RecommendationImpact {
   delta: number
 }
 
-/** Precisely where in the Resume a recommendation's `currentText` lives, so the editor (TASK-016) can apply a user-edited replacement without guessing. Only bullet-impact recommendations have one. */
+/**
+ * Precisely where in the Resume a recommendation's `currentText` lives, so
+ * the editor (TASK-016) can apply a user-edited replacement without
+ * guessing. Only bullet-impact recommendations have one. Carries both the
+ * positional indexes (what the editor's array updates use) and the stable
+ * `ExperienceEntry.id`/`ExperienceBullet.id` they point at.
+ */
 export interface RecommendationLocation {
   section: 'experience'
   entryIndex: number
   bulletIndex: number
+  entryId: string
+  bulletId: string
 }
 
 /** How severe an issue is, derived from its configured impact (see `impactConfig.ts`) — used for sorting/highlighting, never for hiding a recommendation. */
@@ -83,8 +92,8 @@ export interface Recommendation {
   severity: RecommendationSeverity
   /** PRD §15 `issue` — alias of `title`, kept separate so the two can diverge later without a breaking rename. */
   issue: string
-  /** PRD §15 `evidence` — the verbatim resume text this recommendation is based on, if any (mirrors `currentText`). */
-  evidence: string[]
+  /** PRD §15 `evidence` — typed pointers to the resume text this recommendation is based on (empty when it's about something the resume *lacks*). */
+  evidence: Evidence[]
   /** PRD §15 `explanation` — alias of `guidance`. */
   explanation: string
   /** PRD §15 `suggestedChange` — alias of `suggestedText`. */
@@ -109,7 +118,10 @@ export interface Recommendation {
 export type RecommendationDraft = Omit<
   Recommendation,
   'severity' | 'issue' | 'evidence' | 'explanation' | 'suggestedChange' | 'confidence' | 'source' | 'requiresUserInput' | 'status'
->
+> & {
+  /** Typed evidence, when the generator knows exactly where its `currentText` (or supporting text) came from. Omitted → derived from `currentText` by `toPrdRecommendationFields`. */
+  evidence?: Evidence[]
+}
 
 export interface GenerateRecommendationsInput {
   resume: Resume

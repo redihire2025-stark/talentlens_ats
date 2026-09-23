@@ -1,4 +1,5 @@
 import type { SynonymGroup } from '@/lib/normalization/skillSynonyms'
+import { findTaxonomyMentions, type TaxonomyMention } from '@/lib/normalization/termMining'
 
 /**
  * The flagship JD-parser fix called out in the target architecture PRD §9:
@@ -17,28 +18,11 @@ import type { SynonymGroup } from '@/lib/normalization/skillSynonyms'
  * - A term already found elsewhere (e.g. already in a comma-separated
  *   skills line) is not duplicated.
  */
-function escapeRegExp(value: string): string {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+export function mineTermsFromText(text: string, dictionary: readonly SynonymGroup[], exclude: ReadonlySet<string> = new Set()): string[] {
+  return findTaxonomyMentions(text, dictionary, { exclude }).map((mention) => mention.canonical)
 }
 
-const MIN_MINEABLE_VARIANT_LENGTH = 3
-
-export function mineTermsFromText(text: string, dictionary: readonly SynonymGroup[], exclude: ReadonlySet<string> = new Set()): string[] {
-  const found: string[] = []
-  const seen = new Set<string>(exclude)
-
-  for (const group of dictionary) {
-    if (seen.has(group.canonical)) continue
-    const variants = group.variants
-      .filter((variant) => variant.length >= MIN_MINEABLE_VARIANT_LENGTH)
-      .sort((a, b) => b.length - a.length)
-
-    const matched = variants.some((variant) => new RegExp(`\\b${escapeRegExp(variant)}\\b`, 'i').test(text))
-    if (matched) {
-      seen.add(group.canonical)
-      found.push(group.canonical)
-    }
-  }
-
-  return found
+/** Like `mineTermsFromText`, but also returns each term's literal spelling in `text` — the JD parser's `JobRequirement.rawText`. */
+export function mineMentionsFromText(text: string, dictionary: readonly SynonymGroup[], exclude: ReadonlySet<string> = new Set()): TaxonomyMention[] {
+  return findTaxonomyMentions(text, dictionary, { exclude })
 }

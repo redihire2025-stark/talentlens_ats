@@ -6,6 +6,14 @@ export interface SynonymGroup {
 }
 
 /**
+ * Bumped whenever `SKILL_SYNONYM_GROUPS` changes in a way that could change
+ * a canonicalization result — recorded on every parsed Resume
+ * (`parserMetadata.taxonomyVersion`) so a stored result can be traced back
+ * to the taxonomy that produced it (spec §4/§12: "versioned taxonomy").
+ */
+export const SKILL_TAXONOMY_VERSION = '1.0.0'
+
+/**
  * Seed data for skill canonicalization. Deliberately a plain data array,
  * not scattered `if` statements — adding a new skill or variant means
  * adding one entry here, not touching any matching/scoring code (see

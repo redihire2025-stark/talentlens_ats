@@ -1,5 +1,6 @@
 export { toLookupKey } from './lookupKey'
-export { SKILL_SYNONYM_GROUPS, type SynonymGroup } from './skillSynonyms'
+export { SKILL_SYNONYM_GROUPS, SKILL_TAXONOMY_VERSION, type SynonymGroup } from './skillSynonyms'
+export { findTaxonomyMentions, AMBIGUOUS_PROSE_VARIANTS, type TaxonomyMention } from './termMining'
 export { SKILL_DICTIONARY, normalizeSkillName } from './skillDictionary'
 export { TITLE_SYNONYM_GROUPS, normalizeCoreTitle } from './titleSynonyms'
 export { stripSeniorityPrefix, type SeniorityLevel, type SeniorityStripResult } from './titleSeniority'
