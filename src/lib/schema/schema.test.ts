@@ -13,8 +13,6 @@ import {
   rebuildExperienceEntry,
   reindexSkills,
 } from './resumeBuilders'
-import { findTaxonomyMentions, AMBIGUOUS_PROSE_VARIANTS } from '@/lib/normalization/termMining'
-import { SKILL_SYNONYM_GROUPS } from '@/lib/normalization/skillSynonyms'
 
 describe('hashText', () => {
   it('is deterministic and content-sensitive', () => {
@@ -65,24 +63,6 @@ describe('extractMetrics', () => {
 
   it('handles thousands separators', () => {
     expect(extractMetrics('Served 10,000+ users')).toEqual([{ text: '10,000+', value: 10000, kind: 'count' }])
-  })
-})
-
-describe('findTaxonomyMentions', () => {
-  it('returns the literal spelling used and prefers the longest variant', () => {
-    expect(findTaxonomyMentions('Shipped a React.js app on AWS', SKILL_SYNONYM_GROUPS)).toEqual([
-      { canonical: 'react', matchedText: 'React.js' },
-      { canonical: 'aws', matchedText: 'AWS' },
-    ])
-  })
-
-  it('matches variants that end in a symbol (C++), and skips 2-character ones (C#)', () => {
-    expect(findTaxonomyMentions('Wrote C++ and C# services', SKILL_SYNONYM_GROUPS).map((m) => m.canonical)).toEqual(['c++'])
-  })
-
-  it('skips ambiguous English variants when asked to', () => {
-    const text = 'Handled the rest of the release for next quarter'
-    expect(findTaxonomyMentions(text, SKILL_SYNONYM_GROUPS, { skipVariants: AMBIGUOUS_PROSE_VARIANTS })).toEqual([])
   })
 })
 

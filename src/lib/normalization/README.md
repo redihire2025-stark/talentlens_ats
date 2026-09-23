@@ -13,6 +13,12 @@ this module instead of hardcoding its own string comparisons.
 - `normalizeTitle.ts` — combines the two above into `{ seniority, coreTitle }`
 - `keywordNormalization.ts` — generic trim/lowercase/collapse-whitespace
   fallback for keywords that aren't specifically a skill or title
+- `termMining.ts` — `findTaxonomyMentions`, the whole-word taxonomy
+  search shared by the JD prose miner and the resume bullet builder; it
+  reports each term's literal spelling (a `JobRequirement.rawText` /
+  bullet technology's `rawName`) as well as its canonical form
+- `SKILL_TAXONOMY_VERSION` (in `skillSynonyms.ts`) — recorded on every
+  parsed Resume as `parserMetadata.taxonomyVersion`
 
 Unrecognized input never gets dropped — every normalizer falls back to a
 plain lowercase/trim rather than erroring or discarding the value, so an
