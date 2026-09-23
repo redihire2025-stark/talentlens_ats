@@ -7,8 +7,19 @@
  * flat skill token. Canonicalizing the skills this does find (`React.js` →
  * `react`) is the normalization engine's job (TASK-007), not this parser's.
  */
+export interface SkillListItem {
+  name: string
+  /** The list line (bullet marker stripped) the name was split out of. */
+  line: string
+}
+
 export function buildSkillList(lines: string[]): string[] {
-  const skills: string[] = []
+  return buildSkillListItems(lines).map((item) => item.name)
+}
+
+/** Same extraction as `buildSkillList`, keeping each name's source line (a `JobRequirement`'s `evidence`). */
+export function buildSkillListItems(lines: string[]): SkillListItem[] {
+  const skills: SkillListItem[] = []
   const seen = new Set<string>()
 
   for (const rawLine of lines) {
@@ -27,7 +38,7 @@ export function buildSkillList(lines: string[]): string[] {
       const key = name.toLowerCase()
       if (seen.has(key)) continue
       seen.add(key)
-      skills.push(name)
+      skills.push({ name, line })
     }
   }
 

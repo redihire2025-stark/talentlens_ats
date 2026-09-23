@@ -16,7 +16,7 @@ describe('useJobDescriptionStore', () => {
     await useJobDescriptionStore.getState().parseText()
     const state = useJobDescriptionStore.getState()
     expect(state.status).toBe('ready')
-    expect(state.jobDescription?.requiredSkills).toEqual(['React', 'TypeScript'])
+    expect(state.jobDescription?.requiredSkills.map((r) => r.rawText)).toEqual(['React', 'TypeScript'])
   })
 
   it('parseText() is a no-op for blank text', async () => {

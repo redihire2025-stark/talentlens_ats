@@ -9,7 +9,7 @@ describe('parseJobDescriptionFromText', () => {
   it('parses valid job description text', async () => {
     const result = await parseJobDescriptionFromText({ text: 'Senior Engineer\n\nRequirements\nReact, TypeScript' })
     expect(result.ok).toBe(true)
-    if (result.ok) expect(result.data.jobDescription.requiredSkills).toEqual(['React', 'TypeScript'])
+    if (result.ok) expect(result.data.jobDescription.requiredSkills.map((r) => r.rawText)).toEqual(['React', 'TypeScript'])
   })
 
   it('rejects empty text', async () => {

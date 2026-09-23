@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildSkillList } from './buildSkillList'
+import { buildSkillList, buildSkillListItems } from './buildSkillList'
 
 describe('buildSkillList', () => {
   it('splits a labeled comma list into individual skills', () => {
@@ -20,5 +20,12 @@ describe('buildSkillList', () => {
 
   it('ignores blank lines', () => {
     expect(buildSkillList(['React, TypeScript', '', '  '])).toEqual(['React', 'TypeScript'])
+  })
+
+  it('keeps each item\'s source line (bullet marker stripped)', () => {
+    expect(buildSkillListItems(['- Required Skills: React, Go'])).toEqual([
+      { name: 'React', line: 'Required Skills: React, Go' },
+      { name: 'Go', line: 'Required Skills: React, Go' },
+    ])
   })
 })
