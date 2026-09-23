@@ -8,6 +8,14 @@ export type RecommendationCategory =
   | 'missing-section'
   | 'formatting'
   | 'title-alignment'
+  /** A failed `HardRequirement` (spec §38) — see `hardRequirementRecommendations.ts`. */
+  | 'hard-requirement-gap'
+  /** The JD wants more years of experience than the resume demonstrates — see `experienceGapRecommendations.ts`. */
+  | 'experience-gap'
+  /** A JD responsibility line with no matched/partial evidence in the resume — see `responsibilityGapRecommendations.ts`. */
+  | 'responsibility-gap'
+  /** A JD education requirement not satisfied — see `educationGapRecommendations.ts`. */
+  | 'education-gap'
 
 export interface RecommendationImpact {
   /** Which score category this recommendation would help if acted on truthfully. */

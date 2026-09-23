@@ -22,8 +22,16 @@ const SECTION_LABELS: Record<RecommendationCategory, string> = {
   'skill-not-demonstrated': 'Skills',
   'title-alignment': 'Job Title',
   formatting: 'Formatting',
+  // Spec §55's UI grouping list puts hard requirement failures, experience,
+  // responsibility and education gaps under "Critical Requirements" —
+  // distinct from "Job Match"'s skill-level recommendations above, since a
+  // hard requirement must never look like just another suggestion.
+  'hard-requirement-gap': 'Critical Requirements',
+  'experience-gap': 'Critical Requirements',
+  'responsibility-gap': 'Critical Requirements',
+  'education-gap': 'Critical Requirements',
 }
-const SECTION_ORDER = ['Resume Structure', 'Experience', 'Skills', 'Job Title', 'Formatting']
+const SECTION_ORDER = ['Critical Requirements', 'Resume Structure', 'Experience', 'Skills', 'Job Title', 'Formatting']
 
 function groupBySection(recommendations: Recommendation[]): { section: string; items: Recommendation[] }[] {
   const bySection = new Map<string, Recommendation[]>()

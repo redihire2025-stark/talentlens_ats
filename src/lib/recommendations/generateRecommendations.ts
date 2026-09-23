@@ -4,6 +4,10 @@ import { skillEvidenceRecommendations } from './skillEvidenceRecommendations'
 import { formattingRecommendations } from './formattingRecommendations'
 import { skillGapRecommendations } from './skillGapRecommendations'
 import { titleAlignmentRecommendations } from './titleAlignmentRecommendations'
+import { hardRequirementRecommendations } from './hardRequirementRecommendations'
+import { experienceGapRecommendations } from './experienceGapRecommendations'
+import { responsibilityGapRecommendations } from './responsibilityGapRecommendations'
+import { educationGapRecommendations } from './educationGapRecommendations'
 import type { GenerateRecommendationsInput, Recommendation, RecommendationDraft, RecommendationSeverity } from './types'
 
 /** Impact deltas of 5+ are "high" (a required-skill gap, a missing section); 3-4 "medium"; anything smaller "low". Product judgment, not a scientific scale — see `impactConfig.ts`. */
@@ -51,7 +55,14 @@ export function generateRecommendations({ resume, parserWarnings, matchAnalysis 
   ]
 
   if (matchAnalysis) {
-    drafts.push(...skillGapRecommendations(matchAnalysis), ...titleAlignmentRecommendations(matchAnalysis))
+    drafts.push(
+      ...skillGapRecommendations(matchAnalysis),
+      ...titleAlignmentRecommendations(matchAnalysis),
+      ...hardRequirementRecommendations(matchAnalysis),
+      ...experienceGapRecommendations(matchAnalysis),
+      ...responsibilityGapRecommendations(matchAnalysis),
+      ...educationGapRecommendations(matchAnalysis),
+    )
   }
 
   return drafts.map(toPrdRecommendationFields)

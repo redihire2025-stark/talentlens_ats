@@ -13,4 +13,10 @@ export const RECOMMENDATION_IMPACT: Record<RecommendationCategory, { metric: str
   'missing-section': { metric: 'Sections', delta: 5 },
   formatting: { metric: 'Formatting', delta: 4 },
   'title-alignment': { metric: 'Title', delta: 3 },
+  // A failed hard requirement is the highest-impact category by design —
+  // it's a pass/fail gate the spec says must never be hidden (§29).
+  'hard-requirement-gap': { metric: 'Hard Requirements', delta: 8 },
+  'experience-gap': { metric: 'Experience', delta: 5 },
+  'responsibility-gap': { metric: 'Responsibility Alignment', delta: 4 },
+  'education-gap': { metric: 'Education', delta: 3 },
 }

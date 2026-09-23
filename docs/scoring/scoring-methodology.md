@@ -113,6 +113,53 @@ Every score calculation returns:
 }
 ```
 
+## Hard requirements — reported outside the score
+
+A Job Match score never hides a mandatory failure inside a good average.
+`matchResume` (`src/lib/matching/`) also returns `hardRequirements`, a flat
+✓/✗ list covering the JD's stated minimum years of experience and each
+required skill — see `docs/scoring/matching-rules.md`'s "Hard requirements"
+section for the full detection rules and what's deliberately not detected.
+This list is displayed in its own UI section, never merged into
+`breakdown`.
+
+## Recommendation categories added for JD-dependent gaps
+
+Beyond the original six categories, four more (`src/lib/recommendations/`)
+turn already-computed match data into recommendations without any new
+matching logic of their own:
+
+| Category | Generator | Built from |
+| --- | --- | --- |
+| `hard-requirement-gap` | `hardRequirementRecommendations.ts` | Each unsatisfied `HardRequirement` above |
+| `experience-gap` | `experienceGapRecommendations.ts` | `experienceMatcher.ts`'s own status/years when the JD's minimum isn't met |
+| `responsibility-gap` | `responsibilityGapRecommendations.ts` | `responsibilityMatcher.ts`'s `missing` entries |
+| `education-gap` | `educationGapRecommendations.ts` | `educationMatcher.ts`'s `missingRequirements` |
+
+A fifth spec category, `certification-gap`, is deliberately not built: the
+JD schema's `certifications` field is an unstructured `string[]` with no
+matcher comparing it against the resume's own certifications, so a
+generator here would have to invent matching logic rather than reuse an
+existing result — see `docs/architecture/ats-engine-spec-gap.md`.
+
+In the UI (`src/components/Recommendations.tsx`), all four group under a
+new "Critical Requirements" section, ordered first, so a hard-requirement
+or gap-level recommendation is never visually indistinguishable from a
+routine wording suggestion.
+
+## Score-change explanation
+
+`src/lib/scoring/explainScoreChange.ts` is a pure diff utility — never a new
+scoring calculation — over two already-computed `ScoreResult.breakdown`
+objects (Resume Health's 7 categories, or Job Match's 8 components when a
+JD is active). `diffScoreBreakdown` returns each changed category's
+before/after/delta, sorted by magnitude; `formatScoreChange` renders the
+spec §48 example phrasing ("+5 Required Skill Coverage, +2 Responsibility
+Alignment, -1 Risk/Consistency"). `src/components/BeforeAfter.tsx` uses it
+to show *why* a score changed between two saved resume versions, not just
+the two numbers — `src/stores/versionsStore.ts`'s `ResumeVersion.scoreSnapshot`
+now also stores each version's breakdown for this purpose.
+
 ## Determinism
 
 Given the same Resume JSON (and, for JD match, the same JD JSON), the score
