@@ -39,4 +39,12 @@ describe('splitResumeSections', () => {
     const sections = splitResumeSections(text)
     expect(sections.header).toEqual([text])
   })
+
+  it.each(['Skills & Technologies', 'Skills and Technologies', 'Tech Stack', 'Technical Proficiencies', 'Areas of Expertise', 'Key Skills'])(
+    'recognizes "%s" as a skills section header',
+    (heading) => {
+      const sections = splitResumeSections(`${heading}\nReact, TypeScript`)
+      expect(sections.skills).toEqual(['React, TypeScript'])
+    },
+  )
 })

@@ -1,5 +1,11 @@
 # V1 Scope
 
+> See `docs/product/target-architecture-prd.md` for the target direction
+> and `docs/architecture/target-architecture-gap.md` for exactly what that
+> PRD asks for that this sandbox cannot build (real Postgres, object
+> storage, a deployed backend process, auth, a hosted AI provider, a
+> background queue) and why.
+
 ## Product
 
 TalentLens — "Smarter Resume & Talent Matching." A resume intelligence and
@@ -10,10 +16,17 @@ job-matching platform for job seekers (primary, V1) and recruiters
 
 - Anonymous use — no login, no accounts.
 - Upload a resume (PDF/DOCX) → parse into structured Resume JSON.
-- Deterministic ATS Compatibility Score with full breakdown.
-- Optional job description input → structured JD JSON → JD Match Score.
-- Matched / missing / partially-demonstrated skills.
-- Evidence-based, editable recommendations (accept / reject / edit).
+- Deterministic Resume Health / ATS Readiness score with full breakdown,
+  across 7 product categories (ATS Essentials, Resume Structure, Content
+  Quality, Skills & Evidence, Experience & Seniority, Recruiter
+  Readability, Risk & Consistency).
+- Optional job description input → structured JD JSON (including
+  requirements mined from prose, not just list lines) → Job Match Score.
+- Matched / missing / partially-demonstrated skills, each with a match
+  type, confidence, and a plain-language reason.
+- Evidence-based, editable recommendations (accept / reject / edit),
+  including AI-drafted bullet rewrites as a clearly-labeled, optional,
+  non-authoritative suggestion source.
 - Resume versioning (original + edited versions) held in memory.
 - Recalculated scores after edits.
 - Export optimized resume to PDF/DOCX.
@@ -26,8 +39,15 @@ job-matching platform for job seekers (primary, V1) and recruiters
 - Recruiter dashboard, candidate management, job tracking.
 - Semantic/embedding-based matching as a requirement (may exist later as an
   optional, swappable enhancement behind `SemanticMatcher`).
-- Local or hosted LLM as a dependency of the ATS or matching engines.
+- Local or hosted LLM as a dependency of the Resume Health or matching
+  engines — the one existing AI feature (bullet rewrite suggestions) is
+  optional and never authoritative for any score.
 - Supabase, PostgreSQL, Redis, Kafka, Kubernetes, microservices.
+- Everything on the target PRD's explicit do-not-build list (§24):
+  candidate ranking for recruiters, service mesh, automatic job
+  applications, unrestricted scraping, interview-outcome or
+  hiring-probability prediction, and any claim that TalentLens reproduces
+  an employer's proprietary ATS score.
 
 ## Product principles (drive every feature decision)
 

@@ -33,9 +33,7 @@ const GERUND_TO_ACTION_VERB: Record<string, string> = {
  * Rewrites a bullet's weak lead-in ("Responsible for managing...") into a
  * direct action verb ("Managed...") by reusing only words already in the
  * bullet — no invented scope, metrics, or outcomes. Returns null when the
- * bullet doesn't match a recognized weak lead-in + gerund pattern; there's
- * no safe mechanical fix for arbitrary phrasing, and none at all for a
- * missing metric, so those stay guidance-only.
+ * bullet doesn't match a recognized weak lead-in + gerund pattern.
  */
 export function suggestActionVerbRewrite(bullet: string): string | null {
   const trimmed = bullet.trim()
@@ -43,13 +41,56 @@ export function suggestActionVerbRewrite(bullet: string): string | null {
   if (!leadInMatch) return null
 
   const rest = trimmed.slice(leadInMatch[0].length)
-  const gerundMatch = rest.match(/^([a-zA-Z]+)(?=\s|$)/)
+  return rewriteGerundOpener(rest)
+}
+
+/** If `text` starts with a recognized gerund ("Managing…"), rewrites just that opening word to its past-tense action-verb form ("Managed…"). Returns null when the opener isn't a recognized gerund. */
+function rewriteGerundOpener(text: string): string | null {
+  const gerundMatch = text.match(/^([a-zA-Z]+)(?=\s|$)/)
   if (!gerundMatch) return null
 
   const actionVerb = GERUND_TO_ACTION_VERB[gerundMatch[1].toLowerCase()]
   if (!actionVerb) return null
 
-  const remainder = rest.slice(gerundMatch[1].length)
+  const remainder = text.slice(gerundMatch[1].length)
   const capitalized = actionVerb.charAt(0).toUpperCase() + actionVerb.slice(1)
   return `${capitalized}${remainder}`
+}
+
+/**
+ * Always returns a usable, non-fabricating suggested bullet — the
+ * deterministic baseline every bullet-impact recommendation shows
+ * up-front (never a blank "no suggestion available"), which an AI-drafted
+ * rewrite (`src/lib/ai/`) may then optionally upgrade. It only ever
+ * reorders/reuses words already in the bullet:
+ *
+ * 1. A recognized weak lead-in ("Responsible for managing...") becomes a
+ *    direct action verb ("Managed...").
+ * 2. A bare gerund opener with no lead-in phrase ("Managing a team...")
+ *    becomes its past-tense form ("Managed a team...").
+ * 3. A first-person opener ("I led the migration...") drops the "I ".
+ * 4. Otherwise (the bullet already starts with a strong action verb, or no
+ *    safe mechanical fix applies — most commonly, the only issue is a
+ *    missing metric, and no rewrite can invent one) the bullet is returned
+ *    unchanged: an honest "nothing more to safely suggest" rather than a
+ *    fabricated improvement.
+ */
+export function buildDeterministicBulletSuggestion(bullet: string): string {
+  const trimmed = bullet.trim()
+
+  const leadInRewrite = suggestActionVerbRewrite(trimmed)
+  if (leadInRewrite) return leadInRewrite
+
+  if (!startsWithActionVerb(trimmed)) {
+    const bareGerundRewrite = rewriteGerundOpener(trimmed)
+    if (bareGerundRewrite) return bareGerundRewrite
+  }
+
+  const firstPersonMatch = trimmed.match(/^I\s+(.+)$/)
+  if (firstPersonMatch) {
+    const rest = firstPersonMatch[1]!
+    return rest.charAt(0).toUpperCase() + rest.slice(1)
+  }
+
+  return trimmed
 }

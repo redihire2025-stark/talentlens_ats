@@ -7,7 +7,25 @@ import { extractLocation } from './fieldExtractors'
 const TITLE_KEYWORD_RE =
   /\b(engineer|manager|developer|director|designer|analyst|lead|specialist|consultant|architect|intern|coordinator|officer|president|founder|scientist|administrator)\b/i
 
-const META_SEPARATOR_RE = /\s*(?:\||–|—|\bat\b|,)\s*/
+/**
+ * Punctuation-based separators between a title and a company on the same
+ * meta line. Covers pipe, en/en-dash, em-dash, "@" (very common on
+ * LinkedIn-exported resumes: "Senior Engineer @ Acme"), a plain hyphen with
+ * spaces on both sides ("Senior Engineer - Acme" — deliberately requires
+ * surrounding whitespace so it never splits a hyphenated word like
+ * "Full-Stack"), "at" (case-insensitive), a comma, or a semicolon. See
+ * docs/architecture/resume-parser.md.
+ */
+const META_SEPARATOR_RE = /\s+-\s+|\s*(?:\||–|—|@|\bat\b|,|;)\s*/i
+
+/**
+ * Fallback for a meta line with no punctuation separator at all — common
+ * when a PDF's title/company columns were extracted as plain whitespace
+ * (e.g. "Senior Engineer    Acme Corp" or a literal tab). Requires at least
+ * two consecutive spaces (or a tab) so ordinary single-spaced prose is
+ * never mistakenly split.
+ */
+const WHITESPACE_COLUMN_SEPARATOR_RE = /\t+| {2,}/
 
 interface MetaParseResult {
   title: string
@@ -43,10 +61,20 @@ function parseMetaLines(metaLines: string[], warnings: string[], entryIndex: num
   // empty "()" behind that would otherwise get glued onto the next part.
   text = text.replace(/\(\s*\)/g, ' ')
 
-  const parts = text
+  let parts = text
     .split(META_SEPARATOR_RE)
     .map((part) => part.trim())
     .filter(Boolean)
+
+  if (parts.length === 1) {
+    // No punctuation separator found — try the whitespace-columns fallback
+    // before giving up (see WHITESPACE_COLUMN_SEPARATOR_RE above).
+    const columnParts = parts[0]!
+      .split(WHITESPACE_COLUMN_SEPARATOR_RE)
+      .map((part) => part.trim())
+      .filter(Boolean)
+    if (columnParts.length > 1) parts = columnParts
+  }
 
   if (parts.length === 0) {
     warnings.push(`Experience entry ${entryIndex + 1}: couldn't identify a title or company.`)

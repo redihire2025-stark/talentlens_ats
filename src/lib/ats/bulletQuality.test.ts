@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { suggestActionVerbRewrite } from './bulletQuality'
+import { buildDeterministicBulletSuggestion, suggestActionVerbRewrite } from './bulletQuality'
 
 describe('suggestActionVerbRewrite', () => {
   it('rewrites a weak lead-in into the action verb already in the bullet', () => {
@@ -25,5 +25,37 @@ describe('suggestActionVerbRewrite', () => {
 
   it('returns null when the lead-in is followed by an unrecognized verb', () => {
     expect(suggestActionVerbRewrite('Responsible for onboarding new hires.')).toBeNull()
+  })
+})
+
+describe('buildDeterministicBulletSuggestion', () => {
+  it('never returns null or an empty string', () => {
+    for (const bullet of [
+      'Responsible for managing a team of 5 engineers.',
+      'Managing a team of 5 engineers.',
+      'I led the migration to TypeScript.',
+      'Managed the frontend team.',
+      'Collaborated with design on the new checkout flow.',
+    ]) {
+      const result = buildDeterministicBulletSuggestion(bullet)
+      expect(typeof result).toBe('string')
+      expect(result.length).toBeGreaterThan(0)
+    }
+  })
+
+  it('falls back to the weak-lead-in rewrite when one applies', () => {
+    expect(buildDeterministicBulletSuggestion('Responsible for managing a team of 5 engineers.')).toBe('Managed a team of 5 engineers.')
+  })
+
+  it('rewrites a bare gerund opener with no lead-in phrase', () => {
+    expect(buildDeterministicBulletSuggestion('Managing a team of 5 engineers.')).toBe('Managed a team of 5 engineers.')
+  })
+
+  it('drops a first-person "I" opener', () => {
+    expect(buildDeterministicBulletSuggestion('I led the migration to TypeScript.')).toBe('Led the migration to TypeScript.')
+  })
+
+  it('returns the bullet unchanged, verbatim, when no safe rewrite applies', () => {
+    expect(buildDeterministicBulletSuggestion('Managed the frontend team.')).toBe('Managed the frontend team.')
   })
 })

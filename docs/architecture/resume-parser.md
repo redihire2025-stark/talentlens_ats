@@ -84,10 +84,16 @@ gracefully (never crashes, never fabricates data) on unconventional ones:
   parser defaults to "Title, Company" order. A resume using "Company,
   Title" order without a recognizable title keyword will have those two
   swapped.
-- **Ambiguous or missing separators**: if a meta line can't be split at
-  all (no comma/pipe/dash/"at"), the whole line becomes `title` and
-  `company` is left as an empty string — a warning is added rather than
-  guessing a company name.
+- **Ambiguous or missing separators**: the meta-line splitter recognizes a
+  comma, pipe, semicolon, en/em-dash, "@", "at" (case-insensitive), and a
+  plain hyphen with spaces on both sides (never a hyphen with no
+  surrounding whitespace, so "Full-Stack Engineer" is never split). If none
+  of those are present, it falls back to a whitespace-columns heuristic (a
+  literal tab, or 2+ consecutive spaces — common when a PDF's title/company
+  columns were extracted without any punctuation between them). Only if
+  *that* also fails does the whole line become `title` with `company` left
+  as an empty string and a warning added, rather than guessing a company
+  name.
 - **Location matching** requires a 2-letter code after the comma (e.g.
   "Austin, TX"). This is a deliberate trade-off: an earlier, looser
   pattern that also matched any capitalized word (to also catch "Austin,

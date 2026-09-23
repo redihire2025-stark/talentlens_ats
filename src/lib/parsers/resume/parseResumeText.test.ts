@@ -204,6 +204,44 @@ describe('parseResumeText edge cases', () => {
     expect(warnings).toContain('This document is very short for a resume — parsing may be incomplete.')
   })
 
+  it('splits title from company on an "@" separator (common on LinkedIn-exported resumes)', () => {
+    const text = `Jordan Rivera\njordan@example.com\n\nWork Experience\nSenior Backend Engineer @ Acme Corp\nJan 2020 - Present\n- Shipped things.\n`
+    const { resume, warnings } = parseResumeText(text)
+    expect(resume.experience[0]!.title).toBe('Senior Backend Engineer')
+    expect(resume.experience[0]!.company).toBe('Acme Corp')
+    expect(warnings.some((w) => w.includes("couldn't separate"))).toBe(false)
+  })
+
+  it('splits title from company on a plain hyphen with spaces, without breaking a hyphenated title', () => {
+    const text = `Jordan Rivera\njordan@example.com\n\nWork Experience\nFull-Stack Engineer - Acme Corp\nJan 2020 - Present\n- Shipped things.\n`
+    const { resume, warnings } = parseResumeText(text)
+    expect(resume.experience[0]!.title).toBe('Full-Stack Engineer')
+    expect(resume.experience[0]!.company).toBe('Acme Corp')
+    expect(warnings.some((w) => w.includes("couldn't separate"))).toBe(false)
+  })
+
+  it('splits title from company on a whitespace-column layout with no punctuation separator', () => {
+    const text = `Jordan Rivera\njordan@example.com\n\nWork Experience\nSenior Backend Engineer    Acme Corp\nJan 2020 - Present\n- Shipped things.\n`
+    const { resume, warnings } = parseResumeText(text)
+    expect(resume.experience[0]!.title).toBe('Senior Backend Engineer')
+    expect(resume.experience[0]!.company).toBe('Acme Corp')
+    expect(warnings.some((w) => w.includes("couldn't separate"))).toBe(false)
+  })
+
+  it('splits title from company on a literal tab', () => {
+    const text = `Jordan Rivera\njordan@example.com\n\nWork Experience\nSenior Backend Engineer\tAcme Corp\nJan 2020 - Present\n- Shipped things.\n`
+    const { resume } = parseResumeText(text)
+    expect(resume.experience[0]!.title).toBe('Senior Backend Engineer')
+    expect(resume.experience[0]!.company).toBe('Acme Corp')
+  })
+
+  it('splits title from company on "At" with capitalized casing', () => {
+    const text = `Jordan Rivera\njordan@example.com\n\nWork Experience\nSenior Backend Engineer At Acme Corp\nJan 2020 - Present\n- Shipped things.\n`
+    const { resume } = parseResumeText(text)
+    expect(resume.experience[0]!.title).toBe('Senior Backend Engineer')
+    expect(resume.experience[0]!.company).toBe('Acme Corp')
+  })
+
   it('warns but does not crash when an experience entry has no separator to split title from company', () => {
     const text = `Jordan Rivera\njordan@example.com\n\nWork Experience\nRan my own bakery for 2019 - 2021\n- Baked bread.\n`
     const { resume, warnings } = parseResumeText(text)

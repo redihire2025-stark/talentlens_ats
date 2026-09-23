@@ -50,13 +50,54 @@ describe('bulletImpactRecommendations', () => {
     expect(recommendation?.suggestedText).toBe('Managed a team of 5 engineers.')
   })
 
-  it('leaves suggestedText null when there is no safe mechanical rewrite (e.g. a missing metric)', () => {
+  it('falls back to the original bullet, verbatim, when there is no safe mechanical rewrite (e.g. a missing metric)', () => {
     const resume = buildTestResume({
       experience: [
         { company: 'Acme', title: 'Engineer', startDate: null, endDate: null, location: null, bullets: ['Managed the frontend team.'] },
       ],
     })
     const [recommendation] = bulletImpactRecommendations(resume)
-    expect(recommendation?.suggestedText).toBeNull()
+    // Never null: the UI always has a concrete suggestion to show, even when
+    // the only honest "fix" is no fix (no metric can be safely invented).
+    expect(recommendation?.suggestedText).toBe('Managed the frontend team.')
+  })
+
+  it('rewrites a bare gerund opener with no lead-in phrase', () => {
+    const resume = buildTestResume({
+      experience: [
+        { company: 'Acme', title: 'Engineer', startDate: null, endDate: null, location: null, bullets: ['Managing a team of 5 engineers.'] },
+      ],
+    })
+    const [recommendation] = bulletImpactRecommendations(resume)
+    expect(recommendation?.suggestedText).toBe('Managed a team of 5 engineers.')
+  })
+
+  it('drops a first-person "I" opener', () => {
+    const resume = buildTestResume({
+      experience: [
+        { company: 'Acme', title: 'Engineer', startDate: null, endDate: null, location: null, bullets: ['I led the migration to TypeScript.'] },
+      ],
+    })
+    const [recommendation] = bulletImpactRecommendations(resume)
+    expect(recommendation?.suggestedText).toBe('Led the migration to TypeScript.')
+  })
+
+  it('every bullet-impact recommendation has a non-null suggestedText', () => {
+    const resume = buildTestResume({
+      experience: [
+        {
+          company: 'Acme',
+          title: 'Engineer',
+          startDate: null,
+          endDate: null,
+          location: null,
+          bullets: ['Worked on stuff.', 'Helped with the redesign.', 'Tasked with onboarding new hires.'],
+        },
+      ],
+    })
+    for (const recommendation of bulletImpactRecommendations(resume)) {
+      expect(recommendation.suggestedText).not.toBeNull()
+      expect(recommendation.suggestedText!.length).toBeGreaterThan(0)
+    }
   })
 })

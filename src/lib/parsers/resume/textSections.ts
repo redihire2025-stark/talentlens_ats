@@ -4,7 +4,22 @@ export type ResumeSections = Record<ResumeSectionName, string[]> & { header: str
 
 const SECTION_ALIASES: Record<ResumeSectionName, string[]> = {
   summary: ['summary', 'professional summary', 'objective', 'profile', 'about'],
-  skills: ['skills', 'technical skills', 'core competencies', 'competencies', 'technologies'],
+  skills: [
+    'skills',
+    'technical skills',
+    'core competencies',
+    'competencies',
+    'technologies',
+    'skills & technologies',
+    'skills and technologies',
+    'tech stack',
+    'technical proficiencies',
+    'technical skills & tools',
+    'technical skills and tools',
+    'skills & tools',
+    'areas of expertise',
+    'key skills',
+  ],
   experience: ['experience', 'work experience', 'professional experience', 'employment history', 'work history'],
   education: ['education', 'academic background'],
   certifications: ['certifications', 'certifications & licenses', 'licenses', 'licenses & certifications'],
