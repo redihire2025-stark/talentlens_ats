@@ -22,6 +22,7 @@ export function matchTitle({ resume, jobDescription }: MatchInput): TitleMatchRe
       jdTitle: null,
       resumeTitle: null,
       explanation: 'The job description did not state a specific title to compare against.',
+      evidence: [],
     }
   }
 
@@ -32,6 +33,7 @@ export function matchTitle({ resume, jobDescription }: MatchInput): TitleMatchRe
       jdTitle,
       resumeTitle: null,
       explanation: 'No work experience titles were found to compare against the job title.',
+      evidence: [],
     }
   }
 
@@ -50,14 +52,15 @@ export function matchTitle({ resume, jobDescription }: MatchInput): TitleMatchRe
         jdTitle,
         resumeTitle: entry.title,
         explanation: `"${entry.title}" matches the job title "${jdTitle}"${seniorityNote}.`,
+        evidence: entry.evidence,
       }
     }
   }
 
-  let bestFuzzy: { title: string; ratio: number } | null = null
+  let bestFuzzy: { title: string; ratio: number; entry: (typeof resume.experience)[number] } | null = null
   for (const entry of resume.experience) {
     const ratio = tokenOverlapRatio(jdTitle, entry.title)
-    if (!bestFuzzy || ratio > bestFuzzy.ratio) bestFuzzy = { title: entry.title, ratio }
+    if (!bestFuzzy || ratio > bestFuzzy.ratio) bestFuzzy = { title: entry.title, ratio, entry }
   }
   if (bestFuzzy && bestFuzzy.ratio >= FUZZY_PARTIAL_THRESHOLD) {
     return {
@@ -66,6 +69,7 @@ export function matchTitle({ resume, jobDescription }: MatchInput): TitleMatchRe
       jdTitle,
       resumeTitle: bestFuzzy.title,
       explanation: `"${bestFuzzy.title}" is related to, but not the same role as, "${jdTitle}".`,
+      evidence: bestFuzzy.entry.evidence.map((e) => ({ ...e, confidence: Math.round(bestFuzzy!.ratio * 100) / 100 })),
     }
   }
 
@@ -75,5 +79,6 @@ export function matchTitle({ resume, jobDescription }: MatchInput): TitleMatchRe
     jdTitle,
     resumeTitle: resume.experience[0]?.title ?? null,
     explanation: `No experience title closely matching "${jdTitle}" was found.`,
+    evidence: [],
   }
 }

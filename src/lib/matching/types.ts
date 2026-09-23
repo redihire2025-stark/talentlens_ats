@@ -70,6 +70,8 @@ export interface EducationRequirementMatch {
   requirement: string
   status: MatchStatus
   evidence: Evidence[]
+  /** One sentence explaining the status, derived from what was/wasn't found. */
+  reason: string
 }
 
 export interface EducationMatchResult {

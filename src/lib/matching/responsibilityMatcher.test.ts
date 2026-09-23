@@ -36,4 +36,23 @@ describe('matchResponsibilities', () => {
     const results = matchResponsibilities(buildTestMatchInput({ resume }))
     expect(results.every((r) => r.status === 'missing')).toBe(true)
   })
+
+  it('quotes the best-overlapping bullet as evidence (confidence = overlap), and nothing for a missing one', () => {
+    const [matched, missing] = matchResponsibilities(
+      buildTestMatchInput({
+        jobDescription: buildTestJobDescription({
+          responsibilities: ['Build reusable components for production applications.', 'Manage a team of 10 direct reports.'],
+        }),
+      }),
+    )
+    expect(matched!.evidence).toHaveLength(1)
+    expect(matched!.evidence[0]).toMatchObject({
+      text: 'Built reusable React components used across 4 production applications.',
+      section: 'experience',
+      entryId: 'exp-0',
+      sourceType: 'explicit',
+    })
+    expect(matched!.evidence[0]!.confidence).toBeGreaterThanOrEqual(0.5)
+    expect(missing!.evidence).toEqual([])
+  })
 })

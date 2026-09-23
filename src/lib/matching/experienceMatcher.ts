@@ -29,6 +29,8 @@ export function calculateYearsOfExperience(resume: MatchInput['resume']): number
 export function matchExperience({ resume, jobDescription }: MatchInput): ExperienceMatchResult {
   const { minimumYears, maximumYears } = jobDescription.experience
   const candidateYears = resume.experience.length > 0 ? calculateYearsOfExperience(resume) : null
+  // The meta lines (with their dates) of every dated entry the years figure is computed from.
+  const evidence = resume.experience.filter((entry) => entry.startDate).flatMap((entry) => entry.evidence)
 
   if (minimumYears === null && maximumYears === null) {
     return {
@@ -38,6 +40,7 @@ export function matchExperience({ resume, jobDescription }: MatchInput): Experie
       requiredMinimumYears: null,
       requiredMaximumYears: null,
       explanation: 'The job description did not state a specific years-of-experience requirement.',
+      evidence,
     }
   }
 
@@ -49,6 +52,7 @@ export function matchExperience({ resume, jobDescription }: MatchInput): Experie
       requiredMinimumYears: minimumYears,
       requiredMaximumYears: maximumYears,
       explanation: 'No dated work experience was found to evaluate against the experience requirement.',
+      evidence: [],
     }
   }
 
@@ -64,6 +68,7 @@ export function matchExperience({ resume, jobDescription }: MatchInput): Experie
       requiredMinimumYears: minimumYears,
       requiredMaximumYears: maximumYears,
       explanation: `${roundedYears} years of experience found, meeting the requirement.`,
+      evidence,
     }
   }
 
@@ -78,5 +83,6 @@ export function matchExperience({ resume, jobDescription }: MatchInput): Experie
     explanation: isClose
       ? `${roundedYears} years of experience found, close to the ${minimumYears}-year requirement.`
       : `${roundedYears} years of experience found, below the ${minimumYears ?? '?'}-year requirement.`,
+    evidence,
   }
 }

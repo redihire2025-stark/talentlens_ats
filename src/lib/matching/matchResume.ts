@@ -19,13 +19,14 @@ export function matchResume(input: MatchInput): MatchAnalysis {
     preferred: matchSkills(input.jobDescription.preferredSkills, input.resume),
   }
   const experience = matchExperience(input)
+  const education = matchEducation(input)
 
   return {
     skills,
     title: matchTitle(input),
     experience,
-    education: matchEducation(input),
+    education,
     responsibilities: matchResponsibilities(input),
-    hardRequirements: detectHardRequirements(input, { skills, experience }),
+    hardRequirements: detectHardRequirements(input, { skills, experience, education }),
   }
 }

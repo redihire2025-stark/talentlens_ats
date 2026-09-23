@@ -1,8 +1,14 @@
 export { matchResume } from './matchResume'
 export { calculateJdMatchScore } from './calculateJdMatchScore'
 export { scoreEntries, scoreSingleResult } from './categoryScores'
-export { JD_MATCH_SCORE_WEIGHTS, JD_MATCH_SCORE_CATEGORIES, type JdMatchScoreBreakdown, type JdMatchScoreCategory } from './scoringConfig'
-export { matchSkill, matchSkills } from './skillMatcher'
+export {
+  JD_MATCH_SCORE_WEIGHTS,
+  JD_MATCH_SCORE_CATEGORIES,
+  type JdMatchScoreBreakdown,
+  type JdMatchScoreCategory,
+  type JdMatchScoreWeights,
+} from './scoringConfig'
+export { matchSkill, matchSkills, type SkillRequirement } from './skillMatcher'
 export { matchTitle } from './titleMatcher'
 export { matchExperience, calculateYearsOfExperience } from './experienceMatcher'
 export { matchEducation } from './educationMatcher'
@@ -13,11 +19,13 @@ export { NoopSemanticMatcher, type SemanticMatcher, type SemanticMatchResult } f
 export type {
   MatchInput,
   MatchAnalysis,
-  SkillMatchEntry,
+  MatchResult,
   SkillMatchResult,
   TitleMatchResult,
   ExperienceMatchResult,
   EducationMatchResult,
+  EducationRequirementMatch,
   ResponsibilityMatchEntry,
   HardRequirement,
+  HardRequirementType,
 } from './types'

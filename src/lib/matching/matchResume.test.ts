@@ -21,7 +21,7 @@ describe('matchResume', () => {
 
   it('correctly separates matched, missing, and partial required skills', () => {
     const result = matchResume(buildTestMatchInput())
-    const byStatus = Object.fromEntries(result.skills.required.map((s) => [s.skill, s.status]))
+    const byStatus = Object.fromEntries(result.skills.required.map((s) => [s.normalizedTerm, s.status]))
     expect(byStatus['react']).toBe('matched')
     expect(byStatus['typescript']).toBe('matched')
     expect(byStatus['docker']).toBe('missing')
