@@ -18,8 +18,13 @@ without changes to its internals.
   fabricates metrics, employers, or technologies (TASK-011)
 - `resume-generation/` — applies accepted edits to produce new resume
   versions and export-ready output (TASK-016 – TASK-018)
+- `ai/` — the one AI-backed feature (optional bullet-rewrite suggestions),
+  proxied through a server-side Netlify Function so the API key never
+  reaches the client bundle — see `src/lib/ai/README.md` and
+  `docs/architecture/overview.md`'s "AI Layer" section
 
 No external LLM call is a hard dependency of any module in this folder. AI
-abstractions (`SemanticMatcher`, `RecommendationProvider`) will be added as
-interfaces with deterministic default implementations, so they are optional
-enhancements, not requirements, of the ATS engine.
+abstractions (`SemanticMatcher`, `RecommendationProvider`, `src/lib/ai/`)
+exist as interfaces/features with deterministic default behavior, so they
+are optional enhancements, never requirements, of the Resume Health or
+matching engines.

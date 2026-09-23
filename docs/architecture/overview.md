@@ -96,11 +96,59 @@ be extracted into real npm workspace packages without touching engine logic.
 
 ## No hard LLM dependency
 
-The ATS and matching engines are 100% deterministic: same input, same
-output, no network call. Optional AI/semantic enhancements are introduced
-only behind interfaces (`SemanticMatcher`, `RecommendationProvider`), so a
-deterministic implementation always exists and any AI-backed implementation
-is swappable without changing the engines that consume it.
+The Resume Health and matching engines are 100% deterministic: same input,
+same output, no network call. Optional AI/semantic enhancements are
+introduced only behind interfaces (`SemanticMatcher`,
+`RecommendationProvider`), so a deterministic implementation always exists
+and any AI-backed implementation is swappable without changing the engines
+that consume it. The one AI feature that exists today — bullet-rewrite
+suggestions (`src/lib/ai/`) — is a strict example: `bulletImpactRecommendations`
+always computes a real, non-fabricating `suggestedText` deterministically
+first (`buildDeterministicBulletSuggestion` in `src/lib/ats/bulletQuality.ts`);
+the AI rewrite is only ever an optional, silent upgrade over that baseline,
+never something the UI blocks on or shows an error for (see
+`src/components/Recommendations.tsx`).
+
+## AI Layer: where the OpenAI key lives (and where it must never live)
+
+The bullet-rewrite feature calls OpenAI's chat completions API, which needs
+an API key. That key is a **server-side secret**, set in Netlify's
+dashboard as the plain environment variable `OPENAI_API_KEY` — never as a
+`VITE_*`-prefixed variable. This matters because Vite inlines every
+`VITE_*` variable into the shipped client JavaScript bundle at build time:
+a `VITE_OPENAI_API_KEY` would ship the real key to every visitor's browser,
+readable via devtools or view-source. An earlier version of this feature
+did exactly that; it has been replaced with the flow below.
+
+```
+Browser (src/lib/ai/openaiClient.ts)
+    │  POST /.netlify/functions/rewrite-bullet  { bullet, role?, company? }
+    ▼
+Netlify Function (netlify/functions/rewrite-bullet.ts)
+    │  reads process.env.OPENAI_API_KEY (server-side only)
+    │  calls api.openai.com directly, with retry-on-429/503
+    ▼
+Browser receives { ok, text } or { ok: false, error } — same AiRewriteResult
+shape it used to build from OpenAI's raw response directly.
+```
+
+- The client (`openaiClient.ts`) never reads, stores, or sends an OpenAI
+  key. It has no way to know ahead of time whether the server has one
+  configured, so it always calls the function and treats "no provider
+  configured on the server" the same as any other failure: a silent
+  fallback to the deterministic suggestion (see above), never a
+  user-facing error.
+- The function (`netlify/functions/rewrite-bullet.ts`) reuses
+  `src/lib/ai/rewritePrompt.ts`'s prompt-building and no-fabrication rules
+  — that module has no browser-only dependencies, so it's safe to import
+  from a Node function. The actual OpenAI request/retry logic that used to
+  live in `openaiClient.ts` now lives here instead, since this is the only
+  place that holds the key.
+- Local development: `netlify dev` (from the Netlify CLI) runs both the
+  Vite dev server and this function together, with `OPENAI_API_KEY` read
+  from a local `.env` file (never committed) or your shell environment —
+  see `src/lib/ai/README.md`. This sandbox has no OpenAI key and does not
+  attempt to run or test the live call.
 
 ## Screens vs. routing
 
