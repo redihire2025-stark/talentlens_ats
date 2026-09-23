@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { buildResumePdf, __internal } from './exportPdf'
 import { buildTestResume } from '@/lib/ats/testFixtures'
 import { PDFDocument, StandardFonts } from 'pdf-lib'
+import { buildExperienceEntries } from '@/lib/schema/resumeBuilders'
 
 /** jsdom's Blob polyfill doesn't implement arrayBuffer(); FileReader works in both jsdom and real browsers. */
 function readBlobAsArrayBuffer(blob: Blob): Promise<ArrayBuffer> {
@@ -33,7 +34,7 @@ describe('buildResumePdf', () => {
   it('paginates onto a new page when content overflows one page', async () => {
     const manyBullets = Array.from({ length: 80 }, (_, i) => `Accomplishment number ${i} with enough detail to take real vertical space.`)
     const resume = buildTestResume({
-      experience: [{ company: 'Acme', title: 'Engineer', startDate: null, endDate: null, location: null, bullets: manyBullets }],
+      experience: buildExperienceEntries([{ company: 'Acme', title: 'Engineer', startDate: null, endDate: null, location: null, bullets: manyBullets }]),
     })
     const blob = await buildResumePdf(resume)
     const bytes = new Uint8Array(await readBlobAsArrayBuffer(blob))

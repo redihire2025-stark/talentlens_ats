@@ -14,8 +14,8 @@ export function diffResumeChanges(before: Resume, after: Resume): string[] {
     changes.push('Summary updated.')
   }
 
-  const beforeSkills = before.skills.map((s) => s.name).join(',')
-  const afterSkills = after.skills.map((s) => s.name).join(',')
+  const beforeSkills = before.skills.map((s) => s.rawName).join(',')
+  const afterSkills = after.skills.map((s) => s.rawName).join(',')
   if (beforeSkills !== afterSkills) {
     changes.push('Skills updated.')
   }
@@ -33,7 +33,7 @@ export function diffResumeChanges(before: Resume, after: Resume): string[] {
 
     const bulletCount = Math.max(beforeEntry.bullets.length, afterEntry.bullets.length)
     for (let b = 0; b < bulletCount; b++) {
-      if (beforeEntry.bullets[b] !== afterEntry.bullets[b]) {
+      if (beforeEntry.bullets[b]?.text !== afterEntry.bullets[b]?.text) {
         changes.push(`A bullet was updated under ${label}.`)
         break
       }

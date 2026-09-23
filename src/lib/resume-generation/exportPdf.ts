@@ -1,5 +1,6 @@
 import { PDFDocument, StandardFonts, rgb, type PDFFont } from 'pdf-lib'
 import type { Resume } from '@/types/resume'
+import { buildExportContent } from './exportContent'
 
 const PAGE_SIZE: [number, number] = [612, 792] // US Letter, points
 const MARGIN = 54
@@ -72,25 +73,26 @@ export async function buildResumePdf(resume: Resume): Promise<Blob> {
     drawLine(text.toUpperCase(), { size: 12, bold: true, gapAfter: 4 })
   }
 
-  drawLine(resume.candidate.name ?? 'Resume', { size: 18, bold: true, gapAfter: 4 })
+  const content = buildExportContent(resume)
 
-  const contactLine = [resume.candidate.email, resume.candidate.phone, resume.candidate.location].filter(Boolean).join(' | ')
-  if (contactLine) drawLine(contactLine, { size: 10 })
-  for (const link of resume.candidate.links) drawLine(link.url, { size: 10 })
+  drawLine(content.name, { size: 18, bold: true, gapAfter: 4 })
 
-  if (resume.summary) {
+  if (content.contactLine) drawLine(content.contactLine, { size: 10 })
+  for (const url of content.links) drawLine(url, { size: 10 })
+
+  if (content.summary) {
     drawHeading('Summary')
-    drawLine(resume.summary, { gapAfter: 4 })
+    drawLine(content.summary, { gapAfter: 4 })
   }
 
-  if (resume.skills.length > 0) {
+  if (content.skillsLine) {
     drawHeading('Skills')
-    drawLine(resume.skills.map((s) => s.name).join(', '), { gapAfter: 4 })
+    drawLine(content.skillsLine, { gapAfter: 4 })
   }
 
-  if (resume.experience.length > 0) {
+  if (content.experience.length > 0) {
     drawHeading('Experience')
-    for (const entry of resume.experience) {
+    for (const entry of content.experience) {
       const dateRange = formatDateRange(entry.startDate, entry.endDate)
       drawLine(`${entry.title}, ${entry.company}${dateRange ? `  (${dateRange})` : ''}`, { bold: true, gapAfter: 2 })
       for (const bullet of entry.bullets) drawLine(`• ${bullet}`, { indent: 10 })
@@ -98,23 +100,21 @@ export async function buildResumePdf(resume: Resume): Promise<Blob> {
     }
   }
 
-  if (resume.education.length > 0) {
+  if (content.education.length > 0) {
     drawHeading('Education')
-    for (const entry of resume.education) {
-      drawLine([entry.institution, entry.degree, entry.fieldOfStudy].filter(Boolean).join(', '))
-    }
+    for (const line of content.education) drawLine(line)
   }
 
-  if (resume.certifications.length > 0) {
+  if (content.certifications.length > 0) {
     drawHeading('Certifications')
-    for (const cert of resume.certifications) {
+    for (const cert of content.certifications) {
       drawLine([cert.name, cert.issuer].filter(Boolean).join(' - '))
     }
   }
 
-  if (resume.projects.length > 0) {
+  if (content.projects.length > 0) {
     drawHeading('Projects')
-    for (const project of resume.projects) {
+    for (const project of content.projects) {
       drawLine(project.name, { bold: true, gapAfter: 2 })
       if (project.description) drawLine(project.description)
       for (const bullet of project.bullets) drawLine(`• ${bullet}`, { indent: 10 })
