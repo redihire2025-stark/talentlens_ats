@@ -2,6 +2,9 @@ import type { View } from '../App'
 import { ScoreRing } from './shared'
 import { useVersionsStore } from '@/stores/versionsStore'
 import { useEditorStore } from '@/stores/editorStore'
+import { diffScoreBreakdown } from '@/lib/scoring/explainScoreChange'
+import { ATS_CATEGORY_LABELS } from '@/features/ats-analysis/atsCategoryDisplay'
+import { JD_MATCH_CATEGORY_LABELS } from '@/features/job-description/jdMatchDisplay'
 
 interface Props {
   onNav: (v: View) => void
@@ -39,6 +42,19 @@ export default function BeforeAfter({ onNav }: Props) {
 
   const revertToOriginal = () => setDraft(original.resume)
 
+  // Spec §48: a score change is never shown as just "64 → 71" — it's broken
+  // down into which components moved and by how much. Both diffs are
+  // optional (older snapshots saved before this field existed, or a JD
+  // that wasn't active for one/both versions, have no breakdown to compare).
+  const atsChanges =
+    original.scoreSnapshot.atsBreakdown && comparison.scoreSnapshot.atsBreakdown
+      ? diffScoreBreakdown(original.scoreSnapshot.atsBreakdown, comparison.scoreSnapshot.atsBreakdown, ATS_CATEGORY_LABELS)
+      : []
+  const jdMatchChanges =
+    original.scoreSnapshot.jdMatchBreakdown && comparison.scoreSnapshot.jdMatchBreakdown
+      ? diffScoreBreakdown(original.scoreSnapshot.jdMatchBreakdown, comparison.scoreSnapshot.jdMatchBreakdown, JD_MATCH_CATEGORY_LABELS)
+      : []
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
       <div className="mb-8">
@@ -57,6 +73,49 @@ export default function BeforeAfter({ onNav }: Props) {
           <ScoreRing score={comparison.scoreSnapshot.ats} size={80} strokeWidth={7} />
         </div>
       </div>
+
+      {/* Why the score changed (spec §48) — a component-level breakdown, never just the two numbers. */}
+      {(atsChanges.length > 0 || jdMatchChanges.length > 0) && (
+        <div className="bg-card border border-border rounded-2xl p-6 mb-8 max-w-2xl">
+          <h2 className="font-semibold text-foreground mb-4">Why the score changed</h2>
+          {atsChanges.length > 0 && (
+            <div className="mb-4 last:mb-0">
+              <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Resume Health</div>
+              <div className="flex flex-wrap gap-2">
+                {atsChanges.map((c) => (
+                  <span
+                    key={c.category}
+                    className={`px-2.5 py-1 text-xs font-mono font-semibold rounded-full ${
+                      c.delta > 0 ? 'bg-success-bg text-success' : 'bg-critical-bg text-critical'
+                    }`}
+                  >
+                    {c.delta > 0 ? '+' : ''}
+                    {c.delta} {c.label}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+          {jdMatchChanges.length > 0 && (
+            <div>
+              <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Job Match</div>
+              <div className="flex flex-wrap gap-2">
+                {jdMatchChanges.map((c) => (
+                  <span
+                    key={c.category}
+                    className={`px-2.5 py-1 text-xs font-mono font-semibold rounded-full ${
+                      c.delta > 0 ? 'bg-success-bg text-success' : 'bg-critical-bg text-critical'
+                    }`}
+                  >
+                    {c.delta > 0 ? '+' : ''}
+                    {c.delta} {c.label}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Side by side content */}
       <div className="grid lg:grid-cols-2 gap-6 mb-8">

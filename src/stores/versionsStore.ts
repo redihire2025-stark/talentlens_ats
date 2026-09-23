@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import type { Resume } from '@/types/resume'
 import type { ResumeVersion } from '@/types/resumeVersion'
+import type { ScoreBreakdown } from '@/types/score'
 import { diffResumeChanges } from '@/lib/resume-generation/diffResume'
 
 const ORIGINAL_VERSION_ID = 'original'
@@ -10,9 +11,16 @@ interface VersionsState {
   activeVersionId: string | null
 
   /** Creates the 'original' version once, when a resume is first parsed. A no-op if already initialized. */
-  initOriginal: (resume: Resume, atsScore: number) => void
+  initOriginal: (resume: Resume, atsScore: number, atsBreakdown?: ScoreBreakdown) => void
   /** Saves the current draft as a new version, parented to whichever version is currently active. */
-  saveVersion: (label: string, resume: Resume, atsScore: number, jdMatchScore: number | null) => ResumeVersion
+  saveVersion: (
+    label: string,
+    resume: Resume,
+    atsScore: number,
+    jdMatchScore: number | null,
+    atsBreakdown?: ScoreBreakdown,
+    jdMatchBreakdown?: ScoreBreakdown,
+  ) => ResumeVersion
   selectVersion: (id: string) => Resume | null
   reset: () => void
 }
@@ -22,7 +30,7 @@ export const useVersionsStore = create<VersionsState>((set, get) => ({
   versions: [],
   activeVersionId: null,
 
-  initOriginal: (resume, atsScore) => {
+  initOriginal: (resume, atsScore, atsBreakdown) => {
     if (get().versions.length > 0) return
     const original: ResumeVersion = {
       id: ORIGINAL_VERSION_ID,
@@ -31,12 +39,12 @@ export const useVersionsStore = create<VersionsState>((set, get) => ({
       createdAt: new Date().toISOString(),
       resume,
       changes: [],
-      scoreSnapshot: { ats: atsScore, jdMatch: null },
+      scoreSnapshot: { ats: atsScore, jdMatch: null, atsBreakdown },
     }
     set({ versions: [original], activeVersionId: original.id })
   },
 
-  saveVersion: (label, resume, atsScore, jdMatchScore) => {
+  saveVersion: (label, resume, atsScore, jdMatchScore, atsBreakdown, jdMatchBreakdown) => {
     const { versions, activeVersionId } = get()
     const parent = versions.find((v) => v.id === activeVersionId) ?? versions[0] ?? null
 
@@ -47,7 +55,7 @@ export const useVersionsStore = create<VersionsState>((set, get) => ({
       createdAt: new Date().toISOString(),
       resume,
       changes: parent ? diffResumeChanges(parent.resume, resume) : [],
-      scoreSnapshot: { ats: atsScore, jdMatch: jdMatchScore },
+      scoreSnapshot: { ats: atsScore, jdMatch: jdMatchScore, atsBreakdown, jdMatchBreakdown },
     }
 
     set({ versions: [...versions, version], activeVersionId: version.id })

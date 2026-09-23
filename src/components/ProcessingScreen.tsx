@@ -83,7 +83,7 @@ export default function ProcessingScreen({ onNav }: Props) {
 
       const atsResult = useAnalysisStore.getState().atsResult
       if (atsResult) {
-        useVersionsStore.getState().initOriginal(parsedResume, atsResult.score)
+        useVersionsStore.getState().initOriginal(parsedResume, atsResult.score, atsResult.breakdown)
       }
 
       // Generate recommendations now — during "Preparing recommendations" —

@@ -88,7 +88,14 @@ export default function ResumeEditor({ onNav, onExport }: Props) {
           <button
             onClick={() => {
               const label = `Version ${versions.filter((v) => v.id !== 'original').length + 1}`
-              saveVersion(label, draftResume, liveAtsResult?.score ?? 0, liveJdMatchResult?.score ?? null)
+              saveVersion(
+                label,
+                draftResume,
+                liveAtsResult?.score ?? 0,
+                liveJdMatchResult?.score ?? null,
+                liveAtsResult?.breakdown,
+                liveJdMatchResult?.breakdown,
+              )
             }}
             disabled={!edited}
             className="px-3 py-1.5 border border-border text-xs font-medium text-foreground rounded-lg hover:bg-muted transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
