@@ -23,20 +23,27 @@ wouldn't catch.
 
 ## How text becomes a Resume
 
-1. `textSections.ts` splits the raw text into `header` / `summary` /
-   `skills` / `experience` / `education` / `certifications` / `projects`
-   buckets by matching lines against a known set of section-header aliases
-   (e.g. "Work Experience", "Employment History"). Unrecognized headers
-   simply aren't detected as headers — their content stays in whichever
-   bucket is currently active rather than being dropped.
+1. `textSections.ts` (`analyzeResumeLayout`) splits the raw text into
+   `header` / `summary` / `skills` / `experience` / `education` /
+   `certifications` / `projects` / `languages` / `awards` buckets by
+   matching lines against a known set of section-header aliases (e.g. "Work
+   Experience", "Employment History", "Honors & Awards"). It also records
+   each recognized header, as written and in order, which becomes
+   `Resume.sections`. Content under an unrecognized header isn't dropped: it
+   stays in whichever bucket was active before it.
 2. Each bucket is handed to a dedicated `build*.ts` module:
-   - `buildCandidate.ts` — name/email/phone/location/links from the header
-     block, plus a summary fallback when there's no explicit "Summary"
-     section.
-   - `buildSkills.ts` — splits skill lines by comma/pipe/bullet; a leading
-     "Label:" (e.g. "Languages:") gives a default `SkillCategory`. Full
-     canonicalization (`React.js` → `react`) is the normalization engine's
-     job (TASK-007), not this parser's.
+   - `buildContact.ts`: name, email, phone, location, and links from the
+     header block, each with the header line it came from as evidence. It
+     also falls back to leftover header lines for the summary when there's
+     no explicit "Summary" section.
+   - `buildSkills.ts`: splits skill lines on comma, pipe, and bullet
+     characters. A leading "Label:" (e.g. "Languages:") gives a default
+     `SkillCategory`. Each skill keeps `rawName` as written and gets
+     `canonicalName` from the normalization dictionary.
+   - `buildLanguages.ts`: spoken languages with proficiency. If any item is
+     a known technical skill, the whole section is sent to `buildSkills`
+     instead, because "Languages" often means programming languages.
+   - `buildAwards.ts`: one award per line (title, issuer, date).
    - `buildExperience.ts` / `buildEducation.ts` split their section into
      entries using `dateBoundaryBlocks.ts` (a new entry starts at each line
      containing a recognizable date range), not blank lines — see "Why
@@ -44,6 +51,14 @@ wouldn't catch.
      splits on blank lines (`blocks.ts`'s `splitIntoBlocks`), since
      projects don't reliably have dates.
    - `buildCertifications.ts` — one certification per non-blank line.
+   - Every entity is constructed through `src/lib/schema/resumeBuilders.ts`,
+     which assigns deterministic positional ids and typed evidence and
+     derives each `ExperienceBullet`'s fields (action verb, verbatim metrics,
+     taxonomy technologies, responsibility vs. achievement). An entry's
+     `isCurrent` is set only when its date text literally says
+     Present/Current/Now. After everything is built, `linkSkillEvidence`
+     attaches every bullet that mentions a listed skill to that skill's
+     evidence. See `docs/architecture/resume-schema.md`.
 3. `dateUtils.ts` finds date-like tokens (month-year, numeric, year-only,
    or "present") independently and pairs the first two found on a line,
    rather than matching one large "start - end" regex — resume date
@@ -114,8 +129,10 @@ gracefully (never crashes, never fabricates data) on unconventional ones:
 
 `parseResumeFile` throws `ResumeParseError` for file-level problems
 (unsupported type, empty file, too large) before ever attempting
-extraction. `parseResumeText` never throws: an empty or very-short
+extraction. `parseResumeText` never throws. An empty or very short
 document still returns a `Resume` (empty, or partially populated) plus a
-`warnings: string[]` explaining what couldn't be found — so the UI always
+`warnings: string[]` explaining what couldn't be found. The same list is
+also stored as `resume.parserWarnings`, and warnings specific to one
+experience entry also go on that entry's `warnings` — so the UI always
 has something to render instead of a blank screen (see the "ERROR STATES"
 requirements in `AGENTS.md`).

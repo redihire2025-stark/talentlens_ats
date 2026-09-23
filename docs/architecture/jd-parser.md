@@ -29,26 +29,33 @@ thin wrapper that extracts text first and then calls it — same as
    (preferring a labeled "Job Title:" line, falling back to a short first
    header line), a seniority level (`extractSeniority`), and repeated
    all-caps domain acronyms (`extractDomainTerms`).
-3. `buildSkillList.ts` pulls flat skill names out of list-like lines
-   (comma/pipe/semicolon separated, not ending in sentence punctuation) —
-   e.g. "Required Skills: React, TypeScript". `extractProseSkills.ts`'s
-   `mineTermsFromText` then separately mines skill mentions out of the
-   *prose* lines in the same sections — see below.
-4. `responsibilities`, `education`, and `certifications` are the section's
-   lines as-is (bullet markers stripped) — full sentences, not split into
-   fragments.
-5. `keywords` is the deduplicated, lowercased union of `requiredSkills` and
-   `preferredSkills` (which now already include prose-mined terms — see
-   below). Folding `technologies`/`domainTerms`/`softSkills` into
-   `keywords` as well is noted as a next step in
-   `docs/scoring/scoring-methodology.md`.
+3. `buildSkillList.ts` (`buildSkillListItems`) pulls skill names, each
+   with its source line, out of list-like lines: comma, pipe, or semicolon
+   separated, and not ending in sentence punctuation (e.g. "Required
+   Skills: React, TypeScript"). The same sections' *prose* lines are then
+   mined line by line for taxonomy terms (see below). Each result becomes a
+   typed `JobRequirement` with `id`, `rawText`, `canonicalTerm`,
+   `priority`, `confidence`, source-line `evidence`, and `minimumYears`
+   when the same line states one. Required and preferred skills are
+   deduplicated by canonical term. See `docs/architecture/jd-schema.md`.
+4. `responsibilities` are the section's lines as-is (bullet markers
+   stripped): full sentences, not split into fragments. `education` and
+   `certifications` lines are kept whole too, as typed requirements
+   (`edu-<n>`, `cert-<n>`). A line is `preferred` when it says "preferred",
+   "nice to have", or similar, and `required` otherwise.
+5. `keywords` is the union of `requiredSkills` and `preferredSkills`,
+   deduplicated by canonical term (`Keyword[]`, `kw-<n>`). Folding
+   `technologies`/`domainTerms`/`softSkills` into `keywords` as well is
+   noted as a next step in `docs/scoring/scoring-methodology.md`.
 
 ## Requirement extraction from prose (target architecture PRD §9)
 
-`extractProseSkills.ts`'s `mineTermsFromText` scans text for whole-word
-mentions of any variant in a synonym dictionary (`SKILL_SYNONYM_GROUPS` for
-skills/technologies, `SOFT_SKILL_GROUPS` for soft skills) and returns the
-matched canonical terms — conservatively:
+The shared `findTaxonomyMentions` (`src/lib/normalization/termMining.ts`,
+also used by `extractProseSkills.ts`'s `mineTermsFromText`) scans text for
+whole-word mentions of any variant in a synonym dictionary:
+`SKILL_SYNONYM_GROUPS` for skills and technologies, `SOFT_SKILL_GROUPS` for
+soft skills. It returns each term's canonical form and its literal spelling
+in the text, which becomes `rawText`. It is deliberately conservative:
 
 - Every variant is matched as a whole word/phrase, never a substring
   ("javascript" can't match inside "typescript").

@@ -4,7 +4,9 @@ Shared TypeScript types for the whole app. No `any`-based structures — every
 shape used across features is defined here and imported, not redeclared.
 
 - `common.ts` — cross-cutting primitives (`Id`, `ISODateString`, `Nullable<T>`)
-- `score.ts` — `MatchStatus` and `ScoreResult<TBreakdown>`, the shared
+- `evidence.ts` — `Evidence`, the typed pointer back to resume text that
+  every skill, match, score component, and recommendation carries
+- `score.ts` — `MatchStatus`, `ScoreComponent`, and `ScoreResult<Category>`, the shared
   response envelope for both the Resume Health / ATS Readiness score and the Job Match
   Score (see `docs/scoring/scoring-methodology.md`)
 - `resume.ts` — the `Resume` domain schema (see

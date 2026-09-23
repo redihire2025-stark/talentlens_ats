@@ -10,6 +10,13 @@ without changes to its internals.
   JSON (TASK-004, TASK-006)
 - `normalization/` — skill/title/keyword canonicalization used by every
   other engine (TASK-007)
+- `schema/` — the one construction layer for canonical `Resume` /
+  `JobDescription` entities: deterministic ids, typed `Evidence`, derived
+  `ExperienceBullet` fields, skill-evidence linking. It is used by the
+  parsers, the editor's edits, and test fixtures, so every entity is built
+  the same way everywhere (see `docs/architecture/resume-schema.md`)
+- `scoring/` — `ScoreComponent` helpers (build, total, keyed lookup) and
+  the before/after score-change explainer
 - `ats/` — ATS compatibility analysis: parseability, sections, formatting
   risk, etc. (TASK-008)
 - `matching/` — resume-to-JD matching (exact → normalized → synonym →
