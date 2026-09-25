@@ -36,6 +36,11 @@ function parseProjectBlock(block: string[], index: number): ProjectEntry {
     if (!lineWithoutUrl) continue
     if (!description) {
       description = lineWithoutUrl
+    } else if (bulletLines.length > 0) {
+      // A bullet wrapped across two lines by the extractor, not a new item —
+      // join with a space rather than truncating the previous bullet and
+      // adding a stray fragment as its own entry.
+      bulletLines[bulletLines.length - 1] = `${bulletLines[bulletLines.length - 1]} ${lineWithoutUrl}`.trim()
     } else {
       bulletLines.push(lineWithoutUrl)
     }

@@ -309,6 +309,46 @@ describe('parseResumeText edge cases', () => {
     expect(warnings).toContain('This document is very short for a resume — parsing may be incomplete.')
   })
 
+  it('merges a bullet wrapped across two extracted lines instead of truncating it and adding a phantom bullet', () => {
+    // Real PDF extraction commonly wraps a long bullet's text onto a second
+    // line with no bullet marker of its own — this must not be read as a
+    // second, unrelated bullet, or the first bullet ends up truncated
+    // mid-sentence and the "continuation" shows up as a fragment.
+    const text = [
+      'Jordan Rivera',
+      'jordan@example.com',
+      '',
+      'Work Experience',
+      'Senior Engineer, Acme Corp | Mar 2021 - Present',
+      '- Architected scalable web applications using React, TypeScript, and',
+      '  reusable component patterns across the team.',
+      '- Reduced page load time by 35% through code splitting.',
+    ].join('\n')
+
+    const { resume } = parseResumeText(text)
+    expect(resume.experience[0]!.bullets.map((b) => b.text)).toEqual([
+      'Architected scalable web applications using React, TypeScript, and reusable component patterns across the team.',
+      'Reduced page load time by 35% through code splitting.',
+    ])
+  })
+
+  it('merges a wrapped project bullet the same way experience bullets are merged', () => {
+    const text = [
+      'Jordan Rivera',
+      'jordan@example.com',
+      '',
+      'Projects',
+      'Resume Analyzer - A tool that scores resumes against job descriptions',
+      '- Built a scoring engine that evaluates skill coverage and',
+      '  responsibility alignment against a parsed job description.',
+    ].join('\n')
+
+    const { resume } = parseResumeText(text)
+    expect(resume.projects[0]!.bullets).toEqual([
+      'Built a scoring engine that evaluates skill coverage and responsibility alignment against a parsed job description.',
+    ])
+  })
+
   it('splits title from company on an "@" separator (common on LinkedIn-exported resumes)', () => {
     const text = `Jordan Rivera\njordan@example.com\n\nWork Experience\nSenior Backend Engineer @ Acme Corp\nJan 2020 - Present\n- Shipped things.\n`
     const { resume, warnings } = parseResumeText(text)

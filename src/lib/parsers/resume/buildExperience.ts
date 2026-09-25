@@ -1,6 +1,6 @@
 import type { ExperienceEntry } from '@/types/resume'
 import { buildExperienceEntry } from '@/lib/schema/resumeBuilders'
-import { isBulletLine, stripBulletMarker } from './blocks'
+import { isBulletLine, mergeWrappedBulletLines } from './blocks'
 import { splitByDateBoundary } from './dateBoundaryBlocks'
 import { extractDateRange } from './dateUtils'
 import { extractLocation } from './fieldExtractors'
@@ -142,7 +142,7 @@ function parseExperienceBlock(block: string[], warnings: string[], entryIndex: n
       endDate: meta.endDate,
       isCurrent: meta.isCurrent,
       location: meta.location,
-      bullets: bulletLines.map(stripBulletMarker).filter(Boolean),
+      bullets: mergeWrappedBulletLines(bulletLines),
       metaLines: metaLines.map((line) => line.trim()).filter(Boolean),
       warnings: meta.warnings,
     },

@@ -220,17 +220,22 @@ export default function Recommendations({ onNav }: Props) {
                 const status = statuses[rec.id] ?? 'pending'
                 const isEditing = editingId === rec.id
                 // The AI-drafted rewrite (once it lands) upgrades the deterministic
-                // suggestedChange, which is always present already — the card
-                // never shows a blank "no suggestion" state either way.
+                // suggestedChange, which is always present (never null) even when
+                // there's nothing safe to change — see buildDeterministicBulletSuggestion,
+                // which returns the bullet unchanged rather than inventing a metric or
+                // rewording a bullet that's already well-formed. `hasConcreteSuggestion`
+                // distinguishes that "nothing to change" case so the UI never offers to
+                // "Accept" a no-op replacement identical to the current text.
                 const suggestionText = aiSuggestions[rec.id] ?? rec.suggestedChange
                 const isAiSuggestion = Boolean(aiSuggestions[rec.id])
                 const isAiLoading = Boolean(aiLoadingIds[rec.id])
                 const isAiQueued = Boolean(aiQueuedIds[rec.id])
+                const hasConcreteSuggestion = Boolean(rec.location) && suggestionText !== rec.currentText
                 // Only checklist-style recommendations (no location — a missing
                 // section, a skill gap, a title mismatch) show the guidance/
                 // explanation text as their primary content; a bullet-level
-                // recommendation already shows a concrete suggested replacement,
-                // so a separate generic-advice box would be redundant.
+                // recommendation with a real concrete suggestion shows that instead,
+                // so a separate generic-advice box would be redundant there.
                 const showGuidance = !rec.location
 
                 return (
@@ -283,9 +288,17 @@ export default function Recommendations({ onNav }: Props) {
                         else (missing sections, skill gaps, title mismatches) has nothing for Accept to swap in,
                         so it never gets a "Suggested" box or an editable textarea here. */}
                     {rec.location && (
-                      <div className="p-3 bg-success-bg/40 rounded-xl border border-success/20 mb-4">
-                        <div className="text-[10px] font-semibold text-success uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
-                          {isEditing ? 'Your replacement' : 'Suggested replacement'}
+                      <div
+                        className={`p-3 rounded-xl border mb-4 ${
+                          hasConcreteSuggestion || isEditing ? 'bg-success-bg/40 border-success/20' : 'bg-secondary/50 border-primary/10'
+                        }`}
+                      >
+                        <div
+                          className={`text-[10px] font-semibold uppercase tracking-wider mb-1.5 flex items-center gap-1.5 ${
+                            hasConcreteSuggestion || isEditing ? 'text-success' : 'text-secondary-foreground'
+                          }`}
+                        >
+                          {isEditing ? 'Your replacement' : hasConcreteSuggestion ? 'Suggested replacement' : 'No safe rewrite available'}
                           {isAiSuggestion && !isEditing && <span className="normal-case text-accent">✨ AI-drafted, unverified</span>}
                         </div>
                         {isEditing ? (
@@ -296,8 +309,13 @@ export default function Recommendations({ onNav }: Props) {
                             autoFocus
                             className="w-full text-sm bg-card border border-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-ring resize-none"
                           />
-                        ) : (
+                        ) : hasConcreteSuggestion ? (
                           <p className="text-sm text-foreground leading-relaxed">{suggestionText}</p>
+                        ) : (
+                          <p className="text-sm text-foreground leading-relaxed">
+                            {rec.explanation} Nothing can be safely rewritten here without adding information that isn't already
+                            in the bullet — use "Write your own" if you have a real detail or metric to add.
+                          </p>
                         )}
                         {!isEditing && (isAiLoading || isAiQueued) && (
                           <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1.5">
@@ -336,15 +354,15 @@ export default function Recommendations({ onNav }: Props) {
                     {status === 'pending' && !isEditing && (
                       <div className="flex flex-wrap items-center gap-2">
                         {/* A location-less recommendation (missing section, skill gap, title mismatch) has
-                            nothing for Accept to apply — it just checks the item off. Every location-having
-                            one now always has a suggestionText (deterministic, possibly AI-upgraded), so
-                            Accept is always available once there's something to apply. */}
-                        {(!rec.location || suggestionText) && (
+                            nothing for Accept to apply — it just checks the item off. A bullet-level one only
+                            gets an Accept button once there's an actual concrete change to apply — accepting a
+                            "suggestion" identical to the current text would be a confusing no-op. */}
+                        {(!rec.location || hasConcreteSuggestion) && (
                           <button
                             onClick={() => handleAccept(rec.id)}
                             className="px-4 py-2 bg-success text-white text-xs font-medium rounded-lg hover:bg-success/90 transition-colors"
                           >
-                            {suggestionText ? 'Accept suggestion' : 'Accept'}
+                            {hasConcreteSuggestion ? 'Accept suggestion' : 'Accept'}
                           </button>
                         )}
                         <button
@@ -358,7 +376,7 @@ export default function Recommendations({ onNav }: Props) {
                             onClick={() => setEditingId(rec.id)}
                             className="px-4 py-2 border border-border text-foreground text-xs font-medium rounded-lg hover:bg-muted transition-colors"
                           >
-                            {suggestionText ? 'Edit suggestion' : 'Write your own'}
+                            {hasConcreteSuggestion ? 'Edit suggestion' : 'Write your own'}
                           </button>
                         )}
                         {rec.location && !isAiLoading && !isAiQueued && (
