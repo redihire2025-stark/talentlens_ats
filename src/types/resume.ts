@@ -212,6 +212,21 @@ export interface ParserMetadata {
   parserVersion: string
   /** `SKILL_TAXONOMY_VERSION` from `src/lib/normalization/skillSynonyms.ts` at parse time. */
   taxonomyVersion: string
+  /**
+   * Present only when the AI-assisted parsing fallback filled at least one
+   * field the rule-based parser had flagged (see
+   * docs/architecture/resume-parser.md). Absent on every resume the
+   * rule-based parser handled on its own. Every filled value was verified
+   * verbatim against the resume text before use (`groundAiExtraction.ts`).
+   */
+  aiAssist?: ParserAiAssist
+}
+
+export interface ParserAiAssist {
+  /** Which fields came from the verified AI extraction, e.g. `skills`, `contact.email`, `experience.exp-1.company`. */
+  filledFields: string[]
+  /** How many values the model returned that were dropped for not appearing verbatim in the resume text. */
+  rejectedCount: number
 }
 
 /**

@@ -8,7 +8,9 @@ separate backend in V1" in `docs/architecture/overview.md`.
 - `types.ts` — `ApiResult<T>`/`ApiError` envelope, plus each endpoint's
   typed request/response
 - `health.ts` — `getHealth`
-- `resumeParse.ts` — `parseResume`
+- `resumeParse.ts` — `parseResume` (deterministic), `assistResumeParse` (the
+  optional, verified AI-assisted parsing fallback — see
+  docs/architecture/resume-parser.md)
 - `resumeAnalyze.ts` — `analyzeResume`
 - `jdParse.ts` — `parseJobDescriptionFromText`, `parseJobDescriptionFromFile`
 - `match.ts` — `matchResumeToJob`

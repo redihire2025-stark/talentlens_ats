@@ -16,6 +16,23 @@ export type ApiResult<T> = { ok: true; data: T } | { ok: false; error: ApiError 
 export interface ParseResumeResponse {
   resume: Resume
   warnings: string[]
+  /** The extracted text `resume` was parsed from — kept client-side only, for the AI-assisted parsing fallback (see `AssistResumeParseRequest`). */
+  rawText: string
+}
+
+export interface AssistResumeParseRequest {
+  /** The deterministic parser's Resume. */
+  resume: Resume
+  /** The same extracted text it was parsed from. */
+  rawText: string
+}
+
+export interface AssistResumeParseResponse {
+  /** The deterministic Resume, with only its warning-flagged, empty fields filled from verified AI output — or the deterministic Resume unchanged. */
+  resume: Resume
+  /** See `AiAssistStatus` in src/lib/ai/aiAssistedParse.ts. `not-needed` means no network call was made. */
+  status: 'not-needed' | 'skipped' | 'failed' | 'no-change' | 'applied'
+  filledFields: string[]
 }
 
 export interface AnalyzeResumeRequest {

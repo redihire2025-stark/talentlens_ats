@@ -1,5 +1,5 @@
 export { getHealth } from './health'
-export { parseResume } from './resumeParse'
+export { parseResume, assistResumeParse } from './resumeParse'
 export { analyzeResume } from './resumeAnalyze'
 export { parseJobDescriptionFromText, parseJobDescriptionFromFile } from './jdParse'
 export { matchResumeToJob } from './match'

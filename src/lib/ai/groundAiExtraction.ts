@@ -93,24 +93,25 @@ function isWordChar(ch: string | undefined): boolean {
   return ch !== undefined && WORD_CHAR_RE.test(ch)
 }
 
-/** Index in `source.text` of the first token-bounded occurrence of `value`, or -1. */
-function findGroundedIndex(value: string, source: NormalizedText): { index: number; length: number } | null {
+/** Every token-bounded occurrence of `value` in `source.text`, in document order. */
+function findGroundedHits(value: string, source: NormalizedText): { index: number; length: number }[] {
   const needle = normalizeForGrounding(value)
-  if (!needle) return null
+  if (!needle) return []
   const haystack = source.text
   const needsStartBoundary = isWordChar(needle[0])
   const needsEndBoundary = isWordChar(needle[needle.length - 1])
+  const hits: { index: number; length: number }[] = []
 
   let from = 0
   while (from <= haystack.length - needle.length) {
     const index = haystack.indexOf(needle, from)
-    if (index === -1) return null
+    if (index === -1) break
     const startOk = !needsStartBoundary || !isWordChar(haystack[index - 1])
     const endOk = !needsEndBoundary || !isWordChar(haystack[index + needle.length])
-    if (startOk && endOk) return { index, length: needle.length }
+    if (startOk && endOk) hits.push({ index, length: needle.length })
     from = index + 1
   }
-  return null
+  return hits
 }
 
 /**
@@ -118,19 +119,21 @@ function findGroundedIndex(value: string, source: NormalizedText): { index: numb
  * matched, with internal whitespace runs collapsed to single spaces — or
  * null when `value` doesn't appear verbatim. Returning the source's span
  * rather than the model's copy means every value that reaches a Resume is
- * literally a slice of what the candidate wrote, down to its casing.
+ * literally a slice of what the candidate wrote, down to its casing. When
+ * the value occurs more than once, an occurrence with the exact same casing
+ * is preferred; otherwise the first occurrence is used.
  */
 function sourceSpan(value: string, source: NormalizedText, original: string): string | null {
-  const hit = findGroundedIndex(value, source)
-  if (!hit) return null
-  const start = source.map[hit.index]!
-  const end = source.ends[hit.index + hit.length - 1]!
-  return original.slice(start, end).replace(/\s+/g, ' ')
+  const hits = findGroundedHits(value, source)
+  if (hits.length === 0) return null
+  const spans = hits.map((hit) => original.slice(source.map[hit.index]!, source.ends[hit.index + hit.length - 1]!).replace(/\s+/g, ' '))
+  const exact = value.trim().replace(/\s+/g, ' ')
+  return spans.find((span) => span === exact) ?? spans[0]!
 }
 
 /** Public single-value check: does `value` appear verbatim (case/whitespace-insensitive, token-bounded) in `sourceText`? */
 export function isGroundedInSource(value: string, sourceText: string): boolean {
-  return findGroundedIndex(value, normalizeWithMap(sourceText)) !== null
+  return findGroundedHits(value, normalizeWithMap(sourceText)).length > 0
 }
 
 /** The source text's own spelling of `value` (see `sourceSpan`), or null when it isn't grounded. */
@@ -146,7 +149,7 @@ export function locateInSource(value: string, sourceText: string): string | null
 export function findSourceLine(sourceText: string, value: string): string {
   for (const rawLine of sourceText.split('\n')) {
     const line = rawLine.trim()
-    if (line && findGroundedIndex(value, normalizeWithMap(line))) return line
+    if (line && findGroundedHits(value, normalizeWithMap(line)).length > 0) return line
   }
   return value.trim()
 }
