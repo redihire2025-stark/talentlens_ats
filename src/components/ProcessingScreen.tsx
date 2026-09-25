@@ -28,7 +28,8 @@ export default function ProcessingScreen({ onNav }: Props) {
   const [completed, setCompleted] = useState(0)
   const [failure, setFailure] = useState<string | null>(null)
 
-  const { file, parse } = useResumeStore()
+  const { file, parse, assistParse } = useResumeStore()
+  const aiAssistRunning = useResumeStore((s) => s.aiAssistStatus === 'running')
   const { analyze } = useAnalysisStore()
   const aiQueuedIds = useEditorStore((s) => s.aiQueuedIds)
   const aiLoadingIds = useEditorStore((s) => s.aiLoadingIds)
@@ -56,9 +57,24 @@ export default function ProcessingScreen({ onNav }: Props) {
       await parse()
       if (cancelled) return
 
-      const parsedResume = useResumeStore.getState().resume
-      if (useResumeStore.getState().status === 'error' || !parsedResume) {
+      if (useResumeStore.getState().status === 'error' || !useResumeStore.getState().resume) {
         setFailure(useResumeStore.getState().error ?? 'This resume could not be parsed.')
+        return
+      }
+
+      // Still within "Extracting sections": the AI-assisted parsing
+      // fallback. It returns immediately (no network call) when the
+      // deterministic parse raised no structural warning; otherwise stay on
+      // this step until the verified AI fill has finished or failed, so the
+      // ATS analysis below — and the dashboard after it — only ever see the
+      // final parse. Never fails the upload: on any error the deterministic
+      // Resume is kept.
+      await assistParse()
+      if (cancelled) return
+
+      const parsedResume = useResumeStore.getState().resume
+      if (!parsedResume) {
+        setFailure('This resume could not be parsed.')
         return
       }
       setCompleted(2)
@@ -125,7 +141,7 @@ export default function ProcessingScreen({ onNav }: Props) {
     return () => {
       cancelled = true
     }
-  }, [file, onNav, parse, analyze])
+  }, [file, onNav, parse, assistParse, analyze])
 
   if (failure) {
     return (
@@ -216,6 +232,9 @@ export default function ProcessingScreen({ onNav }: Props) {
                 </span>
                 {done && (
                   <span className="ml-auto font-mono text-xs text-success">done</span>
+                )}
+                {current && step.label === 'Extracting sections' && aiAssistRunning && (
+                  <span className="ml-auto font-mono text-xs text-muted-foreground">verifying with AI</span>
                 )}
                 {current && step.label === 'Drafting AI-assisted suggestions' && aiRemaining > 0 && (
                   <span className="ml-auto font-mono text-xs text-muted-foreground">{aiRemaining} left</span>
