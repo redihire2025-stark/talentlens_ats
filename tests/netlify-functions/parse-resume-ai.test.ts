@@ -1,7 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { handler } from './parse-resume-ai'
+import { handler } from '../../netlify/functions/parse-resume-ai'
 
 /**
+ * Lives outside netlify/functions/ on purpose: Netlify's function bundler
+ * scans every file directly in that directory as a candidate function, and
+ * a co-located `*.test.ts` file there broke the deploy (the dot in the
+ * filename isn't a valid function-name character — see the Netlify build
+ * error this fixed). Any future test for a function under netlify/functions/
+ * should go in this directory too, not next to the function itself.
+ *
  * The network boundary (OpenAI) is mocked with a stubbed global `fetch` —
  * no real call is ever made. Covers the same contract rewrite-bullet.ts
  * has: key read server-side only, JSON-mode request, retry on 429/503,
