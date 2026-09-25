@@ -6,7 +6,7 @@
 [build.environment]
   NODE_VERSION = "22"
 
-# rewrite-bullet.ts reads OPENAI_API_KEY (a server-side Netlify environment
+# rewrite-bullet.ts and parse-resume-ai.ts read OPENAI_API_KEY (a server-side Netlify environment
 # variable, NOT a VITE_* one) — see docs/architecture/overview.md's "AI
 # Layer" section for why the key must never be a VITE_* variable.
 

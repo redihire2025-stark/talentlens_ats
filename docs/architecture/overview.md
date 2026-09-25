@@ -110,10 +110,25 @@ the AI rewrite is only ever an optional, silent upgrade over that baseline,
 never something the UI blocks on or shows an error for (see
 `src/components/Recommendations.tsx`).
 
+A second AI feature was added later as an explicit product decision: an
+**AI-assisted resume-parsing fallback**. The product owner made this
+decision knowingly, and it gives up part of the original "AI never
+determines facts" principle. It follows the same shape:
+- The deterministic parser always runs first and remains authoritative.
+- The AI is only called for a resume whose parser warnings flag a
+  structural problem.
+- Everything the AI returns must appear verbatim in the resume text or it
+  is dropped.
+- Failure silently keeps the deterministic result.
+
+It never determines a score. See "AI-assisted parsing fallback" in
+`docs/architecture/resume-parser.md`.
+
 ## AI Layer: where the OpenAI key lives (and where it must never live)
 
-The bullet-rewrite feature calls OpenAI's chat completions API, which needs
-an API key. That key is a **server-side secret**, set in Netlify's
+Two features call OpenAI's chat completions API: bullet-rewrite
+suggestions, and the later AI-assisted resume-parsing fallback (see below).
+Both need an API key, and both use the same pattern. That key is a **server-side secret**, set in Netlify's
 dashboard as the plain environment variable `OPENAI_API_KEY` — never as a
 `VITE_*`-prefixed variable. This matters because Vite inlines every
 `VITE_*` variable into the shipped client JavaScript bundle at build time:
@@ -145,8 +160,34 @@ shape it used to build from OpenAI's raw response directly.
   from a Node function. The actual OpenAI request/retry logic that used to
   live in `openaiClient.ts` now lives here instead, since this is the only
   place that holds the key.
+- **Resume-parsing fallback** (added later, an explicit product
+  decision). It uses the same pattern with a second function, and the
+  same key.
+
+  ```
+  Browser (src/lib/ai/aiParseResume.ts, called only by aiAssistedParse.ts)
+      │  only if the deterministic parse raised a structural warning:
+      │  POST /.netlify/functions/parse-resume-ai  { text }
+      ▼
+  Netlify Function (netlify/functions/parse-resume-ai.ts)
+      │  reads process.env.OPENAI_API_KEY (server-side only)
+      │  calls api.openai.com: JSON mode, temperature 0, same retry-on-429/503
+      │  shape-checks the JSON; returns it UNVERIFIED
+      ▼
+  Browser: groundAiExtraction drops every value not found verbatim in the
+  resume text, then mergeGroundedAiParse fills only the flagged, empty fields.
+  ```
+
+  The function receives already-extracted text (pdfjs-dist and mammoth
+  still run in the browser) and never extracts files itself. The client
+  sends only `{ text }` and never a key. On any failure it keeps the
+  deterministic Resume without showing an error. The system prompt and
+  response shape are shared through `src/lib/ai/parseResumePrompt.ts`,
+  which has no browser-only dependencies. The built bundle contains the
+  endpoint path `/.netlify/functions/parse-resume-ai`. It contains no key,
+  no `api.openai.com` reference, and not the system prompt.
 - Local development: `netlify dev` (from the Netlify CLI) runs both the
-  Vite dev server and this function together, with `OPENAI_API_KEY` read
+  Vite dev server and these functions together, with `OPENAI_API_KEY` read
   from a local `.env` file (never committed) or your shell environment —
   see `src/lib/ai/README.md`. This sandbox has no OpenAI key and does not
   attempt to run or test the live call.

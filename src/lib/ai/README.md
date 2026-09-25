@@ -1,8 +1,28 @@
 # lib/ai
 
-The one AI-backed feature in the app: an optional, non-authoritative
-bullet-rewrite suggestion. See `docs/architecture/overview.md`'s "AI Layer"
-section for the full request flow and why the API key lives server-side.
+Two AI-backed features, both optional and non-authoritative. See
+`docs/architecture/overview.md`'s "AI Layer" section for the full request
+flows and why the API key lives server-side.
+
+1. **Bullet-rewrite suggestions** (below).
+2. **AI-assisted resume-parsing fallback**, added later by explicit
+   product decision (see `docs/architecture/resume-parser.md`):
+   - `parseResumePrompt.ts`: the extract-only system prompt, the
+     `AiParsedResume` shape, and `coerceAiParsedResume`, which checks
+     shape only. Shared with `netlify/functions/parse-resume-ai.ts`.
+   - `aiParseResume.ts`: the client caller. It POSTs `{ text }` to
+     `/.netlify/functions/parse-resume-ai`, holds no key, never throws,
+     and times out after 30s.
+   - `groundAiExtraction.ts`: **the safety layer.** It drops every AI
+     value that doesn't appear verbatim in the resume text, and keeps the
+     resume's own text span for each value that does.
+   - `mergeAiParse.ts`: `aiAssistTargets` decides whether to call the AI
+     at all (only on specific parser warnings).
+     `mergeGroundedAiParse` fills only the flagged, empty fields.
+   - `aiAssistedParse.ts`: the orchestrator, run as
+     target check → call → ground → merge. There is no path from the
+     model's response to a Resume that skips grounding. On any failure it
+     returns the deterministic Resume unchanged.
 
 - `rewritePrompt.ts` — the shared system prompt and no-fabrication rules,
   plus pure string helpers (`buildRewriteUserText`, `cleanRewriteOutput`).
@@ -23,12 +43,12 @@ section for the full request flow and why the API key lives server-side.
 
 ## Local development
 
-`netlify dev` (Netlify CLI) runs the Vite dev server and
-`netlify/functions/rewrite-bullet.ts` together, so `/.netlify/functions/rewrite-bullet`
-resolves locally the same way it does in production. Set `OPENAI_API_KEY`
+`netlify dev` (Netlify CLI) runs the Vite dev server and both
+`netlify/functions/rewrite-bullet.ts` and `netlify/functions/parse-resume-ai.ts`
+together, so `/.netlify/functions/*` resolves locally the same way it does in production. Set `OPENAI_API_KEY`
 in a local `.env` file (never committed — it's server-side only, not a
 `VITE_*` variable) or your shell environment before running it. Without a
 plain `pnpm dev`, the function endpoint won't exist — the client's fetch to
 it will fail, and the bullet-rewrite feature falls back to the
-deterministic suggestion, exactly as it does when the server has no key
-configured.
+deterministic suggestion (and the parsing fallback keeps the deterministic
+parse), exactly as when the server has no key configured.

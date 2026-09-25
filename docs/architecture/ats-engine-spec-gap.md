@@ -22,9 +22,12 @@ Scoring and matching are documented in `docs/scoring/`.
 
 ## What matches the spec
 
-- **Principles (§1)**: deterministic-first; AI only rewrites user-approved
-  bullet text through `netlify/functions/rewrite-bullet.ts` and never
-  determines a score; Resume Health and Job Match are separate scores.
+- **Principles (§1)**: deterministic-first, AI never determines a score,
+  and Resume Health and Job Match are separate scores. AI rewrites
+  user-approved bullet text through `netlify/functions/rewrite-bullet.ts`.
+  There is one later, deliberate exception to "AI never determines facts",
+  the AI-assisted parsing fallback. It is covered below under "Departures
+  from the spec made by later product decision".
 - **Canonical schemas (§3-11)**:
   - `Resume` has `id`, `metadata`, `contact`, `summary`, `skills`,
     `experience`, `education`, `certifications`, `projects`, `languages`,
@@ -100,6 +103,41 @@ and each has a reason:
   canonical name, and `confidence` is always 1. Only skills literally
   listed in the resume enter `Resume.skills`. Skills are never inferred
   from bullets.
+
+## Departures from the spec made by later product decision
+
+- **AI-assisted resume-parsing fallback**
+  (`netlify/functions/parse-resume-ai.ts`, `src/lib/ai/aiAssistedParse.ts`).
+  - **What the spec says:** parsing is deterministic, "AI must NEVER
+    determine whether a skill exists", there is no Resume → LLM →
+    structure pipeline, and candidate information is never invented.
+  - **The decision:** the parser made real mistakes on live resumes, and
+    the product owner asked for OpenAI to help with parsing. They were
+    told twice about the non-determinism, per-upload cost, hallucination
+    risk, and this exact conflict with the spec, and they chose to go
+    ahead. This is a knowing trade, not an oversight or a reinterpretation
+    of the spec.
+  - **What was kept:** the implementation keeps as much of the spec's
+    intent as it can.
+    - The rule-based parser runs first, unconditionally, and is unchanged.
+    - The AI is only called when the parser raised a structural warning.
+      Clean resumes are never sent.
+    - Every AI value must appear verbatim in the resume text, or
+      `groundAiExtraction` drops it. The merged value is the resume's own
+      text span.
+    - Only the warning-flagged fields that are still empty get filled.
+      Nothing the parser extracted is overwritten.
+    - Parser warnings, and therefore the Parsing score, are unchanged.
+    - `parserMetadata.aiAssist` records what was filled.
+  - **What is given up:**
+    - For a flagged resume, the filled fields are no longer deterministic
+      across uploads.
+    - The AI does decide which verified skill names count as the skills
+      list when no skills section was detected. A skill still can't enter
+      the Resume unless the candidate wrote that exact name somewhere in
+      the document. However, it could come from prose rather than a list.
+  - **Details:** `docs/architecture/resume-parser.md`, "AI-assisted
+    parsing fallback".
 
 ## Still not implemented
 
