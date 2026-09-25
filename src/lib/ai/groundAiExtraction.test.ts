@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { findSourceLine, groundAiExtraction, isGroundedInSource } from './groundAiExtraction'
+import { findSourceLine, groundAiExtraction, isGroundedInSource, locateInSource } from './groundAiExtraction'
 
 const SOURCE = `JANE   DOE
 Portland, OR
@@ -65,6 +65,26 @@ describe('isGroundedInSource', () => {
   })
 })
 
+describe('locateInSource', () => {
+  it("returns the resume's own spelling of a grounded value, not the caller's", () => {
+    expect(locateInSource('jane doe', SOURCE)).toBe('JANE DOE')
+    expect(locateInSource('senior data engineer', SOURCE)).toBe('Senior Data Engineer')
+  })
+
+  it('collapses a line-wrapped span to single spaces', () => {
+    expect(locateInSource('per day using kafka', SOURCE)).toBe('per day using Kafka')
+  })
+
+  it('returns null for ungrounded values', () => {
+    expect(locateInSource('Terraform', SOURCE)).toBeNull()
+  })
+
+  it('maps back correctly past characters whose lowercase form is longer', () => {
+    expect(locateInSource('istanbul office', 'Worked in the İstanbul Office')).toBeNull()
+    expect(locateInSource('Office', 'Worked in the İstanbul Office')).toBe('Office')
+  })
+})
+
 describe('findSourceLine', () => {
   it('returns the trimmed line containing the value', () => {
     expect(findSourceLine(SOURCE, 'postgresql')).toBe('Python, PostgreSQL, Kubernetes, JavaScript')
@@ -102,7 +122,8 @@ describe('groundAiExtraction', () => {
     )
 
     expect(rejected).toEqual([])
-    expect(data.name).toBe('Jane Doe')
+    // The kept value is the resume's own casing ("JANE   DOE" collapsed), never the model's.
+    expect(data.name).toBe('JANE DOE')
     expect(data.email).toBe('jane.doe@example.com')
     expect(data.phone).toBe('(503) 555-0199')
     expect(data.links).toEqual(['https://linkedin.com/in/janedoe'])

@@ -25,18 +25,66 @@ import { coerceAiParsedResume, type AiParsedResume } from './parseResumePrompt'
  *   word, so "Go" is not "verified" by "Google" and "Java" is not verified
  *   by "JavaScript".
  *
+ * A kept value is replaced by the source text's own span for it, so even
+ * casing comes from the resume, never from the model.
+ *
  * Pure and deterministic: same (response, text) in, same result out.
  */
 
 export interface GroundingResult {
-  /** Only values that verified against the source text. Safe to merge into a Resume. */
+  /**
+   * Only values that verified against the source text — and each one is the
+   * source's own spelling of it (see `sourceSpan`), not the model's copy.
+   * Safe to merge into a Resume.
+   */
   data: AiParsedResume
   /** Field paths (never values — no resume content) of everything that was dropped, e.g. `skills[3]`, `experience[0].bullets[2]`. */
   rejected: string[]
 }
 
+interface NormalizedText {
+  /** Lowercased, whitespace runs collapsed to one space, trimmed. */
+  text: string
+  /** `map[i]` is the index in the original string of normalized character `i`'s first code unit. */
+  map: number[]
+  /** `ends[i]` is the index just past normalized character `i`'s last code unit in the original string. */
+  ends: number[]
+}
+
+function normalizeWithMap(input: string): NormalizedText {
+  let text = ''
+  const map: number[] = []
+  const ends: number[] = []
+  let offset = 0
+  for (const ch of input) {
+    const start = offset
+    offset += ch.length
+    if (/\s/.test(ch)) {
+      if (text.length > 0 && text[text.length - 1] !== ' ') {
+        text += ' '
+        map.push(start)
+        ends.push(offset)
+      }
+      continue
+    }
+    // Lowercasing can change a character's length (e.g. "İ"); every code
+    // unit it produces maps back to the same original character.
+    for (const unit of ch.toLowerCase().split('')) {
+      text += unit
+      map.push(start)
+      ends.push(offset)
+    }
+  }
+  if (text.endsWith(' ')) {
+    text = text.slice(0, -1)
+    map.pop()
+    ends.pop()
+  }
+  return { text, map, ends }
+}
+
 export function normalizeForGrounding(text: string): string {
-  return text.toLowerCase().replace(/\s+/g, ' ').trim()
+  return normalizeWithMap(text).text
 }
 
 const WORD_CHAR_RE = /[\p{L}\p{N}]/u
@@ -45,30 +93,49 @@ function isWordChar(ch: string | undefined): boolean {
   return ch !== undefined && WORD_CHAR_RE.test(ch)
 }
 
-/** Whether `value` appears verbatim (modulo case/whitespace) in the already-normalized source, on token boundaries. */
-function groundedIn(value: string, normalizedSource: string): boolean {
+/** Index in `source.text` of the first token-bounded occurrence of `value`, or -1. */
+function findGroundedIndex(value: string, source: NormalizedText): { index: number; length: number } | null {
   const needle = normalizeForGrounding(value)
-  if (!needle) return false
+  if (!needle) return null
+  const haystack = source.text
   const needsStartBoundary = isWordChar(needle[0])
   const needsEndBoundary = isWordChar(needle[needle.length - 1])
 
   let from = 0
-  while (from <= normalizedSource.length - needle.length) {
-    const index = normalizedSource.indexOf(needle, from)
-    if (index === -1) return false
-    const before = normalizedSource[index - 1]
-    const after = normalizedSource[index + needle.length]
-    const startOk = !needsStartBoundary || !isWordChar(before)
-    const endOk = !needsEndBoundary || !isWordChar(after)
-    if (startOk && endOk) return true
+  while (from <= haystack.length - needle.length) {
+    const index = haystack.indexOf(needle, from)
+    if (index === -1) return null
+    const startOk = !needsStartBoundary || !isWordChar(haystack[index - 1])
+    const endOk = !needsEndBoundary || !isWordChar(haystack[index + needle.length])
+    if (startOk && endOk) return { index, length: needle.length }
     from = index + 1
   }
-  return false
+  return null
+}
+
+/**
+ * The resume's OWN text for a grounded value — the literal source span it
+ * matched, with internal whitespace runs collapsed to single spaces — or
+ * null when `value` doesn't appear verbatim. Returning the source's span
+ * rather than the model's copy means every value that reaches a Resume is
+ * literally a slice of what the candidate wrote, down to its casing.
+ */
+function sourceSpan(value: string, source: NormalizedText, original: string): string | null {
+  const hit = findGroundedIndex(value, source)
+  if (!hit) return null
+  const start = source.map[hit.index]!
+  const end = source.ends[hit.index + hit.length - 1]!
+  return original.slice(start, end).replace(/\s+/g, ' ')
 }
 
 /** Public single-value check: does `value` appear verbatim (case/whitespace-insensitive, token-bounded) in `sourceText`? */
 export function isGroundedInSource(value: string, sourceText: string): boolean {
-  return groundedIn(value, normalizeForGrounding(sourceText))
+  return findGroundedIndex(value, normalizeWithMap(sourceText)) !== null
+}
+
+/** The source text's own spelling of `value` (see `sourceSpan`), or null when it isn't grounded. */
+export function locateInSource(value: string, sourceText: string): string | null {
+  return sourceSpan(value, normalizeWithMap(sourceText), sourceText)
 }
 
 /**
@@ -79,7 +146,7 @@ export function isGroundedInSource(value: string, sourceText: string): boolean {
 export function findSourceLine(sourceText: string, value: string): string {
   for (const rawLine of sourceText.split('\n')) {
     const line = rawLine.trim()
-    if (line && groundedIn(value, normalizeForGrounding(line))) return line
+    if (line && findGroundedIndex(value, normalizeWithMap(line))) return line
   }
   return value.trim()
 }
@@ -98,12 +165,13 @@ export function findSourceLine(sourceText: string, value: string): string {
  */
 export function groundAiExtraction(raw: unknown, sourceText: string): GroundingResult {
   const ai = coerceAiParsedResume(raw)
-  const source = normalizeForGrounding(sourceText)
+  const source = normalizeWithMap(sourceText)
   const rejected: string[] = []
 
   const keep = (value: string | null, path: string): string | null => {
     if (value === null) return null
-    if (groundedIn(value, source)) return value
+    const span = sourceSpan(value, source, sourceText)
+    if (span !== null) return span
     rejected.push(path)
     return null
   }
